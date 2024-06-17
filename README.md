@@ -9,15 +9,29 @@ Build tools for the Seam API using this blueprint.
 
 TODO
 
+## Motivation
+
+TODO
+
 ## Installation
 
 Add this as a dependency to your project using [npm] with
 
 ```
-$ npm install @seamapi/blueprint
+$ npm install --save-dev @seamapi/blueprint
 ```
 
 [npm]: https://www.npmjs.com/
+
+## Usage
+
+```ts
+import { createBlueprint } from '@seamapi/blueprint'
+import * as types from '@seamapi/types'
+
+const blueprint = createBlueprint(types)
+console.log(JSON.stringify(blueprint)
+```
 
 ## Development and Testing
 
