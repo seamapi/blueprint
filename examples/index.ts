@@ -2,8 +2,9 @@
 
 import landlubber from 'landlubber'
 
+import * as blueprint from './blueprint.js'
 import * as todo from './todo.js'
 
-const commands = [todo]
+const commands = [blueprint, todo]
 
 await landlubber(commands).parse()
