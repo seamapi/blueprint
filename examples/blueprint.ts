@@ -8,7 +8,7 @@ interface Options {
 
 export const command: Command = 'blueprint [moduleName]'
 
-export const describe: Describe = 'Create a blueprint from a type module'
+export const describe: Describe = 'Create a blueprint from a module'
 
 export const builder: Builder = {
   moduleName: {
