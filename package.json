@@ -68,6 +68,7 @@
     "npm": ">= 9.0.0"
   },
   "devDependencies": {
+    "@seamapi/types": "1.184.0",
     "@types/node": "^20.8.10",
     "ava": "^6.0.1",
     "c8": "^10.1.2",
@@ -83,6 +84,7 @@
     "tsc-alias": "^1.8.2",
     "tsup": "^8.0.1",
     "tsx": "^4.6.2",
-    "typescript": "~5.3.3"
+    "typescript": "~5.3.3",
+    "zod": "^3.23.8"
   }
 }
