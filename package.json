@@ -1,6 +1,6 @@
 {
   "name": "@seamapi/blueprint",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "Build tools for the Seam API using this blueprint.",
   "type": "module",
   "main": "index.js",
