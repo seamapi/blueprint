@@ -4,12 +4,11 @@ export interface Blueprint {
   name: string
   language: string
   methodDescription: string 
-  versionInformation: string 
-  category: string // e.g. Devices, Access Codes, Locks, etc.
+  category: string 
   parameters: Array<{
     name: string 
     type: string 
-    optionality: 'optional' | 'required' 
+    required: boolean
     description: string 
   }>
   returnValue: {
