@@ -1,24 +1,33 @@
 import type { Openapi } from './openapi.js'
 
+interface Parameter {
+  name: string
+  type: string
+  required: boolean
+  description: string
+}
+
+interface ReturnValue {
+  type: string
+  description: string
+}
+
+interface Example {
+  codeSnippet: string
+  explanation: string
+}
+
 export interface Blueprint {
   name: string
-  language: string
-  methodDescription: string
-  category: string
-  parameters: Array<{
-    name: string
-    type: string
-    required: boolean
-    description: string
-  }>
-  returnValue: {
-    type: string
-    description: string
+  routes: {
+    path: string
+    method: string
+    methodDescription: string
+    category: string
+    parameters: Parameter[]
+    returnValue: ReturnValue
+    examples: Example[]
   }
-  examples: Array<{
-    codeSnippet: string
-    explanation: string
-  }>
 }
 
 export interface TypesModule {
