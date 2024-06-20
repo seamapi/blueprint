@@ -286,12 +286,7 @@
     },
     {
       "name": "network",
-      "properties": [
-        "created_at",
-        "display_name",
-        "network_id",
-        "workspace_id"
-      ]
+      "properties": ["created_at", "display_name", "network_id", "workspace_id"]
     },
     {
       "name": "noise_threshold",
@@ -330,11 +325,7 @@
     },
     {
       "name": "service_health",
-      "properties": [
-        "description",
-        "service",
-        "status"
-      ]
+      "properties": ["description", "service", "status"]
     },
     {
       "name": "unmanaged_access_code",
@@ -388,12 +379,7 @@
     },
     {
       "name": "webhook",
-      "properties": [
-        "event_types",
-        "secret",
-        "url",
-        "webhook_id"
-      ]
+      "properties": ["event_types", "secret", "url", "webhook_id"]
     },
     {
       "name": "workspace",
@@ -414,11 +400,7 @@
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "access_code",
-              "action_attempt",
-              "ok"
-            ]
+            "schemaProperties": ["access_code", "action_attempt", "ok"]
           }
         }
       ]
@@ -430,20 +412,14 @@
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "access_codes",
-              "ok"
-            ]
+            "schemaProperties": ["access_codes", "ok"]
           }
         },
         {
           "method": "PUT",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "access_codes",
-              "ok"
-            ]
+            "schemaProperties": ["access_codes", "ok"]
           }
         }
       ]
@@ -455,10 +431,7 @@
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "action_attempt",
-              "ok"
-            ]
+            "schemaProperties": ["action_attempt", "ok"]
           }
         }
       ]
@@ -470,10 +443,7 @@
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "generated_code",
-              "ok"
-            ]
+            "schemaProperties": ["generated_code", "ok"]
           }
         }
       ]
@@ -485,10 +455,7 @@
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "access_code",
-              "ok"
-            ]
+            "schemaProperties": ["access_code", "ok"]
           }
         }
       ]
@@ -500,10 +467,7 @@
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "access_codes",
-              "ok"
-            ]
+            "schemaProperties": ["access_codes", "ok"]
           }
         }
       ]
@@ -515,10 +479,7 @@
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "backup_access_code",
-              "ok"
-            ]
+            "schemaProperties": ["backup_access_code", "ok"]
           }
         }
       ]
@@ -530,10 +491,7 @@
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "access_code",
-              "ok"
-            ]
+            "schemaProperties": ["access_code", "ok"]
           }
         }
       ]
@@ -545,18 +503,14 @@
           "method": "PATCH",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "ok"
-            ]
+            "schemaProperties": ["ok"]
           }
         },
         {
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "ok"
-            ]
+            "schemaProperties": ["ok"]
           }
         }
       ]
@@ -568,10 +522,7 @@
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "action_attempt",
-              "ok"
-            ]
+            "schemaProperties": ["action_attempt", "ok"]
           }
         }
       ]
@@ -583,10 +534,7 @@
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "access_code",
-              "ok"
-            ]
+            "schemaProperties": ["access_code", "ok"]
           }
         }
       ]
@@ -598,10 +546,7 @@
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "access_codes",
-              "ok"
-            ]
+            "schemaProperties": ["access_codes", "ok"]
           }
         }
       ]
@@ -613,18 +558,14 @@
           "method": "PATCH",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "ok"
-            ]
+            "schemaProperties": ["ok"]
           }
         },
         {
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "ok"
-            ]
+            "schemaProperties": ["ok"]
           }
         }
       ]
@@ -636,30 +577,21 @@
           "method": "PATCH",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "action_attempt",
-              "ok"
-            ]
+            "schemaProperties": ["action_attempt", "ok"]
           }
         },
         {
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "action_attempt",
-              "ok"
-            ]
+            "schemaProperties": ["action_attempt", "ok"]
           }
         },
         {
           "method": "PUT",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "action_attempt",
-              "ok"
-            ]
+            "schemaProperties": ["action_attempt", "ok"]
           }
         }
       ]
@@ -671,18 +603,14 @@
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "ok"
-            ]
+            "schemaProperties": ["ok"]
           }
         },
         {
           "method": "PUT",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "ok"
-            ]
+            "schemaProperties": ["ok"]
           }
         }
       ]
@@ -694,10 +622,7 @@
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "acs_access_group",
-              "ok"
-            ]
+            "schemaProperties": ["acs_access_group", "ok"]
           }
         }
       ]
@@ -709,10 +634,7 @@
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "acs_access_groups",
-              "ok"
-            ]
+            "schemaProperties": ["acs_access_groups", "ok"]
           }
         }
       ]
@@ -724,10 +646,7 @@
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "acs_users",
-              "ok"
-            ]
+            "schemaProperties": ["acs_users", "ok"]
           }
         }
       ]
@@ -739,9 +658,7 @@
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "ok"
-            ]
+            "schemaProperties": ["ok"]
           }
         }
       ]
@@ -753,10 +670,7 @@
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "acs_credential_pools",
-              "ok"
-            ]
+            "schemaProperties": ["acs_credential_pools", "ok"]
           }
         }
       ]
@@ -768,10 +682,7 @@
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "acs_credential_provisioning_automation",
-              "ok"
-            ]
+            "schemaProperties": ["acs_credential_provisioning_automation", "ok"]
           }
         }
       ]
@@ -783,20 +694,14 @@
           "method": "PATCH",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "acs_credential",
-              "ok"
-            ]
+            "schemaProperties": ["acs_credential", "ok"]
           }
         },
         {
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "acs_credential",
-              "ok"
-            ]
+            "schemaProperties": ["acs_credential", "ok"]
           }
         }
       ]
@@ -808,10 +713,7 @@
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "acs_credential",
-              "ok"
-            ]
+            "schemaProperties": ["acs_credential", "ok"]
           }
         }
       ]
@@ -823,9 +725,7 @@
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "ok"
-            ]
+            "schemaProperties": ["ok"]
           }
         }
       ]
@@ -837,10 +737,7 @@
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "acs_credential",
-              "ok"
-            ]
+            "schemaProperties": ["acs_credential", "ok"]
           }
         }
       ]
@@ -852,10 +749,7 @@
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "acs_credentials",
-              "ok"
-            ]
+            "schemaProperties": ["acs_credentials", "ok"]
           }
         }
       ]
@@ -867,10 +761,7 @@
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "acs_entrances",
-              "ok"
-            ]
+            "schemaProperties": ["acs_entrances", "ok"]
           }
         }
       ]
@@ -882,20 +773,14 @@
           "method": "PATCH",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "acs_credential",
-              "ok"
-            ]
+            "schemaProperties": ["acs_credential", "ok"]
           }
         },
         {
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "acs_credential",
-              "ok"
-            ]
+            "schemaProperties": ["acs_credential", "ok"]
           }
         }
       ]
@@ -907,20 +792,14 @@
           "method": "PATCH",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "acs_credential",
-              "ok"
-            ]
+            "schemaProperties": ["acs_credential", "ok"]
           }
         },
         {
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "acs_credential",
-              "ok"
-            ]
+            "schemaProperties": ["acs_credential", "ok"]
           }
         }
       ]
@@ -932,10 +811,7 @@
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "acs_entrance",
-              "ok"
-            ]
+            "schemaProperties": ["acs_entrance", "ok"]
           }
         }
       ]
@@ -947,9 +823,7 @@
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "ok"
-            ]
+            "schemaProperties": ["ok"]
           }
         }
       ]
@@ -961,10 +835,7 @@
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "acs_entrances",
-              "ok"
-            ]
+            "schemaProperties": ["acs_entrances", "ok"]
           }
         }
       ]
@@ -976,10 +847,7 @@
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "acs_credentials",
-              "ok"
-            ]
+            "schemaProperties": ["acs_credentials", "ok"]
           }
         }
       ]
@@ -991,10 +859,7 @@
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "acs_system",
-              "ok"
-            ]
+            "schemaProperties": ["acs_system", "ok"]
           }
         }
       ]
@@ -1006,10 +871,7 @@
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "acs_systems",
-              "ok"
-            ]
+            "schemaProperties": ["acs_systems", "ok"]
           }
         }
       ]
@@ -1021,10 +883,7 @@
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "acs_systems",
-              "ok"
-            ]
+            "schemaProperties": ["acs_systems", "ok"]
           }
         }
       ]
@@ -1036,18 +895,14 @@
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "ok"
-            ]
+            "schemaProperties": ["ok"]
           }
         },
         {
           "method": "PUT",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "ok"
-            ]
+            "schemaProperties": ["ok"]
           }
         }
       ]
@@ -1059,10 +914,7 @@
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "acs_user",
-              "ok"
-            ]
+            "schemaProperties": ["acs_user", "ok"]
           }
         }
       ]
@@ -1074,9 +926,7 @@
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "ok"
-            ]
+            "schemaProperties": ["ok"]
           }
         }
       ]
@@ -1088,10 +938,7 @@
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "acs_user",
-              "ok"
-            ]
+            "schemaProperties": ["acs_user", "ok"]
           }
         }
       ]
@@ -1103,10 +950,7 @@
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "acs_users",
-              "ok"
-            ]
+            "schemaProperties": ["acs_users", "ok"]
           }
         }
       ]
@@ -1118,10 +962,7 @@
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "acs_entrances",
-              "ok"
-            ]
+            "schemaProperties": ["acs_entrances", "ok"]
           }
         }
       ]
@@ -1133,9 +974,7 @@
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "ok"
-            ]
+            "schemaProperties": ["ok"]
           }
         }
       ]
@@ -1147,9 +986,7 @@
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "ok"
-            ]
+            "schemaProperties": ["ok"]
           }
         }
       ]
@@ -1161,9 +998,7 @@
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "ok"
-            ]
+            "schemaProperties": ["ok"]
           }
         }
       ]
@@ -1175,9 +1010,7 @@
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "ok"
-            ]
+            "schemaProperties": ["ok"]
           }
         }
       ]
@@ -1189,18 +1022,14 @@
           "method": "PATCH",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "ok"
-            ]
+            "schemaProperties": ["ok"]
           }
         },
         {
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "ok"
-            ]
+            "schemaProperties": ["ok"]
           }
         }
       ]
@@ -1212,10 +1041,7 @@
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "action_attempt",
-              "ok"
-            ]
+            "schemaProperties": ["action_attempt", "ok"]
           }
         }
       ]
@@ -1227,10 +1053,7 @@
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "action_attempts",
-              "ok"
-            ]
+            "schemaProperties": ["action_attempts", "ok"]
           }
         }
       ]
@@ -1242,20 +1065,14 @@
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "client_session",
-              "ok"
-            ]
+            "schemaProperties": ["client_session", "ok"]
           }
         },
         {
           "method": "PUT",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "client_session",
-              "ok"
-            ]
+            "schemaProperties": ["client_session", "ok"]
           }
         }
       ]
@@ -1267,9 +1084,7 @@
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "ok"
-            ]
+            "schemaProperties": ["ok"]
           }
         }
       ]
@@ -1281,10 +1096,7 @@
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "client_session",
-              "ok"
-            ]
+            "schemaProperties": ["client_session", "ok"]
           }
         }
       ]
@@ -1296,20 +1108,14 @@
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "client_session",
-              "ok"
-            ]
+            "schemaProperties": ["client_session", "ok"]
           }
         },
         {
           "method": "PUT",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "client_session",
-              "ok"
-            ]
+            "schemaProperties": ["client_session", "ok"]
           }
         }
       ]
@@ -1321,20 +1127,14 @@
           "method": "PATCH",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "client_session",
-              "ok"
-            ]
+            "schemaProperties": ["client_session", "ok"]
           }
         },
         {
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "client_session",
-              "ok"
-            ]
+            "schemaProperties": ["client_session", "ok"]
           }
         }
       ]
@@ -1346,10 +1146,7 @@
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "client_sessions",
-              "ok"
-            ]
+            "schemaProperties": ["client_sessions", "ok"]
           }
         }
       ]
@@ -1361,9 +1158,7 @@
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "ok"
-            ]
+            "schemaProperties": ["ok"]
           }
         }
       ]
@@ -1375,10 +1170,7 @@
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "connect_webview",
-              "ok"
-            ]
+            "schemaProperties": ["connect_webview", "ok"]
           }
         }
       ]
@@ -1390,9 +1182,7 @@
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "ok"
-            ]
+            "schemaProperties": ["ok"]
           }
         }
       ]
@@ -1404,10 +1194,7 @@
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "connect_webview",
-              "ok"
-            ]
+            "schemaProperties": ["connect_webview", "ok"]
           }
         }
       ]
@@ -1419,10 +1206,7 @@
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "connect_webviews",
-              "ok"
-            ]
+            "schemaProperties": ["connect_webviews", "ok"]
           }
         }
       ]
@@ -1434,9 +1218,7 @@
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "ok"
-            ]
+            "schemaProperties": ["ok"]
           }
         }
       ]
@@ -1448,10 +1230,7 @@
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "connected_account",
-              "ok"
-            ]
+            "schemaProperties": ["connected_account", "ok"]
           }
         }
       ]
@@ -1463,10 +1242,7 @@
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "connected_accounts",
-              "ok"
-            ]
+            "schemaProperties": ["connected_accounts", "ok"]
           }
         }
       ]
@@ -1478,10 +1254,7 @@
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "connected_account",
-              "ok"
-            ]
+            "schemaProperties": ["connected_account", "ok"]
           }
         }
       ]
@@ -1493,9 +1266,7 @@
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "ok"
-            ]
+            "schemaProperties": ["ok"]
           }
         }
       ]
@@ -1507,10 +1278,7 @@
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "device",
-              "ok"
-            ]
+            "schemaProperties": ["device", "ok"]
           }
         }
       ]
@@ -1522,10 +1290,7 @@
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "devices",
-              "ok"
-            ]
+            "schemaProperties": ["devices", "ok"]
           }
         }
       ]
@@ -1537,10 +1302,7 @@
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "device_providers",
-              "ok"
-            ]
+            "schemaProperties": ["device_providers", "ok"]
           }
         }
       ]
@@ -1552,9 +1314,7 @@
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "ok"
-            ]
+            "schemaProperties": ["ok"]
           }
         }
       ]
@@ -1566,10 +1326,7 @@
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "device",
-              "ok"
-            ]
+            "schemaProperties": ["device", "ok"]
           }
         }
       ]
@@ -1581,10 +1338,7 @@
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "devices",
-              "ok"
-            ]
+            "schemaProperties": ["devices", "ok"]
           }
         }
       ]
@@ -1596,18 +1350,14 @@
           "method": "PATCH",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "ok"
-            ]
+            "schemaProperties": ["ok"]
           }
         },
         {
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "ok"
-            ]
+            "schemaProperties": ["ok"]
           }
         }
       ]
@@ -1619,18 +1369,14 @@
           "method": "PATCH",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "ok"
-            ]
+            "schemaProperties": ["ok"]
           }
         },
         {
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "ok"
-            ]
+            "schemaProperties": ["ok"]
           }
         }
       ]
@@ -1642,11 +1388,7 @@
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "event",
-              "message",
-              "ok"
-            ]
+            "schemaProperties": ["event", "message", "ok"]
           }
         }
       ]
@@ -1658,10 +1400,7 @@
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "events",
-              "ok"
-            ]
+            "schemaProperties": ["events", "ok"]
           }
         }
       ]
@@ -1673,11 +1412,7 @@
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "device",
-              "lock",
-              "ok"
-            ]
+            "schemaProperties": ["device", "lock", "ok"]
           }
         }
       ]
@@ -1689,11 +1424,7 @@
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "devices",
-              "locks",
-              "ok"
-            ]
+            "schemaProperties": ["devices", "locks", "ok"]
           }
         }
       ]
@@ -1705,10 +1436,7 @@
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "action_attempt",
-              "ok"
-            ]
+            "schemaProperties": ["action_attempt", "ok"]
           }
         }
       ]
@@ -1720,10 +1448,7 @@
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "action_attempt",
-              "ok"
-            ]
+            "schemaProperties": ["action_attempt", "ok"]
           }
         }
       ]
@@ -1735,10 +1460,7 @@
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "network",
-              "ok"
-            ]
+            "schemaProperties": ["network", "ok"]
           }
         }
       ]
@@ -1750,10 +1472,7 @@
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "networks",
-              "ok"
-            ]
+            "schemaProperties": ["networks", "ok"]
           }
         }
       ]
@@ -1765,11 +1484,7 @@
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "action_attempt",
-              "noise_threshold",
-              "ok"
-            ]
+            "schemaProperties": ["action_attempt", "noise_threshold", "ok"]
           }
         }
       ]
@@ -1781,10 +1496,7 @@
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "action_attempt",
-              "ok"
-            ]
+            "schemaProperties": ["action_attempt", "ok"]
           }
         }
       ]
@@ -1796,10 +1508,7 @@
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "noise_threshold",
-              "ok"
-            ]
+            "schemaProperties": ["noise_threshold", "ok"]
           }
         }
       ]
@@ -1811,10 +1520,7 @@
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "noise_thresholds",
-              "ok"
-            ]
+            "schemaProperties": ["noise_thresholds", "ok"]
           }
         }
       ]
@@ -1826,30 +1532,21 @@
           "method": "PATCH",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "action_attempt",
-              "ok"
-            ]
+            "schemaProperties": ["action_attempt", "ok"]
           }
         },
         {
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "action_attempt",
-              "ok"
-            ]
+            "schemaProperties": ["action_attempt", "ok"]
           }
         },
         {
           "method": "PUT",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "action_attempt",
-              "ok"
-            ]
+            "schemaProperties": ["action_attempt", "ok"]
           }
         }
       ]
@@ -1861,9 +1558,7 @@
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "ok"
-            ]
+            "schemaProperties": ["ok"]
           }
         }
       ]
@@ -1875,9 +1570,7 @@
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "ok"
-            ]
+            "schemaProperties": ["ok"]
           }
         }
       ]
@@ -1889,10 +1582,7 @@
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "ok",
-              "phones"
-            ]
+            "schemaProperties": ["ok", "phones"]
           }
         }
       ]
@@ -1904,10 +1594,7 @@
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "ok",
-              "phone"
-            ]
+            "schemaProperties": ["ok", "phone"]
           }
         }
       ]
@@ -1919,10 +1606,7 @@
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "climate_setting_schedule",
-              "ok"
-            ]
+            "schemaProperties": ["climate_setting_schedule", "ok"]
           }
         }
       ]
@@ -1934,18 +1618,14 @@
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "ok"
-            ]
+            "schemaProperties": ["ok"]
           }
         },
         {
           "method": "PUT",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "ok"
-            ]
+            "schemaProperties": ["ok"]
           }
         }
       ]
@@ -1957,10 +1637,7 @@
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "climate_setting_schedule",
-              "ok"
-            ]
+            "schemaProperties": ["climate_setting_schedule", "ok"]
           }
         }
       ]
@@ -1972,10 +1649,7 @@
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "climate_setting_schedules",
-              "ok"
-            ]
+            "schemaProperties": ["climate_setting_schedules", "ok"]
           }
         }
       ]
@@ -1987,30 +1661,21 @@
           "method": "PATCH",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "climate_setting_schedule",
-              "ok"
-            ]
+            "schemaProperties": ["climate_setting_schedule", "ok"]
           }
         },
         {
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "climate_setting_schedule",
-              "ok"
-            ]
+            "schemaProperties": ["climate_setting_schedule", "ok"]
           }
         },
         {
           "method": "PUT",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "climate_setting_schedule",
-              "ok"
-            ]
+            "schemaProperties": ["climate_setting_schedule", "ok"]
           }
         }
       ]
@@ -2022,10 +1687,7 @@
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "action_attempt",
-              "ok"
-            ]
+            "schemaProperties": ["action_attempt", "ok"]
           }
         }
       ]
@@ -2037,10 +1699,7 @@
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "ok",
-              "thermostat"
-            ]
+            "schemaProperties": ["ok", "thermostat"]
           }
         }
       ]
@@ -2052,10 +1711,7 @@
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "action_attempt",
-              "ok"
-            ]
+            "schemaProperties": ["action_attempt", "ok"]
           }
         }
       ]
@@ -2067,10 +1723,7 @@
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "action_attempt",
-              "ok"
-            ]
+            "schemaProperties": ["action_attempt", "ok"]
           }
         }
       ]
@@ -2082,10 +1735,7 @@
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "ok",
-              "thermostats"
-            ]
+            "schemaProperties": ["ok", "thermostats"]
           }
         }
       ]
@@ -2097,10 +1747,7 @@
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "action_attempt",
-              "ok"
-            ]
+            "schemaProperties": ["action_attempt", "ok"]
           }
         }
       ]
@@ -2112,10 +1759,7 @@
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "action_attempt",
-              "ok"
-            ]
+            "schemaProperties": ["action_attempt", "ok"]
           }
         }
       ]
@@ -2127,18 +1771,14 @@
           "method": "PATCH",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "ok"
-            ]
+            "schemaProperties": ["ok"]
           }
         },
         {
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "ok"
-            ]
+            "schemaProperties": ["ok"]
           }
         }
       ]
@@ -2150,18 +1790,14 @@
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "ok"
-            ]
+            "schemaProperties": ["ok"]
           }
         },
         {
           "method": "PUT",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "ok"
-            ]
+            "schemaProperties": ["ok"]
           }
         }
       ]
@@ -2173,10 +1809,7 @@
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "ok",
-              "user_identity"
-            ]
+            "schemaProperties": ["ok", "user_identity"]
           }
         }
       ]
@@ -2188,9 +1821,7 @@
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "ok"
-            ]
+            "schemaProperties": ["ok"]
           }
         }
       ]
@@ -2202,9 +1833,7 @@
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "ok"
-            ]
+            "schemaProperties": ["ok"]
           }
         }
       ]
@@ -2216,10 +1845,7 @@
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "enrollment_automation",
-              "ok"
-            ]
+            "schemaProperties": ["enrollment_automation", "ok"]
           }
         }
       ]
@@ -2231,10 +1857,7 @@
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "enrollment_automation",
-              "ok"
-            ]
+            "schemaProperties": ["enrollment_automation", "ok"]
           }
         }
       ]
@@ -2246,10 +1869,7 @@
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "enrollment_automations",
-              "ok"
-            ]
+            "schemaProperties": ["enrollment_automations", "ok"]
           }
         }
       ]
@@ -2261,10 +1881,7 @@
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "ok",
-              "user_identity"
-            ]
+            "schemaProperties": ["ok", "user_identity"]
           }
         }
       ]
@@ -2276,18 +1893,14 @@
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "ok"
-            ]
+            "schemaProperties": ["ok"]
           }
         },
         {
           "method": "PUT",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "ok"
-            ]
+            "schemaProperties": ["ok"]
           }
         }
       ]
@@ -2299,10 +1912,7 @@
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "ok",
-              "user_identities"
-            ]
+            "schemaProperties": ["ok", "user_identities"]
           }
         }
       ]
@@ -2314,11 +1924,7 @@
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "accessible_devices",
-              "devices",
-              "ok"
-            ]
+            "schemaProperties": ["accessible_devices", "devices", "ok"]
           }
         }
       ]
@@ -2330,10 +1936,7 @@
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "acs_systems",
-              "ok"
-            ]
+            "schemaProperties": ["acs_systems", "ok"]
           }
         }
       ]
@@ -2345,10 +1948,7 @@
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "acs_users",
-              "ok"
-            ]
+            "schemaProperties": ["acs_users", "ok"]
           }
         }
       ]
@@ -2360,9 +1960,7 @@
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "ok"
-            ]
+            "schemaProperties": ["ok"]
           }
         }
       ]
@@ -2374,9 +1972,7 @@
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "ok"
-            ]
+            "schemaProperties": ["ok"]
           }
         }
       ]
@@ -2388,18 +1984,14 @@
           "method": "PATCH",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "ok"
-            ]
+            "schemaProperties": ["ok"]
           }
         },
         {
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "ok"
-            ]
+            "schemaProperties": ["ok"]
           }
         }
       ]
@@ -2411,10 +2003,7 @@
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "ok",
-              "webhook"
-            ]
+            "schemaProperties": ["ok", "webhook"]
           }
         }
       ]
@@ -2426,9 +2015,7 @@
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "ok"
-            ]
+            "schemaProperties": ["ok"]
           }
         }
       ]
@@ -2440,10 +2027,7 @@
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "ok",
-              "webhook"
-            ]
+            "schemaProperties": ["ok", "webhook"]
           }
         }
       ]
@@ -2455,20 +2039,14 @@
           "method": "GET",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "ok",
-              "webhooks"
-            ]
+            "schemaProperties": ["ok", "webhooks"]
           }
         },
         {
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "ok",
-              "webhooks"
-            ]
+            "schemaProperties": ["ok", "webhooks"]
           }
         }
       ]
@@ -2480,18 +2058,14 @@
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "ok"
-            ]
+            "schemaProperties": ["ok"]
           }
         },
         {
           "method": "PUT",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "ok"
-            ]
+            "schemaProperties": ["ok"]
           }
         }
       ]
@@ -2503,10 +2077,7 @@
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "ok",
-              "workspace"
-            ]
+            "schemaProperties": ["ok", "workspace"]
           }
         }
       ]
@@ -2518,20 +2089,14 @@
           "method": "GET",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "ok",
-              "workspace"
-            ]
+            "schemaProperties": ["ok", "workspace"]
           }
         },
         {
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "ok",
-              "workspace"
-            ]
+            "schemaProperties": ["ok", "workspace"]
           }
         }
       ]
@@ -2543,20 +2108,14 @@
           "method": "GET",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "ok",
-              "workspaces"
-            ]
+            "schemaProperties": ["ok", "workspaces"]
           }
         },
         {
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "ok",
-              "workspaces"
-            ]
+            "schemaProperties": ["ok", "workspaces"]
           }
         }
       ]
@@ -2568,10 +2127,7 @@
           "method": "POST",
           "successfulResponse": {
             "description": "OK",
-            "schemaProperties": [
-              "action_attempt",
-              "ok"
-            ]
+            "schemaProperties": ["action_attempt", "ok"]
           }
         }
       ]
