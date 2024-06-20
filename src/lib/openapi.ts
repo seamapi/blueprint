@@ -10,7 +10,6 @@ interface SchemaObject {
 type Schemas = Record<string, SchemaObject>
 
 interface OperationDetails {
-  operationId?: string
   responses?: Record<string, any>
 }
 type Operations = Record<string, OperationDetails>
@@ -24,6 +23,7 @@ interface Schema {
 interface SuccessfulResponse {
   description: string
   schemaProperties: string[]
+  type: string
 }
 
 interface Operation {
@@ -74,7 +74,6 @@ const extractPaths = (paths: Paths): ApiPath[] => {
 
       return {
         method: method.toUpperCase(),
-        operationId: operationDetails.operationId || '',
         successfulResponse,
       }
     })
