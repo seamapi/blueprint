@@ -69,7 +69,8 @@
   },
   "devDependencies": {
     "@seamapi/types": "1.184.0",
-    "@types/node": "^20.8.10",
+    "@types/eslint": "^8.56.10",
+    "@types/node": "^20.14.6",
     "ava": "^6.0.1",
     "c8": "^10.1.2",
     "del-cli": "^5.0.0",
@@ -83,7 +84,7 @@
     "prettier": "^3.0.0",
     "tsc-alias": "^1.8.2",
     "tsup": "^8.0.1",
-    "tsx": "^4.6.2",
+    "tsx": "^4.15.6",
     "typescript": "~5.3.3",
     "zod": "^3.23.8"
   }
