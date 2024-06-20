@@ -2,31 +2,26 @@ import type { Openapi } from './openapi.js'
 
 interface Parameter {
   name: string
-  type: string
-  required: boolean
+  isRequired: boolean
   description: string
 }
 
-interface ReturnValue {
-  type: string
+interface Response {
   description: string
 }
 
-interface Example {
-  codeSnippet: string
-  explanation: string
-}
+type Method = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH'
 
 export interface Blueprint {
   name: string
   routes: {
     path: string
-    method: string
+    method: Method[]
+    semanticMethod: Method
     methodDescription: string
     category: string
     parameters: Parameter[]
-    returnValue: ReturnValue
-    examples: Example[]
+    response: Response
   }
 }
 
