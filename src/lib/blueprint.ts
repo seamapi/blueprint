@@ -18,7 +18,7 @@ export interface Blueprint {
     path: string
     method: Method[]
     semanticMethod: Method
-    methodDescription: string
+    routeDescription: string
     category: string
     parameters: Parameter[]
     response: Response
