@@ -1,11 +1,7 @@
-/* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
-/* eslint-disable @typescript-eslint/strict-boolean-expressions */
-import { writeFile } from "node:fs/promises"
-
 import { openapi } from "@seamapi/types/connect"
 
 interface SchemaObject {
-  properties?: Record<string, any> 
+  properties?: Record<string, any>
 }
 type Schemas = Record<string, SchemaObject>
 
@@ -28,7 +24,6 @@ interface SuccessfulResponse {
 
 interface Operation {
   method: string
-  operationId: string
   successfulResponse: SuccessfulResponse | null
 }
 
@@ -40,7 +35,6 @@ interface ApiPath {
 export interface Openapi {
   info: {
     title: string
-    version: string
   }
   schemas: Schema[]
   apiPaths: ApiPath[]
@@ -49,7 +43,7 @@ export interface Openapi {
 const extractSchemas = (schemas: Schemas): Schema[] => {
   return Object.entries(schemas).map(([schemaName, schema]) => ({
     name: schemaName,
-    properties: schema.properties ? Object.keys(schema.properties) : [],
+    properties: (schema.properties != null) ? Object.keys(schema.properties) : [],
   }))
 }
 
@@ -59,16 +53,15 @@ const extractPaths = (paths: Paths): ApiPath[] => {
     operations: Object.entries(operations).map(([method, operationDetails]) => {
       let successfulResponse: SuccessfulResponse | null = null
 
-      if (operationDetails.responses?.['200']) {
+      if (operationDetails.responses?.['200'] !== undefined) {
         const response = operationDetails.responses['200']
-        const description = response.description || ''
-        const schemaProperties = response.content?.["application/json"]?.schema?.properties
-          ? Object.keys(response.content["application/json"].schema.properties)
-          : []
+        const description = typeof response.description === 'string' ? response.description : ''
+        const schemaProperties = response.content?.["application/json"]?.schema?.properties ?? {}
 
         successfulResponse = {
           description,
           schemaProperties,
+          type: response.content["application/json"].schema.type,
         }
       }
 
@@ -80,27 +73,17 @@ const extractPaths = (paths: Paths): ApiPath[] => {
   }))
 }
 
-const extractOpenapi = (): Openapi => {
+export const extractOpenapi = (): Openapi => {
   const { components, paths, info } = openapi
 
-  const schemas = extractSchemas(components.schemas as Schemas) 
-  const apiPaths = extractPaths(paths as Paths) 
+  const schemas = extractSchemas(components.schemas as Schemas)
+  const apiPaths = extractPaths(paths as Paths)
 
   return {
     info: {
       title: info.title,
-      version: info.version,
     },
     schemas,
     apiPaths,
   }
 }
-
-const extractedOpenapi = extractOpenapi()
-
-const outputFilePath = './extractedOpenapi.json'
-writeFile(outputFilePath, JSON.stringify(extractedOpenapi, null, 2))
-  .then(() => console.log('Extracted Openapi data written to extractedOpenapi.json'))
-  .catch((error) => console.error('Error writing extractedOpenapi:', error))
-
-console.log(JSON.stringify(extractedOpenapi, null, 2))
