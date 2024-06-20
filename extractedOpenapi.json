@@ -1,0 +1,2580 @@
+{
+  "info": {
+    "title": "Seam Connect",
+    "version": "1.0.0"
+  },
+  "schemas": [
+    {
+      "name": "access_code",
+      "properties": [
+        "access_code_id",
+        "code",
+        "common_code_key",
+        "created_at",
+        "device_id",
+        "ends_at",
+        "errors",
+        "is_backup",
+        "is_backup_access_code_available",
+        "is_external_modification_allowed",
+        "is_managed",
+        "is_offline_access_code",
+        "is_one_time_use",
+        "is_scheduled_on_device",
+        "is_waiting_for_code_assignment",
+        "name",
+        "pulled_backup_access_code_id",
+        "starts_at",
+        "status",
+        "type",
+        "warnings"
+      ]
+    },
+    {
+      "name": "acs_access_group",
+      "properties": [
+        "access_group_type",
+        "access_group_type_display_name",
+        "acs_access_group_id",
+        "acs_system_id",
+        "created_at",
+        "display_name",
+        "external_type",
+        "external_type_display_name",
+        "name",
+        "workspace_id"
+      ]
+    },
+    {
+      "name": "acs_credential",
+      "properties": [
+        "access_method",
+        "acs_credential_id",
+        "acs_credential_pool_id",
+        "acs_system_id",
+        "acs_user_id",
+        "code",
+        "created_at",
+        "display_name",
+        "ends_at",
+        "errors",
+        "external_type",
+        "external_type_display_name",
+        "is_multi_phone_sync_credential",
+        "parent_acs_credential_id",
+        "starts_at",
+        "visionline_metadata",
+        "warnings",
+        "workspace_id"
+      ]
+    },
+    {
+      "name": "acs_credential_pool",
+      "properties": [
+        "acs_credential_pool_id",
+        "acs_system_id",
+        "created_at",
+        "display_name",
+        "external_type",
+        "external_type_display_name",
+        "workspace_id"
+      ]
+    },
+    {
+      "name": "acs_credential_provisioning_automation",
+      "properties": [
+        "acs_credential_provisioning_automation_id",
+        "created_at",
+        "credential_manager_acs_system_id",
+        "user_identity_id",
+        "workspace_id"
+      ]
+    },
+    {
+      "name": "acs_entrance",
+      "properties": [
+        "acs_entrance_id",
+        "acs_system_id",
+        "created_at",
+        "display_name",
+        "errors",
+        "latch_metadata",
+        "visionline_metadata"
+      ]
+    },
+    {
+      "name": "acs_system",
+      "properties": [
+        "acs_system_id",
+        "can_add_acs_users_to_acs_access_groups",
+        "can_automate_enrollment",
+        "can_create_acs_access_groups",
+        "can_remove_acs_users_from_acs_access_groups",
+        "connected_account_ids",
+        "created_at",
+        "errors",
+        "external_type",
+        "external_type_display_name",
+        "image_alt_text",
+        "image_url",
+        "name",
+        "system_type",
+        "system_type_display_name",
+        "warnings",
+        "workspace_id"
+      ]
+    },
+    {
+      "name": "acs_user",
+      "properties": [
+        "access_schedule",
+        "acs_system_id",
+        "acs_user_id",
+        "created_at",
+        "display_name",
+        "email",
+        "email_address",
+        "external_type",
+        "external_type_display_name",
+        "full_name",
+        "hid_acs_system_id",
+        "is_suspended",
+        "phone_number",
+        "user_identity_email_address",
+        "user_identity_full_name",
+        "user_identity_id",
+        "user_identity_phone_number",
+        "workspace_id"
+      ]
+    },
+    {
+      "name": "action_attempt",
+      "properties": []
+    },
+    {
+      "name": "client_session",
+      "properties": [
+        "client_session_id",
+        "connect_webview_ids",
+        "connected_account_ids",
+        "created_at",
+        "device_count",
+        "token",
+        "user_identifier_key",
+        "user_identity_ids",
+        "workspace_id"
+      ]
+    },
+    {
+      "name": "climate_setting_schedule",
+      "properties": [
+        "automatic_cooling_enabled",
+        "automatic_heating_enabled",
+        "climate_setting_schedule_id",
+        "cooling_set_point_celsius",
+        "cooling_set_point_fahrenheit",
+        "created_at",
+        "device_id",
+        "errors",
+        "heating_set_point_celsius",
+        "heating_set_point_fahrenheit",
+        "hvac_mode_setting",
+        "manual_override_allowed",
+        "name",
+        "schedule_ends_at",
+        "schedule_starts_at",
+        "schedule_type"
+      ]
+    },
+    {
+      "name": "connect_webview",
+      "properties": [
+        "accepted_devices",
+        "accepted_providers",
+        "any_device_allowed",
+        "any_provider_allowed",
+        "authorized_at",
+        "automatically_manage_new_devices",
+        "connect_webview_id",
+        "connected_account_id",
+        "created_at",
+        "custom_metadata",
+        "custom_redirect_failure_url",
+        "custom_redirect_url",
+        "device_selection_mode",
+        "login_successful",
+        "selected_provider",
+        "status",
+        "url",
+        "wait_for_device_creation",
+        "workspace_id"
+      ]
+    },
+    {
+      "name": "connected_account",
+      "properties": [
+        "account_type",
+        "account_type_display_name",
+        "automatically_manage_new_devices",
+        "connected_account_id",
+        "created_at",
+        "custom_metadata",
+        "errors",
+        "user_identifier",
+        "warnings"
+      ]
+    },
+    {
+      "name": "device",
+      "properties": [
+        "can_program_offline_access_codes",
+        "can_program_online_access_codes",
+        "can_remotely_lock",
+        "can_remotely_unlock",
+        "can_simulate_removal",
+        "capabilities_supported",
+        "connected_account_id",
+        "created_at",
+        "custom_metadata",
+        "device_id",
+        "device_type",
+        "display_name",
+        "errors",
+        "is_managed",
+        "location",
+        "nickname",
+        "properties",
+        "warnings",
+        "workspace_id"
+      ]
+    },
+    {
+      "name": "device_provider",
+      "properties": [
+        "device_provider_name",
+        "display_name",
+        "image_url",
+        "provider_categories"
+      ]
+    },
+    {
+      "name": "enrollment_automation",
+      "properties": [
+        "created_at",
+        "credential_manager_acs_system_id",
+        "enrollment_automation_id",
+        "user_identity_id",
+        "workspace_id"
+      ]
+    },
+    {
+      "name": "event",
+      "properties": [
+        "acs_credential_id",
+        "acs_system_id",
+        "acs_user_id",
+        "action_attempt_id",
+        "client_session_id",
+        "created_at",
+        "device_id",
+        "enrollment_automation_id",
+        "event_id",
+        "event_type",
+        "occurred_at",
+        "workspace_id"
+      ]
+    },
+    {
+      "name": "network",
+      "properties": [
+        "created_at",
+        "display_name",
+        "network_id",
+        "workspace_id"
+      ]
+    },
+    {
+      "name": "noise_threshold",
+      "properties": [
+        "device_id",
+        "ends_daily_at",
+        "name",
+        "noise_threshold_decibels",
+        "noise_threshold_id",
+        "noise_threshold_nrs",
+        "starts_daily_at"
+      ]
+    },
+    {
+      "name": "phone",
+      "properties": [
+        "can_program_offline_access_codes",
+        "can_program_online_access_codes",
+        "can_remotely_lock",
+        "can_remotely_unlock",
+        "can_simulate_removal",
+        "capabilities_supported",
+        "created_at",
+        "custom_metadata",
+        "device_id",
+        "device_type",
+        "display_name",
+        "errors",
+        "is_managed",
+        "location",
+        "nickname",
+        "properties",
+        "warnings",
+        "workspace_id"
+      ]
+    },
+    {
+      "name": "service_health",
+      "properties": [
+        "description",
+        "service",
+        "status"
+      ]
+    },
+    {
+      "name": "unmanaged_access_code",
+      "properties": [
+        "access_code_id",
+        "code",
+        "created_at",
+        "device_id",
+        "ends_at",
+        "errors",
+        "is_managed",
+        "name",
+        "starts_at",
+        "status",
+        "type",
+        "warnings"
+      ]
+    },
+    {
+      "name": "unmanaged_device",
+      "properties": [
+        "can_program_offline_access_codes",
+        "can_program_online_access_codes",
+        "can_remotely_lock",
+        "can_remotely_unlock",
+        "can_simulate_removal",
+        "capabilities_supported",
+        "connected_account_id",
+        "created_at",
+        "device_id",
+        "device_type",
+        "errors",
+        "is_managed",
+        "properties",
+        "warnings",
+        "workspace_id"
+      ]
+    },
+    {
+      "name": "user_identity",
+      "properties": [
+        "created_at",
+        "display_name",
+        "email_address",
+        "full_name",
+        "phone_number",
+        "user_identity_id",
+        "user_identity_key",
+        "workspace_id"
+      ]
+    },
+    {
+      "name": "webhook",
+      "properties": [
+        "event_types",
+        "secret",
+        "url",
+        "webhook_id"
+      ]
+    },
+    {
+      "name": "workspace",
+      "properties": [
+        "company_name",
+        "connect_partner_name",
+        "is_sandbox",
+        "name",
+        "workspace_id"
+      ]
+    }
+  ],
+  "apiPaths": [
+    {
+      "path": "/access_codes/create",
+      "operations": [
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "access_code",
+              "action_attempt",
+              "ok"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "path": "/access_codes/create_multiple",
+      "operations": [
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "access_codes",
+              "ok"
+            ]
+          }
+        },
+        {
+          "method": "PUT",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "access_codes",
+              "ok"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "path": "/access_codes/delete",
+      "operations": [
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "action_attempt",
+              "ok"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "path": "/access_codes/generate_code",
+      "operations": [
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "generated_code",
+              "ok"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "path": "/access_codes/get",
+      "operations": [
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "access_code",
+              "ok"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "path": "/access_codes/list",
+      "operations": [
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "access_codes",
+              "ok"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "path": "/access_codes/pull_backup_access_code",
+      "operations": [
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "backup_access_code",
+              "ok"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "path": "/access_codes/simulate/create_unmanaged_access_code",
+      "operations": [
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "access_code",
+              "ok"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "path": "/access_codes/unmanaged/convert_to_managed",
+      "operations": [
+        {
+          "method": "PATCH",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "ok"
+            ]
+          }
+        },
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "ok"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "path": "/access_codes/unmanaged/delete",
+      "operations": [
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "action_attempt",
+              "ok"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "path": "/access_codes/unmanaged/get",
+      "operations": [
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "access_code",
+              "ok"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "path": "/access_codes/unmanaged/list",
+      "operations": [
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "access_codes",
+              "ok"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "path": "/access_codes/unmanaged/update",
+      "operations": [
+        {
+          "method": "PATCH",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "ok"
+            ]
+          }
+        },
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "ok"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "path": "/access_codes/update",
+      "operations": [
+        {
+          "method": "PATCH",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "action_attempt",
+              "ok"
+            ]
+          }
+        },
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "action_attempt",
+              "ok"
+            ]
+          }
+        },
+        {
+          "method": "PUT",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "action_attempt",
+              "ok"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "path": "/acs/access_groups/add_user",
+      "operations": [
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "ok"
+            ]
+          }
+        },
+        {
+          "method": "PUT",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "ok"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "path": "/acs/access_groups/get",
+      "operations": [
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "acs_access_group",
+              "ok"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "path": "/acs/access_groups/list",
+      "operations": [
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "acs_access_groups",
+              "ok"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "path": "/acs/access_groups/list_users",
+      "operations": [
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "acs_users",
+              "ok"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "path": "/acs/access_groups/remove_user",
+      "operations": [
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "ok"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "path": "/acs/credential_pools/list",
+      "operations": [
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "acs_credential_pools",
+              "ok"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "path": "/acs/credential_provisioning_automations/launch",
+      "operations": [
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "acs_credential_provisioning_automation",
+              "ok"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "path": "/acs/credentials/assign",
+      "operations": [
+        {
+          "method": "PATCH",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "acs_credential",
+              "ok"
+            ]
+          }
+        },
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "acs_credential",
+              "ok"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "path": "/acs/credentials/create",
+      "operations": [
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "acs_credential",
+              "ok"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "path": "/acs/credentials/delete",
+      "operations": [
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "ok"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "path": "/acs/credentials/get",
+      "operations": [
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "acs_credential",
+              "ok"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "path": "/acs/credentials/list",
+      "operations": [
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "acs_credentials",
+              "ok"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "path": "/acs/credentials/list_accessible_entrances",
+      "operations": [
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "acs_entrances",
+              "ok"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "path": "/acs/credentials/unassign",
+      "operations": [
+        {
+          "method": "PATCH",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "acs_credential",
+              "ok"
+            ]
+          }
+        },
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "acs_credential",
+              "ok"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "path": "/acs/credentials/update",
+      "operations": [
+        {
+          "method": "PATCH",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "acs_credential",
+              "ok"
+            ]
+          }
+        },
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "acs_credential",
+              "ok"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "path": "/acs/entrances/get",
+      "operations": [
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "acs_entrance",
+              "ok"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "path": "/acs/entrances/grant_access",
+      "operations": [
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "ok"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "path": "/acs/entrances/list",
+      "operations": [
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "acs_entrances",
+              "ok"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "path": "/acs/entrances/list_credentials_with_access",
+      "operations": [
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "acs_credentials",
+              "ok"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "path": "/acs/systems/get",
+      "operations": [
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "acs_system",
+              "ok"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "path": "/acs/systems/list",
+      "operations": [
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "acs_systems",
+              "ok"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "path": "/acs/systems/list_compatible_credential_manager_acs_systems",
+      "operations": [
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "acs_systems",
+              "ok"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "path": "/acs/users/add_to_access_group",
+      "operations": [
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "ok"
+            ]
+          }
+        },
+        {
+          "method": "PUT",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "ok"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "path": "/acs/users/create",
+      "operations": [
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "acs_user",
+              "ok"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "path": "/acs/users/delete",
+      "operations": [
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "ok"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "path": "/acs/users/get",
+      "operations": [
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "acs_user",
+              "ok"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "path": "/acs/users/list",
+      "operations": [
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "acs_users",
+              "ok"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "path": "/acs/users/list_accessible_entrances",
+      "operations": [
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "acs_entrances",
+              "ok"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "path": "/acs/users/remove_from_access_group",
+      "operations": [
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "ok"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "path": "/acs/users/revoke_access_to_all_entrances",
+      "operations": [
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "ok"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "path": "/acs/users/suspend",
+      "operations": [
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "ok"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "path": "/acs/users/unsuspend",
+      "operations": [
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "ok"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "path": "/acs/users/update",
+      "operations": [
+        {
+          "method": "PATCH",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "ok"
+            ]
+          }
+        },
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "ok"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "path": "/action_attempts/get",
+      "operations": [
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "action_attempt",
+              "ok"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "path": "/action_attempts/list",
+      "operations": [
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "action_attempts",
+              "ok"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "path": "/client_sessions/create",
+      "operations": [
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "client_session",
+              "ok"
+            ]
+          }
+        },
+        {
+          "method": "PUT",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "client_session",
+              "ok"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "path": "/client_sessions/delete",
+      "operations": [
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "ok"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "path": "/client_sessions/get",
+      "operations": [
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "client_session",
+              "ok"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "path": "/client_sessions/get_or_create",
+      "operations": [
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "client_session",
+              "ok"
+            ]
+          }
+        },
+        {
+          "method": "PUT",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "client_session",
+              "ok"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "path": "/client_sessions/grant_access",
+      "operations": [
+        {
+          "method": "PATCH",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "client_session",
+              "ok"
+            ]
+          }
+        },
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "client_session",
+              "ok"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "path": "/client_sessions/list",
+      "operations": [
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "client_sessions",
+              "ok"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "path": "/client_sessions/revoke",
+      "operations": [
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "ok"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "path": "/connect_webviews/create",
+      "operations": [
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "connect_webview",
+              "ok"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "path": "/connect_webviews/delete",
+      "operations": [
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "ok"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "path": "/connect_webviews/get",
+      "operations": [
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "connect_webview",
+              "ok"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "path": "/connect_webviews/list",
+      "operations": [
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "connect_webviews",
+              "ok"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "path": "/connected_accounts/delete",
+      "operations": [
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "ok"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "path": "/connected_accounts/get",
+      "operations": [
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "connected_account",
+              "ok"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "path": "/connected_accounts/list",
+      "operations": [
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "connected_accounts",
+              "ok"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "path": "/connected_accounts/update",
+      "operations": [
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "connected_account",
+              "ok"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "path": "/devices/delete",
+      "operations": [
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "ok"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "path": "/devices/get",
+      "operations": [
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "device",
+              "ok"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "path": "/devices/list",
+      "operations": [
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "devices",
+              "ok"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "path": "/devices/list_device_providers",
+      "operations": [
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "device_providers",
+              "ok"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "path": "/devices/simulate/remove",
+      "operations": [
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "ok"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "path": "/devices/unmanaged/get",
+      "operations": [
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "device",
+              "ok"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "path": "/devices/unmanaged/list",
+      "operations": [
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "devices",
+              "ok"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "path": "/devices/unmanaged/update",
+      "operations": [
+        {
+          "method": "PATCH",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "ok"
+            ]
+          }
+        },
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "ok"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "path": "/devices/update",
+      "operations": [
+        {
+          "method": "PATCH",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "ok"
+            ]
+          }
+        },
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "ok"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "path": "/events/get",
+      "operations": [
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "event",
+              "message",
+              "ok"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "path": "/events/list",
+      "operations": [
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "events",
+              "ok"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "path": "/locks/get",
+      "operations": [
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "device",
+              "lock",
+              "ok"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "path": "/locks/list",
+      "operations": [
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "devices",
+              "locks",
+              "ok"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "path": "/locks/lock_door",
+      "operations": [
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "action_attempt",
+              "ok"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "path": "/locks/unlock_door",
+      "operations": [
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "action_attempt",
+              "ok"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "path": "/networks/get",
+      "operations": [
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "network",
+              "ok"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "path": "/networks/list",
+      "operations": [
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "networks",
+              "ok"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "path": "/noise_sensors/noise_thresholds/create",
+      "operations": [
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "action_attempt",
+              "noise_threshold",
+              "ok"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "path": "/noise_sensors/noise_thresholds/delete",
+      "operations": [
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "action_attempt",
+              "ok"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "path": "/noise_sensors/noise_thresholds/get",
+      "operations": [
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "noise_threshold",
+              "ok"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "path": "/noise_sensors/noise_thresholds/list",
+      "operations": [
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "noise_thresholds",
+              "ok"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "path": "/noise_sensors/noise_thresholds/update",
+      "operations": [
+        {
+          "method": "PATCH",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "action_attempt",
+              "ok"
+            ]
+          }
+        },
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "action_attempt",
+              "ok"
+            ]
+          }
+        },
+        {
+          "method": "PUT",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "action_attempt",
+              "ok"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "path": "/noise_sensors/simulate/trigger_noise_threshold",
+      "operations": [
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "ok"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "path": "/phones/deactivate",
+      "operations": [
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "ok"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "path": "/phones/list",
+      "operations": [
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "ok",
+              "phones"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "path": "/phones/simulate/create_sandbox_phone",
+      "operations": [
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "ok",
+              "phone"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "path": "/thermostats/climate_setting_schedules/create",
+      "operations": [
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "climate_setting_schedule",
+              "ok"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "path": "/thermostats/climate_setting_schedules/delete",
+      "operations": [
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "ok"
+            ]
+          }
+        },
+        {
+          "method": "PUT",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "ok"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "path": "/thermostats/climate_setting_schedules/get",
+      "operations": [
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "climate_setting_schedule",
+              "ok"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "path": "/thermostats/climate_setting_schedules/list",
+      "operations": [
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "climate_setting_schedules",
+              "ok"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "path": "/thermostats/climate_setting_schedules/update",
+      "operations": [
+        {
+          "method": "PATCH",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "climate_setting_schedule",
+              "ok"
+            ]
+          }
+        },
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "climate_setting_schedule",
+              "ok"
+            ]
+          }
+        },
+        {
+          "method": "PUT",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "climate_setting_schedule",
+              "ok"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "path": "/thermostats/cool",
+      "operations": [
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "action_attempt",
+              "ok"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "path": "/thermostats/get",
+      "operations": [
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "ok",
+              "thermostat"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "path": "/thermostats/heat",
+      "operations": [
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "action_attempt",
+              "ok"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "path": "/thermostats/heat_cool",
+      "operations": [
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "action_attempt",
+              "ok"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "path": "/thermostats/list",
+      "operations": [
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "ok",
+              "thermostats"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "path": "/thermostats/off",
+      "operations": [
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "action_attempt",
+              "ok"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "path": "/thermostats/set_fan_mode",
+      "operations": [
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "action_attempt",
+              "ok"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "path": "/thermostats/update",
+      "operations": [
+        {
+          "method": "PATCH",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "ok"
+            ]
+          }
+        },
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "ok"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "path": "/user_identities/add_acs_user",
+      "operations": [
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "ok"
+            ]
+          }
+        },
+        {
+          "method": "PUT",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "ok"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "path": "/user_identities/create",
+      "operations": [
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "ok",
+              "user_identity"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "path": "/user_identities/delete",
+      "operations": [
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "ok"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "path": "/user_identities/enrollment_automations/delete",
+      "operations": [
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "ok"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "path": "/user_identities/enrollment_automations/get",
+      "operations": [
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "enrollment_automation",
+              "ok"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "path": "/user_identities/enrollment_automations/launch",
+      "operations": [
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "enrollment_automation",
+              "ok"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "path": "/user_identities/enrollment_automations/list",
+      "operations": [
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "enrollment_automations",
+              "ok"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "path": "/user_identities/get",
+      "operations": [
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "ok",
+              "user_identity"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "path": "/user_identities/grant_access_to_device",
+      "operations": [
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "ok"
+            ]
+          }
+        },
+        {
+          "method": "PUT",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "ok"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "path": "/user_identities/list",
+      "operations": [
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "ok",
+              "user_identities"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "path": "/user_identities/list_accessible_devices",
+      "operations": [
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "accessible_devices",
+              "devices",
+              "ok"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "path": "/user_identities/list_acs_systems",
+      "operations": [
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "acs_systems",
+              "ok"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "path": "/user_identities/list_acs_users",
+      "operations": [
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "acs_users",
+              "ok"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "path": "/user_identities/remove_acs_user",
+      "operations": [
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "ok"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "path": "/user_identities/revoke_access_to_device",
+      "operations": [
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "ok"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "path": "/user_identities/update",
+      "operations": [
+        {
+          "method": "PATCH",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "ok"
+            ]
+          }
+        },
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "ok"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "path": "/webhooks/create",
+      "operations": [
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "ok",
+              "webhook"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "path": "/webhooks/delete",
+      "operations": [
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "ok"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "path": "/webhooks/get",
+      "operations": [
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "ok",
+              "webhook"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "path": "/webhooks/list",
+      "operations": [
+        {
+          "method": "GET",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "ok",
+              "webhooks"
+            ]
+          }
+        },
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "ok",
+              "webhooks"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "path": "/webhooks/update",
+      "operations": [
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "ok"
+            ]
+          }
+        },
+        {
+          "method": "PUT",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "ok"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "path": "/workspaces/create",
+      "operations": [
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "ok",
+              "workspace"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "path": "/workspaces/get",
+      "operations": [
+        {
+          "method": "GET",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "ok",
+              "workspace"
+            ]
+          }
+        },
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "ok",
+              "workspace"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "path": "/workspaces/list",
+      "operations": [
+        {
+          "method": "GET",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "ok",
+              "workspaces"
+            ]
+          }
+        },
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "ok",
+              "workspaces"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "path": "/workspaces/reset_sandbox",
+      "operations": [
+        {
+          "method": "POST",
+          "successfulResponse": {
+            "description": "OK",
+            "schemaProperties": [
+              "action_attempt",
+              "ok"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}
