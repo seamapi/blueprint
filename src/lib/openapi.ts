@@ -1,4 +1,4 @@
-import { openapi } from "@seamapi/types/connect"
+import { openapi } from '@seamapi/types/connect'
 
 interface SchemaObject {
   properties?: Record<string, any>
@@ -43,7 +43,7 @@ export interface Openapi {
 const extractSchemas = (schemas: Schemas): Schema[] => {
   return Object.entries(schemas).map(([schemaName, schema]) => ({
     name: schemaName,
-    properties: (schema.properties != null) ? Object.keys(schema.properties) : [],
+    properties: schema.properties != null ? Object.keys(schema.properties) : [],
   }))
 }
 
@@ -55,13 +55,15 @@ const extractPaths = (paths: Paths): ApiPath[] => {
 
       if (operationDetails.responses?.['200'] !== undefined) {
         const response = operationDetails.responses['200']
-        const description = typeof response.description === 'string' ? response.description : ''
-        const schemaProperties = response.content?.["application/json"]?.schema?.properties ?? {}
+        const description =
+          typeof response.description === 'string' ? response.description : ''
+        const schemaProperties =
+          response.content?.['application/json']?.schema?.properties ?? {}
 
         successfulResponse = {
           description,
           schemaProperties,
-          type: response.content["application/json"].schema.type,
+          type: response.content['application/json'].schema.type,
         }
       }
 
@@ -69,7 +71,7 @@ const extractPaths = (paths: Paths): ApiPath[] => {
         method: method.toUpperCase(),
         successfulResponse,
       }
-    })
+    }),
   }))
 }
 

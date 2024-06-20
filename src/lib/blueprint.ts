@@ -3,21 +3,21 @@ import type { Openapi } from './openapi.js'
 export interface Blueprint {
   name: string
   language: string
-  methodDescription: string 
-  category: string 
+  methodDescription: string
+  category: string
   parameters: Array<{
-    name: string 
-    type: string 
+    name: string
+    type: string
     required: boolean
-    description: string 
+    description: string
   }>
   returnValue: {
-    type: string 
-    description: string 
+    type: string
+    description: string
   }
   examples: Array<{
-    codeSnippet: string 
-    explanation: string 
+    codeSnippet: string
+    explanation: string
   }>
 }
 
