@@ -18,6 +18,7 @@ interface Endpoint {
   name: string
   path: string
   method: Method[]
+  semanticMethod?: string | undefined
   routeDescription?: string | undefined
   parameters: Parameter[]
   response: Response
