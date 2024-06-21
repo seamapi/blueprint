@@ -1,5 +1,3 @@
-import { openapi } from '@seamapi/types/connect'
-
 import type { Openapi } from './openapi.js'
 
 interface Parameter {
@@ -18,7 +16,7 @@ interface Endpoint {
   name: string
   path: string
   method: Method[]
-  semanticMethod?: string | undefined
+  semanticMethod?: string
   routeDescription?: string | undefined
   parameters: Parameter[]
   response: Response
@@ -60,8 +58,9 @@ export const createBlueprint = ({ openapi }: TypesModule): Blueprint => {
           name: operation.operationId,
           path,
           method: [method.toUpperCase() as Method],
+          // TODO: fix routeDescription
           routeDescription: operation.summary,
-          parameters: [],  // Assuming no parameters for simplicity
+          parameters: [],
           response: {
             description: Object.values(operation.responses)[0]?.description ?? 'No Description'
           }
@@ -72,7 +71,8 @@ export const createBlueprint = ({ openapi }: TypesModule): Blueprint => {
           path,
           namespace,
           endpoints,
-          subroutes: null  // Assuming no subroutes for simplicity
+          // TODO: implement optional subroutes extraction
+          subroutes: null
         })
       }
     }
@@ -83,5 +83,3 @@ export const createBlueprint = ({ openapi }: TypesModule): Blueprint => {
     routes,
   }
 }
-
-console.log(JSON.stringify(createBlueprint({ openapi }), null, 2))
