@@ -12,34 +12,52 @@ export interface Openapi {
     description: string
   }>
   components: {
-    schemas: Record<string, {
-      type: string
-      properties: Record<string, {
-        description: string
+    schemas: Record<
+      string,
+      {
         type: string
-        format?: string
-      }>
-      required: string[]
-    }>
-  }
-  paths: Record<string, {
-    [method in 'get' | 'post' | 'put' | 'delete' | 'patch']?: {
-      operationId: string
-      responses: Record<string, {
-        description: string
-        content?: Record<string, {
-          schema: {
-            properties: Record<string, {
-              type: string
-              $ref?: string
-            }>
-            required: string[]
+        properties: Record<
+          string,
+          {
+            description: string
             type: string
+            format?: string
           }
-        }>
-      }>
-      summary?: string
-      tags?: string[]
+        >
+        required: string[]
+      }
+    >
+  }
+  paths: Record<
+    string,
+    {
+      [method in 'get' | 'post' | 'put' | 'delete' | 'patch']?: {
+        operationId: string
+        responses: Record<
+          string,
+          {
+            description: string
+            content?: Record<
+              string,
+              {
+                schema: {
+                  properties: Record<
+                    string,
+                    {
+                      type: string
+                      $ref?: string
+                    }
+                  >
+                  required: string[]
+                  type: string
+                }
+              }
+            >
+          }
+        >
+        summary?: string
+        tags?: string[]
+      }
     }
-  }>
+  >
 }

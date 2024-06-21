@@ -51,8 +51,11 @@ export const createBlueprint = ({ openapi }: TypesModule): Blueprint => {
 
     for (const [method, operation] of Object.entries(methods)) {
       if (['get', 'post', 'put', 'delete', 'patch'].includes(method)) {
-        const namespaceName = (operation.tags?.[0]) ?? null
-        const namespace: Namespace | null = (namespaceName != null) ? { name: namespaceName, path: namespaceName } : null
+        const namespaceName = operation.tags?.[0] ?? null
+        const namespace: Namespace | null =
+          namespaceName != null
+            ? { name: namespaceName, path: namespaceName }
+            : null
 
         endpoints.push({
           name: operation.operationId,
@@ -62,8 +65,10 @@ export const createBlueprint = ({ openapi }: TypesModule): Blueprint => {
           routeDescription: operation.summary,
           parameters: [],
           response: {
-            description: Object.values(operation.responses)[0]?.description ?? 'No Description'
-          }
+            description:
+              Object.values(operation.responses)[0]?.description ??
+              'No Description',
+          },
         })
 
         routes.push({
@@ -72,7 +77,7 @@ export const createBlueprint = ({ openapi }: TypesModule): Blueprint => {
           namespace,
           endpoints,
           // TODO: implement optional subroutes extraction
-          subroutes: null
+          subroutes: null,
         })
       }
     }
