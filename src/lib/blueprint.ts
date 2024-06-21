@@ -12,17 +12,34 @@ interface Response {
 
 type Method = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH'
 
+// Single endpoint
+interface Endpoint {
+  name: string 
+  path: string 
+  method: Method[]
+  routeDescription: string
+  parameters: Parameter[]
+  response: Response
+}
+
+// Collection of endpoints and potentially subroutes
+interface Route {
+  name: string 
+  path: string 
+  namespace: Namespace | null 
+  endpoints: Endpoint[]
+  subroutes: Route[] | null
+}
+
+// A namespace containing routes
+interface Namespace {
+  name: string 
+  path: string 
+}
+
 export interface Blueprint {
   name: string
-  routes: {
-    path: string
-    method: Method[]
-    semanticMethod: Method
-    routeDescription: string
-    category: string
-    parameters: Parameter[]
-    response: Response
-  }
+  routes: Route[]
 }
 
 export interface TypesModule {
