@@ -51,6 +51,7 @@ export interface TypesModule {
   openapi: Openapi
 }
 export const createBlueprint = ({ openapi }: TypesModule): Blueprint => {
+  // TODO: fix generation once we agree on the blueprint schema
   const routes: Route[] = []
 
   for (const [path, methods] of Object.entries(openapi.paths)) {
