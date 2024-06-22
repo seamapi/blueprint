@@ -69,22 +69,25 @@ export const createBlueprint = ({ openapi }: TypesModule): Blueprint => {
           name: operation.operationId,
           path,
           methods: [method.toUpperCase() as Method],
-          description: (operation.summary ?? 'No Description'),
-          parameters: [{
-            name: '',
-            description: '',
-            isRequired: false,
-            isDeprecated: false,
-            deprecationMessage: ''
-          }],
+          description: operation.summary ?? 'No Description',
+          parameters: [
+            {
+              name: '',
+              description: '',
+              isRequired: false,
+              isDeprecated: false,
+              deprecationMessage: '',
+            },
+          ],
           response: {
-            description: Object.values(operation.responses)[0]?.description ??
+            description:
+              Object.values(operation.responses)[0]?.description ??
               'No Description',
           },
           semanticMethod: 'GET',
           preferredMethod: 'POST',
           isDeprecated: false,
-          deprecationMessage: ''
+          deprecationMessage: '',
         })
 
         routes.push({
@@ -94,7 +97,7 @@ export const createBlueprint = ({ openapi }: TypesModule): Blueprint => {
           endpoints,
           // TODO: implement optional subroutes extraction
           subroutes: [],
-          description: null
+          description: null,
         })
       }
     }
