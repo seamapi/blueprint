@@ -4,18 +4,6 @@ export interface Blueprint {
   name: string
   routes: Route[]
 }
-interface Endpoint {
-  name: string
-  path: string
-  methods: Method[]
-  semanticMethod: Method
-  preferredMethod: Method
-  description: string | null
-  isDeprecated: boolean
-  depractionMessage: string
-  parameters: Parameter[]
-  response: Response
-}
 
 interface Route {
   name: string
@@ -29,6 +17,19 @@ interface Route {
 interface Namespace {
   name: string
   path: string
+}
+
+interface Endpoint {
+  name: string
+  path: string
+  methods: Method[]
+  semanticMethod: Method
+  preferredMethod: Method
+  description: string | null
+  isDeprecated: boolean
+  depractionMessage: string
+  parameters: Parameter[]
+  response: Response
 }
 
 interface Parameter {
@@ -67,7 +68,7 @@ export const createBlueprint = ({ openapi }: TypesModule): Blueprint => {
           name: operation.operationId,
           path,
           methods: [method.toUpperCase() as Method],
-          description: operation.summary || 'No Description',
+          description: (operation.summary != null) || 'No Description',
           parameters: {
             isRequired: false,
             isDeprecated: false,
