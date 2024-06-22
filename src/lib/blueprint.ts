@@ -27,7 +27,7 @@ interface Endpoint {
   preferredMethod: Method
   description: string | null
   isDeprecated: boolean
-  depractionMessage: string
+  deprecationMessage: string
   parameters: Parameter[]
   response: Response
 }
@@ -68,17 +68,22 @@ export const createBlueprint = ({ openapi }: TypesModule): Blueprint => {
           name: operation.operationId,
           path,
           methods: [method.toUpperCase() as Method],
-          description: (operation.summary != null) || 'No Description',
-          parameters: {
+          description: (operation.summary ?? 'No Description'),
+          parameters: [{
+            name: '',
+            description: '',
             isRequired: false,
             isDeprecated: false,
             deprecationMessage: ''
-          },
+          }],
           response: {
-            description:
-              Object.values(operation.responses)[0]?.description ??
+            description: Object.values(operation.responses)[0]?.description ??
               'No Description',
           },
+          semanticMethod: 'GET',
+          preferredMethod: 'POST',
+          isDeprecated: false,
+          deprecationMessage: ''
         })
 
         routes.push({
@@ -87,7 +92,8 @@ export const createBlueprint = ({ openapi }: TypesModule): Blueprint => {
           namespace,
           endpoints,
           // TODO: implement optional subroutes extraction
-          subroutes: '',
+          subroutes: [],
+          description: null
         })
       }
     }
