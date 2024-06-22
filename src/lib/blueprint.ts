@@ -1,5 +1,36 @@
 import type { Openapi } from './openapi.js'
 
+export interface Blueprint {
+  name: string
+  routes: Route[]
+}
+interface Endpoint {
+  name: string
+  path: string
+  methods: Method[]
+  semanticMethod: string
+  description: string | null
+  isDeprecated: boolean
+  depractionMessage: string
+  parameters: Parameter[]
+  response: Response
+}
+
+interface Route {
+  name: string
+  path: string
+  description: string | null
+  namespace: Namespace | null
+  endpoints: Endpoint[]
+  subroutes: Route[] 
+}
+
+interface Namespace {
+  name: string
+  path: string
+}
+
+
 interface Parameter {
   name: string
   isRequired: boolean
@@ -11,34 +42,6 @@ interface Response {
 }
 
 type Method = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH'
-
-interface Endpoint {
-  name: string
-  path: string
-  method: Method[]
-  semanticMethod?: string
-  routeDescription?: string | undefined
-  parameters: Parameter[]
-  response: Response
-}
-
-interface Route {
-  name: string
-  path: string
-  namespace: Namespace | null
-  endpoints: Endpoint[]
-  subroutes: Route[] | null
-}
-
-interface Namespace {
-  name: string
-  path: string
-}
-
-export interface Blueprint {
-  name: string
-  routes: Route[]
-}
 
 export interface TypesModule {
   openapi: Openapi
@@ -60,9 +63,9 @@ export const createBlueprint = ({ openapi }: TypesModule): Blueprint => {
         endpoints.push({
           name: operation.operationId,
           path,
-          method: [method.toUpperCase() as Method],
-          // TODO: fix routeDescription
-          routeDescription: operation.summary,
+          methods: [method.toUpperCase() as Method],
+          // TODO: fix description of route
+          description: operation.summary || 'No Description',
           parameters: [],
           response: {
             description:
@@ -77,7 +80,7 @@ export const createBlueprint = ({ openapi }: TypesModule): Blueprint => {
           namespace,
           endpoints,
           // TODO: implement optional subroutes extraction
-          subroutes: null,
+          subroutes: '',
         })
       }
     }
