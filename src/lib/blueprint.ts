@@ -8,7 +8,8 @@ interface Endpoint {
   name: string
   path: string
   methods: Method[]
-  semanticMethod: string
+  semanticMethod: Method
+  preferredMethod: Method
   description: string | null
   isDeprecated: boolean
   depractionMessage: string
@@ -22,7 +23,7 @@ interface Route {
   description: string | null
   namespace: Namespace | null
   endpoints: Endpoint[]
-  subroutes: Route[] 
+  subroutes: Route[]
 }
 
 interface Namespace {
@@ -30,10 +31,12 @@ interface Namespace {
   path: string
 }
 
-
 interface Parameter {
   name: string
+  // TODO generate isRequired, isDeprecated, deprecationMessage from https://github.com/seamapi/nextlove/pull/133/files
   isRequired: boolean
+  isDeprecated: boolean
+  deprecationMessage: string
   description: string
 }
 
@@ -64,9 +67,12 @@ export const createBlueprint = ({ openapi }: TypesModule): Blueprint => {
           name: operation.operationId,
           path,
           methods: [method.toUpperCase() as Method],
-          // TODO: fix description of route
           description: operation.summary || 'No Description',
-          parameters: [],
+          parameters: {
+            isRequired: false,
+            isDeprecated: false,
+            deprecationMessage: ''
+          },
           response: {
             description:
               Object.values(operation.responses)[0]?.description ??
