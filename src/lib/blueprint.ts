@@ -8,7 +8,9 @@ export interface Blueprint {
 interface Route {
   name: string
   path: string
-  description: string | null
+  // descriptions will default to an empty string and emit a warning, e.g. 
+  // if (description.trim().length === 0) console.warn(`... has an empty description`)
+  description: string 
   namespace: Namespace | null
   endpoints: Endpoint[]
   subroutes: Route[]
@@ -16,6 +18,7 @@ interface Route {
 
 interface Namespace {
   name: string
+  description: string
   path: string
 }
 
@@ -25,10 +28,12 @@ interface Endpoint {
   methods: Method[]
   semanticMethod: Method
   preferredMethod: Method
-  description: string | null
+  description: string
+  // if (isDeprecated && deprecationMessage.trim().length === 0) console.warn(`... has an empty deprecation message`)
   isDeprecated: boolean
   deprecationMessage: string
   parameters: Parameter[]
+  request: Request
   response: Response
 }
 
@@ -39,6 +44,13 @@ interface Parameter {
   isDeprecated: boolean
   deprecationMessage: string
   description: string
+}
+
+interface Request {
+  methods: Method[]
+  semanticMethod: Method
+  preferredMethod: Method
+  parameters: Parameter[]
 }
 
 interface Response {
@@ -62,7 +74,7 @@ export const createBlueprint = ({ openapi }: TypesModule): Blueprint => {
         const namespaceName = operation.tags?.[0] ?? null
         const namespace: Namespace | null =
           namespaceName != null
-            ? { name: namespaceName, path: namespaceName }
+            ? { name: namespaceName, description: '', path: namespaceName }
             : null
 
         endpoints.push({
@@ -97,7 +109,7 @@ export const createBlueprint = ({ openapi }: TypesModule): Blueprint => {
           endpoints,
           // TODO: implement optional subroutes extraction
           subroutes: [],
-          description: null,
+          description: '',
         })
       }
     }
