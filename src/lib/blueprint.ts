@@ -10,7 +10,7 @@ interface Route {
   path: string
   // descriptions will default to an empty string and emit a warning, e.g. 
   // if (description.trim().length === 0) console.warn(`... has an empty description`)
-  description: string 
+  description: string
   namespace: Namespace | null
   endpoints: Endpoint[]
   subroutes: Route[]
@@ -92,14 +92,19 @@ export const createBlueprint = ({ openapi }: TypesModule): Blueprint => {
             },
           ],
           response: {
-            description:
-              Object.values(operation.responses)[0]?.description ??
+            description: Object.values(operation.responses)[0]?.description ??
               'No Description',
           },
           semanticMethod: 'GET',
           preferredMethod: 'POST',
           isDeprecated: false,
           deprecationMessage: '',
+          request: {
+            methods: ['GET'],
+            semanticMethod: 'GET',
+            preferredMethod: 'POST',
+            parameters: [],
+          },
         })
 
         routes.push({
