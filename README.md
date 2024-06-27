@@ -7,11 +7,40 @@ Build tools for the Seam API using this blueprint.
 
 ## Description
 
-TODO
+A blueprint is a simplified description of an API schema that is optimized for code and documentation generation.
+
+The blueprint schema assumes the API follows Seam API design guidelines,
+and will evolve with those guidelines and any SDK, documentation, or product quality requirements.
+
+The blueprint defines the following core concepts:
+
+- Endpoint: a path that accepts an HTTP request and returns a response.
+- Route: the direct parent path of a collection of one or more endpoints.
+- Subroute: a route that is nested under another route.
+- Namespace: the direct parent path of a collection routes only: there are no endpoints under this path.
+- Resource: every endpoint that returns non-empty data returns a resource or a collection of resources.
 
 ## Motivation
 
-TODO
+The scope of the [OpenAPI Specification](https://swagger.io/specification/) covers arbitrarily complicated APIs,
+while the Seam API follows very predictable and simplified API design patterns.
+
+For this reason, Seam has encountered several challenges working directly with the OpenAPI Specification:
+
+- Existing tools built on the OpenAPI Specification cannot meet Seam's requirements or require non-trivial extensions.
+- Extending the OpenAPI Specification with non-standard properties to support Seam's SDK and documentation requirements
+  is not directly compatible with existing tools.
+- Seam's requirements and scope are overall simpler than the broad use-cases existing tools based on the OpenAPI Specification are trying to solve.
+- All existing Seam tooling must first expend duplicated effort parsing and flattening the OpenAPI Specification into a form more natural to the Seam API.
+- This creates a high barrier of entry for working with the Seam API specification
+  as one must first deeply understand how to parse the OpenAPI Specification for any practical application.
+
+The blueprint addresses these concerns:
+
+- The blueprint module centralizes on a source of truth for parsing the OpenAPI Specification into something usable.
+- The blueprint schema matches naturally to the Seam API design and is immediately usable for practical application.
+- The blueprint is not limited by the OpenAPI Specification or constrained by the wide scope of supporting any API.
+  It is optimized for Seam's requirements and can evolve faster to meet Seam's specific concerns and integrate directly with other Seam integrated tooling.
 
 ## Installation
 
