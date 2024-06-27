@@ -18,7 +18,7 @@ The blueprint defines the following core concepts:
 - Route: the direct parent path of a collection of one or more endpoints.
 - Subroute: a route that is nested under another route.
 - Namespace: the direct parent path of a collection routes only: there are no endpoints under this path.
-- Resource: every endpoint that returns non-empty data returns a resource or collection of resources.
+- Resource: every endpoint that returns non-empty data returns a resource or a collection of resources.
 
 ## Motivation
 
@@ -32,7 +32,8 @@ For this reason, Seam has encountered several challenges working directly with t
   is not directly compatible with existing tools.
 - Seam's requirements and scope are overall simpler than the broad use-cases existing tools based on the OpenAPI Specification are trying to solve.
 - All existing Seam tooling must first expend duplicated effort parsing and flattening the OpenAPI Specification into a form more natural to the Seam API.
-- This creates a high barrier of entry for working with the Seam API specification as one must first deeply understand how to parse the OpenAPI Specification for any practical application.
+- This creates a high barrier of entry for working with the Seam API specification
+  as one must first deeply understand how to parse the OpenAPI Specification for any practical application.
 
 The blueprint addresses these concerns:
 
