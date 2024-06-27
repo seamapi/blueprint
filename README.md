@@ -16,7 +16,7 @@ The blueprint defines the following core concepts:
 
 - Endpoint: a path that accepts an HTTP request and returns a response.
 - Route: the direct parent path of a collection of one or more endpoints.
-- Subroute: A route that is nested under another route.
+- Subroute: a route that is nested under another route.
 - Namespace: the direct parent path of a collection routes only: there are no endpoints under this path.
 - Resource: every endpoint that returns non-empty data returns a resource or collection of resources.
 
