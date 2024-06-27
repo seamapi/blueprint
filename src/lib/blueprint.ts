@@ -6,16 +6,13 @@ export interface Blueprint {
 }
 
 interface Route {
-  name: string
   path: string
-  description: string
   namespace: Namespace | null
   endpoints: Endpoint[]
   subroutes: Route[]
 }
 
 interface Namespace {
-  name: string
   path: string
 }
 
@@ -26,6 +23,7 @@ interface Endpoint {
   semanticMethod: Method
   preferredMethod: Method
   description: string
+  isUndocumented: boolean
   isDeprecated: boolean
   deprecationMessage: string
   parameters: Parameter[]
@@ -36,6 +34,7 @@ interface Endpoint {
 interface Parameter {
   name: string
   isRequired: boolean
+  isUndocumented: boolean
   isDeprecated: boolean
   deprecationMessage: string
   description: string
