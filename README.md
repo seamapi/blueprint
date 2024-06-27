@@ -37,8 +37,8 @@ For this reason, Seam has encountered several challenges working directly with t
 The blueprint addresses these concerns:
 
 - The blueprint module centralizes on a source of truth for parsing the OpenAPI Specification into something usable.
-- The blueprint schema matches naturally to the Seam API design and is immediately usable for practical application. 
-- The blueprint is not limited by the OpenAPI Specification: it is optimized for Seam's requirements and can evolve faster to meet Seam's specific concerns and integrate directly with other Seam integrated tooling. 
+- The blueprint schema matches naturally to the Seam API design and is immediately usable for practical application.
+- The blueprint is not limited by the OpenAPI Specification: it is optimized for Seam's requirements and can evolve faster to meet Seam's specific concerns and integrate directly with other Seam integrated tooling.
 
 ## Installation
 
