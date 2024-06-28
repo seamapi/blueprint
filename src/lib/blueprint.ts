@@ -78,6 +78,6 @@ export const createBlueprint = ({ openapi }: TypesModule): Blueprint => {
   return {
     name: openapi.info.title,
     routes: [],
-    resources: {}
+    resources: {},
   }
 }
