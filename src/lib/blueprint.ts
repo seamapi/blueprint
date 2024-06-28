@@ -3,6 +3,7 @@ import type { Openapi } from './openapi.js'
 export interface Blueprint {
   name: string
   routes: Route[]
+  resources: Record<ResourceType, Resource>
 }
 
 interface Route {
@@ -10,6 +11,11 @@ interface Route {
   namespace: Namespace | null
   endpoints: Endpoint[]
   subroutes: Route[]
+}
+
+interface Resource {
+  resourceType: ResourceType
+  properties: Property[]
 }
 
 interface Namespace {
@@ -49,7 +55,18 @@ interface Request {
 
 interface Response {
   description: string
+  responseType: 'resource' | 'resource_list' | 'void'
+  responseKey: string | null
+  resourceType: ResourceType | null
 }
+
+interface Property {
+  name: string
+  type: 'string' | 'enum' | 'record' | 'list' | 'object'
+  properties: Property[] | null
+}
+
+type ResourceType = 'access_code' | 'user' | 'order' | string
 
 type Method = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH'
 
@@ -61,5 +78,6 @@ export const createBlueprint = ({ openapi }: TypesModule): Blueprint => {
   return {
     name: openapi.info.title,
     routes: [],
+    resources: {}
   }
 }
