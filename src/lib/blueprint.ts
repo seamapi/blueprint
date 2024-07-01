@@ -1,36 +1,28 @@
 import type { Openapi } from './openapi.js'
 
-export interface Blueprint<T extends TypesModule> {
+export interface Blueprint {
   name: string
-  routes: Array<Route<T>>
-  resources: Partial<Record<ResourceType<T>, Resource<T>>>
+  routes: Route[]
+  resources: Record<string, Resource>
 }
 
-interface Route<T extends TypesModule> {
+interface Route {
   path: string
   namespace: Namespace | null
-  endpoints: Array<Endpoint<T>>
-  subroutes: Array<Route<T>>
+  endpoints: Endpoint[]
+  subroutes: Route[]
 }
 
-interface Resource<T extends TypesModule> {
-  resourceType: ResourceType<T>
+interface Resource {
+  resourceType: string
   properties: Property[]
 }
-
-// Helper type to safely access nested properties of openapi schema - defualt to unknown if not found
-type SafeAccess<T, K extends string> = K extends keyof T ? T[K] : unknown
-
-type ResourceType<T extends TypesModule> = keyof SafeAccess<
-  SafeAccess<T['openapi'], 'components'>,
-  'schemas'
->
 
 interface Namespace {
   path: string
 }
 
-interface Endpoint<T extends TypesModule> {
+interface Endpoint {
   name: string
   path: string
   methods: Method[]
@@ -42,7 +34,7 @@ interface Endpoint<T extends TypesModule> {
   deprecationMessage: string
   parameters: Parameter[]
   request: Request
-  response: Response<T>
+  response: Response
 }
 
 interface Parameter {
@@ -61,11 +53,11 @@ interface Request {
   parameters: Parameter[]
 }
 
-interface Response<T extends TypesModule> {
+interface Response {
   description: string
   responseType: 'resource' | 'resource_list' | 'void'
   responseKey: string | null
-  resourceType: ResourceType<T>
+  resourceType: string | null
 }
 
 interface Property {
@@ -80,9 +72,7 @@ export interface TypesModule {
   openapi: Openapi
 }
 
-export const createBlueprint = <T extends TypesModule>({
-  openapi,
-}: T): Blueprint<T> => {
+export const createBlueprint = ({ openapi }: TypesModule): Blueprint => {
   return {
     name: openapi.info.title,
     routes: [],
