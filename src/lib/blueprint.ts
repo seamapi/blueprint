@@ -53,17 +53,61 @@ interface Request {
   parameters: Parameter[]
 }
 
-interface Response {
+type Response = VoidResponse | ResourceResponse | ResourceListResponse
+
+interface BaseResponse {
   description: string
-  responseType: 'resource' | 'resource_list' | 'void'
-  responseKey: string | null
-  resourceType: string | null
 }
 
-interface Property {
+interface VoidResponse extends BaseResponse {
+  responseType: 'void'
+}
+
+interface ResourceResponse extends BaseResponse {
+  responseType: 'resource'
+  responseKey: string
+  resourceType: string
+}
+
+interface ResourceListResponse extends BaseResponse {
+  responseType: 'resource_list'
+  responseKey: string
+  resourceType: string
+}
+
+type Property =
+  | StringProperty
+  | EnumProperty
+  | RecordProperty
+  | ListProperty
+  | ObjectProperty
+
+interface BaseProperty {
   name: string
-  type: 'string' | 'enum' | 'record' | 'list' | 'object'
-  properties: Property[] | null
+}
+
+interface StringProperty extends BaseProperty {
+  type: 'string'
+}
+
+interface EnumProperty extends BaseProperty {
+  type: 'enum'
+  values: string[]
+}
+
+interface RecordProperty extends BaseProperty {
+  type: 'record'
+  properties: Property[]
+}
+
+interface ListProperty extends BaseProperty {
+  type: 'list'
+  items: Property
+}
+
+interface ObjectProperty extends BaseProperty {
+  type: 'object'
+  properties: Property[]
 }
 
 type Method = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH'
