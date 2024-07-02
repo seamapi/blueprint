@@ -75,6 +75,15 @@ interface ResourceListResponse extends BaseResponse {
   resourceType: string
 }
 
+interface BaseProperty {
+  name: string
+  type: 'string' | 'enum' | 'record' | 'list' | 'object'
+  description?: string
+  isRequired?: boolean
+  isDeprecated?: boolean
+  deprecationMessage?: string
+}
+
 type Property =
   | StringProperty
   | EnumProperty
@@ -82,17 +91,19 @@ type Property =
   | ListProperty
   | ObjectProperty
 
-interface BaseProperty {
-  name: string
-}
-
 interface StringProperty extends BaseProperty {
   type: 'string'
 }
 
 interface EnumProperty extends BaseProperty {
   type: 'enum'
-  values: string[]
+  values: EnumValue[]
+}
+
+interface EnumValue {
+  name: string
+  description: string
+  // Additional metadata fields for enum values
 }
 
 interface RecordProperty extends BaseProperty {
