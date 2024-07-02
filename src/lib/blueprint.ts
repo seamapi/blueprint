@@ -77,11 +77,9 @@ interface ResourceListResponse extends BaseResponse {
 
 interface BaseProperty {
   name: string
-  type: 'string' | 'enum' | 'record' | 'list' | 'object'
   description?: string
-  isRequired?: boolean
-  isDeprecated?: boolean
-  deprecationMessage?: string
+  isDeprecated: boolean
+  deprecationMessage: string
 }
 
 type Property =
@@ -102,18 +100,14 @@ interface EnumProperty extends BaseProperty {
 
 interface EnumValue {
   name: string
-  description: string
-  // Additional metadata fields for enum values
 }
 
 interface RecordProperty extends BaseProperty {
   type: 'record'
-  properties: Property[]
 }
 
 interface ListProperty extends BaseProperty {
   type: 'list'
-  items: Property
 }
 
 interface ObjectProperty extends BaseProperty {
