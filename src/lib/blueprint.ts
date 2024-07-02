@@ -3,6 +3,7 @@ import type { Openapi } from './openapi.js'
 export interface Blueprint {
   name: string
   routes: Route[]
+  resources: Record<string, Resource>
 }
 
 interface Route {
@@ -10,6 +11,11 @@ interface Route {
   namespace: Namespace | null
   endpoints: Endpoint[]
   subroutes: Route[]
+}
+
+interface Resource {
+  resourceType: string
+  properties: Property[]
 }
 
 interface Namespace {
@@ -47,8 +53,66 @@ interface Request {
   parameters: Parameter[]
 }
 
-interface Response {
+type Response = VoidResponse | ResourceResponse | ResourceListResponse
+
+interface BaseResponse {
   description: string
+}
+
+interface VoidResponse extends BaseResponse {
+  responseType: 'void'
+}
+
+interface ResourceResponse extends BaseResponse {
+  responseType: 'resource'
+  responseKey: string
+  resourceType: string
+}
+
+interface ResourceListResponse extends BaseResponse {
+  responseType: 'resource_list'
+  responseKey: string
+  resourceType: string
+}
+
+interface BaseProperty {
+  name: string
+  description?: string
+  isDeprecated: boolean
+  deprecationMessage: string
+}
+
+type Property =
+  | StringProperty
+  | EnumProperty
+  | RecordProperty
+  | ListProperty
+  | ObjectProperty
+
+interface StringProperty extends BaseProperty {
+  type: 'string'
+}
+
+interface EnumProperty extends BaseProperty {
+  type: 'enum'
+  values: EnumValue[]
+}
+
+interface EnumValue {
+  name: string
+}
+
+interface RecordProperty extends BaseProperty {
+  type: 'record'
+}
+
+interface ListProperty extends BaseProperty {
+  type: 'list'
+}
+
+interface ObjectProperty extends BaseProperty {
+  type: 'object'
+  properties: Property[]
 }
 
 type Method = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH'
@@ -61,5 +125,6 @@ export const createBlueprint = ({ openapi }: TypesModule): Blueprint => {
   return {
     name: openapi.info.title,
     routes: [],
+    resources: {},
   }
 }
