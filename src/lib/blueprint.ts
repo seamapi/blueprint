@@ -1,5 +1,3 @@
-import { openapi } from '@seamapi/types/connect'
-
 import type { Openapi } from './openapi.js'
 
 export interface Blueprint {
@@ -134,11 +132,9 @@ export const createBlueprint = ({
     resources: {},
   }
 
-  // Filter for /acs/systems/list
   const targetPath = '/acs/systems/list'
   const targetSchema = 'acs_system'
 
-  // Check for fake data
   const isFakeData = openapi.info.title === 'Foo'
 
   for (const [path, pathItem] of Object.entries(openapi.paths)) {
@@ -146,21 +142,25 @@ export const createBlueprint = ({
 
     const route: Route = {
       path,
-      namespace: { path: '/acs' }, // Hardcoded namespace for now
+      namespace: { path: '/acs' },
       endpoints: [],
       subroutes: [],
     }
 
-    for (const [method, operation] of Object.entries(pathItem)) {
-      if (!operation) continue
+    for (const [method, operation] of Object.entries(pathItem as Record<string, unknown>)) {
+      if (typeof operation !== 'object' || operation === null) continue
 
       const endpoint: Endpoint = {
-        name: operation.operationId || `${method}${path.replace(/\//g, '_')}`,
+        name: 'operationId' in operation && typeof operation.operationId === 'string'
+          ? operation.operationId
+          : `${method}${path.replace(/\//g, '_')}`,
         path,
         methods: [method.toUpperCase() as Method],
         semanticMethod: method.toUpperCase() as Method,
         preferredMethod: method.toUpperCase() as Method,
-        description: operation.summary || '',
+        description: 'summary' in operation && typeof operation.summary === 'string'
+          ? operation.summary
+          : '',
         isUndocumented: false,
         isDeprecated: false,
         deprecationMessage: '',
@@ -171,21 +171,23 @@ export const createBlueprint = ({
           preferredMethod: method.toUpperCase() as Method,
           parameters: [],
         },
-        response: createResponse(operation.responses),
+        response: createResponse('responses' in operation ? operation.responses : {}),
       }
 
-      if (operation.parameters) {
+      if ('parameters' in operation && Array.isArray(operation.parameters)) {
         for (const param of operation.parameters) {
-          const parameter: Parameter = {
-            name: param.name,
-            isRequired: param.required || false,
-            isUndocumented: false,
-            isDeprecated: false,
-            deprecationMessage: '',
-            description: param.description || '',
+          if (typeof param === 'object' && param !== null) {
+            const parameter: Parameter = {
+              name: 'name' in param && typeof param.name === 'string' ? param.name : '',
+              isRequired: 'required' in param && typeof param.required === 'boolean' ? param.required : false,
+              isUndocumented: false,
+              isDeprecated: false,
+              deprecationMessage: '',
+              description: 'description' in param && typeof param.description === 'string' ? param.description : '',
+            }
+            endpoint.parameters.push(parameter)
+            endpoint.request.parameters.push(parameter)
           }
-          endpoint.parameters.push(parameter)
-          endpoint.request.parameters.push(parameter)
         }
       }
 
@@ -195,81 +197,110 @@ export const createBlueprint = ({
     blueprint.routes.push(route)
   }
 
-  for (const [schemaName, schema] of Object.entries(
-    openapi.components.schemas,
-  )) {
+  for (const [schemaName, schema] of Object.entries(openapi.components.schemas)) {
     if (!isFakeData && schemaName !== targetSchema) continue
 
-    blueprint.resources[schemaName] = {
-      resourceType: schemaName,
-      properties: createProperties(schema.properties),
+    if (typeof schema === 'object' && schema !== null && 'properties' in schema && typeof schema.properties === 'object' && schema.properties !== null) {
+      blueprint.resources[schemaName] = {
+        resourceType: schemaName,
+        properties: createProperties(schema.properties as Record<string, unknown>),
+      }
     }
   }
 
   return blueprint
 }
 
-function createResponse(responses: any): Response {
-  // Only checking for 200 response for now
-  const okResponse = responses['200']
-  if (!okResponse) return { responseType: 'void', description: 'No content' }
+function createResponse(responses: unknown): Response {
+  if (typeof responses !== 'object' || responses === null) {
+    return { responseType: 'void', description: 'No content' }
+  }
 
-  const schema = okResponse.content?.['application/json']?.schema
-  if (!schema)
-    return { responseType: 'void', description: okResponse.description || '' }
+  const okResponse = (responses as Record<string, unknown>)['200']
+  if (typeof okResponse !== 'object' || okResponse === null) {
+    return { responseType: 'void', description: 'No content' }
+  }
 
-  if (schema.type === 'array') {
-    return {
-      responseType: 'resource_list',
-      responseKey: 'items',
-      resourceType: schema.items?.$ref?.split('/').pop() || 'unknown',
-      description: okResponse.description || '',
-    }
-  } else if (schema.type === 'object') {
-    const refKey = Object.keys(schema.properties).find(
-      (key) => schema.properties[key].$ref,
-    )
-    if (refKey) {
+  const content = 'content' in okResponse ? okResponse.content : null
+  if (typeof content !== 'object' || content === null) {
+    return { responseType: 'void', description: 'description' in okResponse && typeof okResponse.description === 'string' ? okResponse.description : '' }
+  }
+
+  const jsonContent = 'application/json' in content ? content['application/json'] : null
+  if (typeof jsonContent !== 'object' || jsonContent === null) {
+    return { responseType: 'void', description: 'description' in okResponse && typeof okResponse.description === 'string' ? okResponse.description : '' }
+  }
+
+  const schema = 'schema' in jsonContent ? jsonContent.schema : null
+  if (typeof schema !== 'object' || schema === null) {
+    return { responseType: 'void', description: 'description' in okResponse && typeof okResponse.description === 'string' ? okResponse.description : '' }
+  }
+
+  if ('type' in schema && 'properties' in schema) {
+    if (schema.type === 'array' && 'items' in schema && typeof schema.items === 'object' && schema.items !== null) {
+      const refString = '$ref' in schema.items ? schema.items.$ref : null
       return {
-        responseType: 'resource',
-        responseKey: refKey,
-        resourceType:
-          schema.properties[refKey].$ref.split('/').pop() || 'unknown',
-        description: okResponse.description || '',
+        responseType: 'resource_list',
+        responseKey: 'items',
+        resourceType: typeof refString === 'string' && refString.length > 0 ? refString.split('/').pop() ?? 'unknown' : 'unknown',
+        description: 'description' in okResponse && typeof okResponse.description === 'string' ? okResponse.description : '',
+      }
+    } else if (schema.type === 'object' && typeof schema.properties === 'object' && schema.properties !== null) {
+      const properties = schema.properties as Record<string, unknown>
+      const refKey = Object.keys(properties).find(
+        (key) => typeof properties[key] === 'object' &&
+          properties[key] !== null &&
+          '$ref' in (properties[key] as Record<string, unknown>)
+      )
+      if (refKey != null) {
+        const refString = '$ref' in (properties[refKey] as Record<string, unknown>)
+          ? (properties[refKey] as Record<string, unknown>)['$ref']
+          : null
+        return {
+          responseType: 'resource',
+          responseKey: refKey,
+          resourceType: typeof refString === 'string' && refString.length > 0 ? refString.split('/').pop() ?? 'unknown' : 'unknown',
+          description: 'description' in okResponse && typeof okResponse.description === 'string' ? okResponse.description : '',
+        }
       }
     }
   }
 
-  return { responseType: 'void', description: okResponse.description || '' }
+  return { responseType: 'void', description: 'description' in okResponse && typeof okResponse.description === 'string' ? okResponse.description : '' }
 }
 
-function createProperties(properties: any): Property[] {
-  if (!properties) return []
+function createProperties(properties: Record<string, unknown>): Property[] {
+  return Object.entries(properties).map(([name, prop]): Property => {
+    if (typeof prop !== 'object' || prop === null) {
+      return { name, type: 'string', isDeprecated: false, deprecationMessage: '' }
+    }
 
-  return Object.entries(properties).map(([name, prop]: [string, any]) => {
     const baseProperty = {
       name,
-      description: prop.description || '',
+      description: 'description' in prop && typeof prop.description === 'string' ? prop.description : '',
       isDeprecated: false,
       deprecationMessage: '',
     }
 
-    switch (prop.type) {
-      case 'string':
-        return { ...baseProperty, type: 'string' }
-      case 'object':
-        return {
-          ...baseProperty,
-          type: 'object',
-          properties: createProperties(prop.properties),
-        }
-      case 'array':
-        return { ...baseProperty, type: 'list' }
-      default:
-        return { ...baseProperty, type: 'string' }
+    if ('type' in prop) {
+      switch (prop.type) {
+        case 'string':
+          return { ...baseProperty, type: 'string' }
+        case 'object':
+          return {
+            ...baseProperty,
+            type: 'object',
+            properties: 'properties' in prop && typeof prop.properties === 'object' && prop.properties !== null
+              ? createProperties(prop.properties as Record<string, unknown>)
+              : [],
+          }
+        case 'array':
+          return { ...baseProperty, type: 'list' }
+        default:
+          return { ...baseProperty, type: 'string' }
+      }
     }
+
+    return { ...baseProperty, type: 'string' }
   })
 }
-
-const blueprint = createBlueprint({ openapi })
-console.log(JSON.stringify(blueprint, null, 2))
