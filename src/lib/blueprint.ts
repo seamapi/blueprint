@@ -25,9 +25,6 @@ interface Namespace {
 interface Endpoint {
   name: string
   path: string
-  methods: Method[]
-  semanticMethod: Method
-  preferredMethod: Method
   description: string
   isUndocumented: boolean
   isDeprecated: boolean
@@ -121,7 +118,7 @@ export interface TypesModule {
   openapi: Openapi
 }
 
-export const createBlueprint = (openapi: Openapi): Blueprint => {
+export const createBlueprint = ({ openapi }: TypesModule): Blueprint => {
   const isFakeData = openapi.info.title === 'Foo'
   const targetPath = '/acs/systems/list'
   const targetSchema = 'acs_system'
@@ -141,62 +138,65 @@ const createRoutes = (
   paths: Openapi['paths'],
   isFakeData: boolean,
   targetPath: string,
-): Route[] =>
-  Object.entries(paths)
+): Route[] => {
+  return Object.entries(paths)
     .filter(([path]) => isFakeData || path === targetPath)
     .map(([path, pathItem]) => createRoute(path, pathItem))
+}
 
 const createRoute = (
   path: string,
   pathItem: Record<string, unknown>,
-): Route => ({
-  path,
-  namespace: { path: '/acs' },
-  endpoints: createEndpoints(path, pathItem),
-  subroutes: [],
-})
+): Route => {
+  return {
+    path,
+    namespace: { path: path.split('/').slice(0, 2).join('/') },
+    endpoints: createEndpoints(path, pathItem),
+    subroutes: [],
+  }
+}
 
 const createEndpoints = (
   path: string,
   pathItem: Record<string, unknown>,
-): Endpoint[] =>
-  Object.entries(pathItem)
+): Endpoint[] => {
+  return Object.entries(pathItem)
     .filter(
       ([, operation]) => typeof operation === 'object' && operation !== null,
     )
     .map(([method, operation]) =>
       createEndpoint(method, operation as Record<string, unknown>, path),
     )
+}
 
 const createEndpoint = (
   method: string,
   operation: Record<string, unknown>,
   path: string,
-): Endpoint => ({
-  name:
-    'operationId' in operation && typeof operation['operationId'] === 'string'
-      ? operation['operationId']
-      : `${method}${path.replace(/\//g, '_')}`,
-  path,
-  methods: [method.toUpperCase() as Method],
-  semanticMethod: method.toUpperCase() as Method,
-  preferredMethod: method.toUpperCase() as Method,
-  description:
-    'summary' in operation && typeof operation['summary'] === 'string'
-      ? operation['summary']
-      : '',
-  isUndocumented: false,
-  isDeprecated: false,
-  deprecationMessage: '',
-  parameters: createParameters(operation),
-  request: createRequest(method, operation),
-  response: createResponse(
-    'responses' in operation ? operation['responses'] : {},
-  ),
-})
+): Endpoint => {
+  return {
+    name:
+      'operationId' in operation && typeof operation['operationId'] === 'string'
+        ? operation['operationId']
+        : `${path.replace(/\//g, '')}${method.charAt(0).toUpperCase() + method.slice(1).toLowerCase()}`,
+    path,
+    description:
+      'summary' in operation && typeof operation['summary'] === 'string'
+        ? operation['summary']
+        : `${method.toUpperCase()} ${path}`,
+    isUndocumented: false,
+    isDeprecated: false,
+    deprecationMessage: '',
+    parameters: createParameters(operation),
+    request: createRequest(method, operation),
+    response: createResponse(
+      'responses' in operation ? operation['responses'] : {},
+    ),
+  }
+}
 
-const createParameters = (operation: Record<string, unknown>): Parameter[] =>
-  'parameters' in operation && Array.isArray(operation['parameters'])
+const createParameters = (operation: Record<string, unknown>): Parameter[] => {
+  return 'parameters' in operation && Array.isArray(operation['parameters'])
     ? operation['parameters']
         .filter(
           (param): param is Record<string, unknown> =>
@@ -204,22 +204,25 @@ const createParameters = (operation: Record<string, unknown>): Parameter[] =>
         )
         .map(createParameter)
     : []
+}
 
-const createParameter = (param: Record<string, unknown>): Parameter => ({
-  name:
-    'name' in param && typeof param['name'] === 'string' ? param['name'] : '',
-  isRequired:
-    'required' in param && typeof param['required'] === 'boolean'
-      ? param['required']
-      : false,
-  isUndocumented: false,
-  isDeprecated: false,
-  deprecationMessage: '',
-  description:
-    'description' in param && typeof param['description'] === 'string'
-      ? param['description']
-      : '',
-})
+const createParameter = (param: Record<string, unknown>): Parameter => {
+  return {
+    name:
+      'name' in param && typeof param['name'] === 'string' ? param['name'] : '',
+    isRequired:
+      'required' in param && typeof param['required'] === 'boolean'
+        ? param['required']
+        : false,
+    isUndocumented: false,
+    isDeprecated: false,
+    deprecationMessage: '',
+    description:
+      'description' in param && typeof param['description'] === 'string'
+        ? param['description']
+        : '',
+  }
+}
 
 const createRequest = (
   method: string,
@@ -235,8 +238,8 @@ const createResources = (
   schemas: Openapi['components']['schemas'],
   isFakeData: boolean,
   targetSchema: string,
-): Record<string, Resource> =>
-  Object.entries(schemas)
+): Record<string, Resource> => {
+  return Object.entries(schemas)
     .filter(([schemaName]) => isFakeData || schemaName === targetSchema)
     .reduce<Record<string, Resource>>((acc, [schemaName, schema]) => {
       if (
@@ -253,15 +256,16 @@ const createResources = (
       }
       return acc
     }, {})
+}
 
-function createResponse(responses: unknown): Response {
+const createResponse = (responses: unknown): Response => {
   if (typeof responses !== 'object' || responses === null) {
-    return { responseType: 'void', description: 'No content' }
+    return { responseType: 'void', description: 'No description available' }
   }
 
   const okResponse = (responses as Record<string, unknown>)['200']
   if (typeof okResponse !== 'object' || okResponse === null) {
-    return { responseType: 'void', description: 'No content' }
+    return { responseType: 'void', description: 'No description available' }
   }
 
   const content = 'content' in okResponse ? okResponse.content : null
@@ -272,7 +276,7 @@ function createResponse(responses: unknown): Response {
         'description' in okResponse &&
         typeof okResponse.description === 'string'
           ? okResponse.description
-          : '',
+          : 'No description available',
     }
   }
 
@@ -365,7 +369,7 @@ function createResponse(responses: unknown): Response {
   }
 }
 
-function createProperties(properties: Record<string, unknown>): Property[] {
+const createProperties = (properties: Record<string, unknown>): Property[] => {
   return Object.entries(properties).map(([name, prop]): Property => {
     if (typeof prop !== 'object' || prop === null) {
       return {
