@@ -148,9 +148,12 @@ const createRoute = (
   path: string,
   pathItem: Record<string, unknown>,
 ): Route => {
+  const pathParts = path.split('/')
+  const routePath = `/${pathParts.slice(1, -1).join('/')}`
+
   return {
-    path,
-    namespace: { path: path.split('/').slice(0, 2).join('/') },
+    path: routePath,
+    namespace: { path: `/${pathParts[1]}` },
     endpoints: createEndpoints(path, pathItem),
     subroutes: [],
   }
@@ -174,12 +177,15 @@ const createEndpoint = (
   operation: Record<string, unknown>,
   path: string,
 ): Endpoint => {
+  const pathParts = path.split('/')
+  const endpointPath = `/${pathParts.slice(1, -1).join('/')}`
+
   return {
     name:
       'operationId' in operation && typeof operation['operationId'] === 'string'
         ? operation['operationId']
         : `${path.replace(/\//g, '')}${method.charAt(0).toUpperCase() + method.slice(1).toLowerCase()}`,
-    path: `/${path.split('/').slice(1, -1).join('/')}`,
+    path: endpointPath,
     description:
       'description' in operation && typeof operation['description'] === 'string'
         ? operation['description']
