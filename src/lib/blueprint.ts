@@ -114,6 +114,8 @@ interface ObjectProperty extends BaseProperty {
 
 type Method = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH'
 
+type LowercaseMethod = Lowercase<Method>
+
 export interface TypesModule {
   openapi: Openapi
 }
@@ -233,12 +235,18 @@ const createParameter = (param: Record<string, unknown>): Parameter => {
 const createRequest = (
   method: string,
   operation: Record<string, unknown>,
-): Request => ({
-  methods: [method.toUpperCase() as Method],
-  semanticMethod: method.toUpperCase() as Method,
-  preferredMethod: method.toUpperCase() as Method,
-  parameters: createParameters(operation),
-})
+): Request => {
+  const uppercaseMethod = openapiMethodToMethod(
+    method.toLowerCase() as LowercaseMethod,
+  )
+
+  return {
+    methods: [uppercaseMethod],
+    semanticMethod: uppercaseMethod,
+    preferredMethod: uppercaseMethod,
+    parameters: createParameters(operation),
+  }
+}
 
 const createResources = (
   schemas: Openapi['components']['schemas'],
@@ -420,4 +428,19 @@ const createProperties = (properties: Record<string, unknown>): Property[] => {
 
     return { ...baseProperty, type: 'string' }
   })
+}
+
+const openapiMethodToMethod = (openapiMethod: LowercaseMethod): Method => {
+  switch (openapiMethod) {
+    case 'get':
+      return 'GET'
+    case 'post':
+      return 'POST'
+    case 'put':
+      return 'PUT'
+    case 'delete':
+      return 'DELETE'
+    case 'patch':
+      return 'PATCH'
+  }
 }
