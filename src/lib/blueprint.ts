@@ -179,11 +179,11 @@ const createEndpoint = (
       'operationId' in operation && typeof operation['operationId'] === 'string'
         ? operation['operationId']
         : `${path.replace(/\//g, '')}${method.charAt(0).toUpperCase() + method.slice(1).toLowerCase()}`,
-    path,
+    path: `/${path.split('/').slice(1, -1).join('/')}`,
     description:
-      'summary' in operation && typeof operation['summary'] === 'string'
-        ? operation['summary']
-        : `${method.toUpperCase()} ${path}`,
+      'description' in operation && typeof operation['description'] === 'string'
+        ? operation['description']
+        : '',
     isUndocumented: false,
     isDeprecated: false,
     deprecationMessage: '',
