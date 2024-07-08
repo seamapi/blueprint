@@ -1,4 +1,11 @@
-import type { OpenAPI, OpenAPIOperation, OpenAPIParameter, OpenAPIPathItem, OpenAPIPaths, OpenAPISchema } from './openapi.js'
+import type {
+  OpenAPI,
+  OpenAPIOperation,
+  OpenAPIParameter,
+  OpenAPIPathItem,
+  OpenAPIPaths,
+  OpenAPISchema,
+} from './openapi.js'
 
 export interface Blueprint {
   name: string
@@ -146,10 +153,7 @@ const createRoutes = (
     .map(([path, pathItem]) => createRoute(path, pathItem))
 }
 
-const createRoute = (
-  path: string,
-  pathItem: OpenAPIPathItem,
-): Route => {
+const createRoute = (path: string, pathItem: OpenAPIPathItem): Route => {
   const pathParts = path.split('/')
   const routePath = `/${pathParts.slice(1, -1).join('/')}`
 
@@ -206,18 +210,14 @@ const createEndpoint = (
 const createParameters = (operation: OpenAPIOperation): Parameter[] => {
   return 'parameters' in operation && Array.isArray(operation.parameters)
     ? operation.parameters
-      .filter(
-        (param) =>
-          typeof param === 'object' && param !== null,
-      )
-      .map(createParameter)
+        .filter((param) => typeof param === 'object' && param !== null)
+        .map(createParameter)
     : []
 }
 
 const createParameter = (param: OpenAPIParameter): Parameter => {
   return {
-    name:
-      'name' in param && typeof param.name === 'string' ? param.name : '',
+    name: 'name' in param && typeof param.name === 'string' ? param.name : '',
     isRequired:
       'required' in param && typeof param.required === 'boolean'
         ? param.required
@@ -288,7 +288,7 @@ const createResponse = (responses: OpenAPIOperation['responses']): Response => {
       responseType: 'void',
       description:
         'description' in okResponse &&
-          typeof okResponse.description === 'string'
+        typeof okResponse.description === 'string'
           ? okResponse.description
           : 'No description available',
     }
@@ -301,7 +301,7 @@ const createResponse = (responses: OpenAPIOperation['responses']): Response => {
       responseType: 'void',
       description:
         'description' in okResponse &&
-          typeof okResponse.description === 'string'
+        typeof okResponse.description === 'string'
           ? okResponse.description
           : '',
     }
@@ -313,7 +313,7 @@ const createResponse = (responses: OpenAPIOperation['responses']): Response => {
       responseType: 'void',
       description:
         'description' in okResponse &&
-          typeof okResponse.description === 'string'
+        typeof okResponse.description === 'string'
           ? okResponse.description
           : '',
     }
@@ -336,7 +336,7 @@ const createResponse = (responses: OpenAPIOperation['responses']): Response => {
             : 'unknown',
         description:
           'description' in okResponse &&
-            typeof okResponse.description === 'string'
+          typeof okResponse.description === 'string'
             ? okResponse.description
             : '',
       }
@@ -350,10 +350,11 @@ const createResponse = (responses: OpenAPIOperation['responses']): Response => {
         (key) =>
           typeof properties[key] === 'object' &&
           properties[key] !== null &&
-          '$ref' in (properties[key]) && typeof properties[key].$ref === 'string',
+          '$ref' in properties[key] &&
+          typeof properties[key].$ref === 'string',
       )
       if (refKey != null && properties[refKey] != null) {
-        const refString = schema.properties[refKey]?.$ref 
+        const refString = schema.properties[refKey]?.$ref
 
         return {
           responseType: 'resource',
@@ -364,7 +365,7 @@ const createResponse = (responses: OpenAPIOperation['responses']): Response => {
               : 'unknown',
           description:
             'description' in okResponse &&
-              typeof okResponse.description === 'string'
+            typeof okResponse.description === 'string'
               ? okResponse.description
               : '',
         }
@@ -374,11 +375,13 @@ const createResponse = (responses: OpenAPIOperation['responses']): Response => {
 
   return {
     responseType: 'void',
-    description: okResponse.description
+    description: okResponse.description,
   }
 }
 
-const createProperties = (properties: Record<string, OpenAPISchema>): Property[] => {
+const createProperties = (
+  properties: Record<string, OpenAPISchema>,
+): Property[] => {
   return Object.entries(properties).map(([name, prop]): Property => {
     if (typeof prop !== 'object' || prop === null) {
       return {
@@ -409,8 +412,8 @@ const createProperties = (properties: Record<string, OpenAPISchema>): Property[]
             type: 'object',
             properties:
               'properties' in prop &&
-                typeof prop.properties === 'object' &&
-                prop.properties !== null
+              typeof prop.properties === 'object' &&
+              prop.properties !== null
                 ? createProperties(prop.properties)
                 : [],
           }
