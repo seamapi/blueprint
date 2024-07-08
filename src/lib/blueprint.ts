@@ -1,4 +1,4 @@
-import type { Openapi } from './openapi.js'
+import type { OpenAPI, OpenAPIOperation, OpenAPIParameter, OpenAPIPathItem, OpenAPIPaths, OpenAPISchema } from './openapi.js'
 
 export interface Blueprint {
   name: string
@@ -117,7 +117,7 @@ type Method = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH'
 type LowercaseMethod = Lowercase<Method>
 
 export interface TypesModule {
-  openapi: Openapi
+  openapi: OpenAPI
 }
 
 export const createBlueprint = ({ openapi }: TypesModule): Blueprint => {
@@ -137,7 +137,7 @@ export const createBlueprint = ({ openapi }: TypesModule): Blueprint => {
 }
 
 const createRoutes = (
-  paths: Openapi['paths'],
+  paths: OpenAPIPaths,
   isFakeData: boolean,
   targetPath: string,
 ): Route[] => {
@@ -148,7 +148,7 @@ const createRoutes = (
 
 const createRoute = (
   path: string,
-  pathItem: Record<string, unknown>,
+  pathItem: OpenAPIPathItem,
 ): Route => {
   const pathParts = path.split('/')
   const routePath = `/${pathParts.slice(1, -1).join('/')}`
@@ -163,20 +163,20 @@ const createRoute = (
 
 const createEndpoints = (
   path: string,
-  pathItem: Record<string, unknown>,
+  pathItem: OpenAPIPathItem,
 ): Endpoint[] => {
   return Object.entries(pathItem)
     .filter(
       ([, operation]) => typeof operation === 'object' && operation !== null,
     )
     .map(([method, operation]) =>
-      createEndpoint(method, operation as Record<string, unknown>, path),
+      createEndpoint(method, operation as OpenAPIOperation, path),
     )
 }
 
 const createEndpoint = (
   method: string,
-  operation: Record<string, unknown>,
+  operation: OpenAPIOperation,
   path: string,
 ): Endpoint => {
   const pathParts = path.split('/')
@@ -184,13 +184,13 @@ const createEndpoint = (
 
   return {
     name:
-      'operationId' in operation && typeof operation['operationId'] === 'string'
-        ? operation['operationId']
+      'operationId' in operation && typeof operation.operationId === 'string'
+        ? operation.operationId
         : `${path.replace(/\//g, '')}${method.charAt(0).toUpperCase() + method.slice(1).toLowerCase()}`,
     path: endpointPath,
     description:
-      'description' in operation && typeof operation['description'] === 'string'
-        ? operation['description']
+      'description' in operation && typeof operation.description === 'string'
+        ? operation.description
         : '',
     isUndocumented: false,
     isDeprecated: false,
@@ -198,43 +198,43 @@ const createEndpoint = (
     parameters: createParameters(operation),
     request: createRequest(method, operation),
     response: createResponse(
-      'responses' in operation ? operation['responses'] : {},
+      'responses' in operation ? operation.responses : {},
     ),
   }
 }
 
-const createParameters = (operation: Record<string, unknown>): Parameter[] => {
-  return 'parameters' in operation && Array.isArray(operation['parameters'])
-    ? operation['parameters']
-        .filter(
-          (param): param is Record<string, unknown> =>
-            typeof param === 'object' && param !== null,
-        )
-        .map(createParameter)
+const createParameters = (operation: OpenAPIOperation): Parameter[] => {
+  return 'parameters' in operation && Array.isArray(operation.parameters)
+    ? operation.parameters
+      .filter(
+        (param) =>
+          typeof param === 'object' && param !== null,
+      )
+      .map(createParameter)
     : []
 }
 
-const createParameter = (param: Record<string, unknown>): Parameter => {
+const createParameter = (param: OpenAPIParameter): Parameter => {
   return {
     name:
-      'name' in param && typeof param['name'] === 'string' ? param['name'] : '',
+      'name' in param && typeof param.name === 'string' ? param.name : '',
     isRequired:
-      'required' in param && typeof param['required'] === 'boolean'
-        ? param['required']
+      'required' in param && typeof param.required === 'boolean'
+        ? param.required
         : false,
     isUndocumented: false,
     isDeprecated: false,
     deprecationMessage: '',
     description:
-      'description' in param && typeof param['description'] === 'string'
-        ? param['description']
+      'description' in param && typeof param.description === 'string'
+        ? param.description
         : '',
   }
 }
 
 const createRequest = (
   method: string,
-  operation: Record<string, unknown>,
+  operation: OpenAPIOperation,
 ): Request => {
   const uppercaseMethod = openapiMethodToMethod(
     method.toLowerCase() as LowercaseMethod,
@@ -249,7 +249,7 @@ const createRequest = (
 }
 
 const createResources = (
-  schemas: Openapi['components']['schemas'],
+  schemas: OpenAPI['components']['schemas'],
   isFakeData: boolean,
   targetSchema: string,
 ): Record<string, Resource> => {
@@ -272,12 +272,12 @@ const createResources = (
     }, {})
 }
 
-const createResponse = (responses: unknown): Response => {
+const createResponse = (responses: OpenAPIOperation['responses']): Response => {
   if (typeof responses !== 'object' || responses === null) {
     return { responseType: 'void', description: 'No description available' }
   }
 
-  const okResponse = (responses as Record<string, unknown>)['200']
+  const okResponse = responses['200']
   if (typeof okResponse !== 'object' || okResponse === null) {
     return { responseType: 'void', description: 'No description available' }
   }
@@ -288,7 +288,7 @@ const createResponse = (responses: unknown): Response => {
       responseType: 'void',
       description:
         'description' in okResponse &&
-        typeof okResponse.description === 'string'
+          typeof okResponse.description === 'string'
           ? okResponse.description
           : 'No description available',
     }
@@ -301,7 +301,7 @@ const createResponse = (responses: unknown): Response => {
       responseType: 'void',
       description:
         'description' in okResponse &&
-        typeof okResponse.description === 'string'
+          typeof okResponse.description === 'string'
           ? okResponse.description
           : '',
     }
@@ -313,7 +313,7 @@ const createResponse = (responses: unknown): Response => {
       responseType: 'void',
       description:
         'description' in okResponse &&
-        typeof okResponse.description === 'string'
+          typeof okResponse.description === 'string'
           ? okResponse.description
           : '',
     }
@@ -336,7 +336,7 @@ const createResponse = (responses: unknown): Response => {
             : 'unknown',
         description:
           'description' in okResponse &&
-          typeof okResponse.description === 'string'
+            typeof okResponse.description === 'string'
             ? okResponse.description
             : '',
       }
@@ -345,18 +345,16 @@ const createResponse = (responses: unknown): Response => {
       typeof schema.properties === 'object' &&
       schema.properties !== null
     ) {
-      const properties = schema.properties as Record<string, unknown>
+      const properties = schema.properties
       const refKey = Object.keys(properties).find(
         (key) =>
           typeof properties[key] === 'object' &&
           properties[key] !== null &&
-          '$ref' in (properties[key] as Record<string, unknown>),
+          '$ref' in (properties[key]) && typeof properties[key].$ref === 'string',
       )
-      if (refKey != null) {
-        const refString =
-          '$ref' in (properties[refKey] as Record<string, unknown>)
-            ? (properties[refKey] as Record<string, unknown>)['$ref']
-            : null
+      if (refKey != null && properties[refKey] != null) {
+        const refString = schema.properties[refKey]?.$ref 
+
         return {
           responseType: 'resource',
           responseKey: refKey,
@@ -366,7 +364,7 @@ const createResponse = (responses: unknown): Response => {
               : 'unknown',
           description:
             'description' in okResponse &&
-            typeof okResponse.description === 'string'
+              typeof okResponse.description === 'string'
               ? okResponse.description
               : '',
         }
@@ -376,14 +374,11 @@ const createResponse = (responses: unknown): Response => {
 
   return {
     responseType: 'void',
-    description:
-      'description' in okResponse && typeof okResponse.description === 'string'
-        ? okResponse.description
-        : '',
+    description: okResponse.description
   }
 }
 
-const createProperties = (properties: Record<string, unknown>): Property[] => {
+const createProperties = (properties: Record<string, OpenAPISchema>): Property[] => {
   return Object.entries(properties).map(([name, prop]): Property => {
     if (typeof prop !== 'object' || prop === null) {
       return {
@@ -414,9 +409,9 @@ const createProperties = (properties: Record<string, unknown>): Property[] => {
             type: 'object',
             properties:
               'properties' in prop &&
-              typeof prop.properties === 'object' &&
-              prop.properties !== null
-                ? createProperties(prop.properties as Record<string, unknown>)
+                typeof prop.properties === 'object' &&
+                prop.properties !== null
+                ? createProperties(prop.properties)
                 : [],
           }
         case 'array':
