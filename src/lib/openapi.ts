@@ -1,82 +1,82 @@
-export interface OpenAPI {
+export interface Openapi {
   openapi: string
-  info: OpenAPIInfo
-  servers: OpenAPIServer[]
-  tags: OpenAPITag[]
-  paths: OpenAPIPaths
-  components: OpenAPIComponents
+  info: OpenapiInfo
+  servers: OpenapiServer[]
+  tags: OpenapiTag[]
+  paths: OpenapiPaths
+  components: OpenapiComponents
 }
 
-export interface OpenAPIInfo {
+export interface OpenapiInfo {
   title: string
   version: string
 }
 
-export interface OpenAPIServer {
+export interface OpenapiServer {
   url: string
 }
 
-export interface OpenAPITag {
+export interface OpenapiTag {
   name: string
   description: string
 }
 
-export type OpenAPIPaths = Record<string, OpenAPIPathItem>
+export type OpenapiPaths = Record<string, OpenapiPathItem>
 
-export interface OpenAPIPathItem {
-  get?: OpenAPIOperation
-  post?: OpenAPIOperation
-  put?: OpenAPIOperation
-  delete?: OpenAPIOperation
-  patch?: OpenAPIOperation
+export interface OpenapiPathItem {
+  get?: OpenapiOperation
+  post?: OpenapiOperation
+  put?: OpenapiOperation
+  delete?: OpenapiOperation
+  patch?: OpenapiOperation
 }
 
-export interface OpenAPIOperation {
+export interface OpenapiOperation {
   operationId: string
   summary?: string
   description?: string
-  parameters?: OpenAPIParameter[]
-  requestBody?: OpenAPIRequestBody
-  responses: Record<string, OpenAPIResponse>
+  parameters?: OpenapiParameter[]
+  requestBody?: OpenapiRequestBody
+  responses: Record<string, OpenapiResponse>
   tags?: string[]
-  security?: OpenAPISecurity[]
+  security?: OpenapiSecurity[]
 }
 
-export interface OpenAPIParameter {
+export interface OpenapiParameter {
   name: string
   in: 'query' | 'header' | 'path' | 'cookie'
   description?: string
   required?: boolean
-  schema: OpenAPISchema
+  schema: OpenapiSchema
 }
 
-export interface OpenAPIRequestBody {
-  content: Record<string, OpenAPIMediaType>
+export interface OpenapiRequestBody {
+  content: Record<string, OpenapiMediaType>
   description?: string
   required?: boolean
 }
 
-export interface OpenAPIResponse {
+export interface OpenapiResponse {
   description: string
-  content?: Record<string, OpenAPIMediaType>
+  content?: Record<string, OpenapiMediaType>
 }
 
-export interface OpenAPIMediaType {
-  schema: OpenAPISchema
+export interface OpenapiMediaType {
+  schema: OpenapiSchema
 }
 
-export interface OpenAPISchema {
+export interface OpenapiSchema {
   type: 'object' | 'array' | 'string' | 'number' | 'integer' | 'boolean'
-  properties?: Record<string, OpenAPISchema>
-  items?: OpenAPISchema
+  properties?: Record<string, OpenapiSchema>
+  items?: OpenapiSchema
   $ref?: string
   required?: string[]
   format?: string
   description?: string
 }
 
-export interface OpenAPIComponents {
-  schemas: Record<string, OpenAPISchema>
+export interface OpenapiComponents {
+  schemas: Record<string, OpenapiSchema>
 }
 
-export type OpenAPISecurity = Record<string, string[]>
+export type OpenapiSecurity = Record<string, string[]>
