@@ -92,6 +92,7 @@ type Property =
   | RecordProperty
   | ListProperty
   | ObjectProperty
+  | BooleanProperty
 
 interface StringProperty extends BaseProperty {
   type: 'string'
@@ -112,6 +113,9 @@ interface RecordProperty extends BaseProperty {
 
 interface ListProperty extends BaseProperty {
   type: 'list'
+}
+interface BooleanProperty extends BaseProperty {
+  type: 'boolean'
 }
 
 interface ObjectProperty extends BaseProperty {
@@ -260,9 +264,12 @@ const createResources = (
         typeof schema.properties === 'object' &&
         schema.properties !== null
       ) {
-        acc[schemaName] = {
-          resourceType: schemaName,
-          properties: createProperties(schema.properties),
+        return {
+          ...acc,
+          [schemaName]: {
+            resourceType: schemaName,
+            properties: createProperties(schema.properties),
+          },
         }
       }
       return acc
@@ -405,6 +412,13 @@ const createProperties = (
     if ('type' in prop) {
       switch (prop.type) {
         case 'string':
+          if ('enum' in prop && Array.isArray(prop.enum)) {
+            return {
+              ...baseProperty,
+              type: 'enum',
+              values: prop.enum.map((value) => ({ name: String(value) })),
+            }
+          }
           return { ...baseProperty, type: 'string' }
         case 'object':
           return {
@@ -419,6 +433,8 @@ const createProperties = (
           }
         case 'array':
           return { ...baseProperty, type: 'list' }
+        case 'boolean':
+          return { ...baseProperty, type: 'boolean' }
         default:
           return { ...baseProperty, type: 'string' }
       }
