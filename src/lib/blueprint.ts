@@ -1,4 +1,11 @@
-import type { Openapi } from './openapi.js'
+import type {
+  Openapi,
+  OpenapiOperation,
+  OpenapiParameter,
+  OpenapiPathItem,
+  OpenapiPaths,
+  OpenapiSchema,
+} from './openapi.js'
 
 export interface Blueprint {
   name: string
@@ -25,9 +32,6 @@ interface Namespace {
 interface Endpoint {
   name: string
   path: string
-  methods: Method[]
-  semanticMethod: Method
-  preferredMethod: Method
   description: string
   isUndocumented: boolean
   isDeprecated: boolean
@@ -122,9 +126,321 @@ export interface TypesModule {
 }
 
 export const createBlueprint = ({ openapi }: TypesModule): Blueprint => {
+  const isFakeData = openapi.info.title === 'Foo'
+  const targetPath = '/acs/systems/list'
+  const targetSchema = 'acs_system'
+
   return {
     name: openapi.info.title,
-    routes: [],
-    resources: {},
+    routes: createRoutes(openapi.paths, isFakeData, targetPath),
+    resources: createResources(
+      openapi.components.schemas,
+      isFakeData,
+      targetSchema,
+    ),
+  }
+}
+
+const createRoutes = (
+  paths: OpenapiPaths,
+  isFakeData: boolean,
+  targetPath: string,
+): Route[] => {
+  return Object.entries(paths)
+    .filter(([path]) => isFakeData || path === targetPath)
+    .map(([path, pathItem]) => createRoute(path, pathItem))
+}
+
+const createRoute = (path: string, pathItem: OpenapiPathItem): Route => {
+  const pathParts = path.split('/')
+  const routePath = `/${pathParts.slice(1, -1).join('/')}`
+
+  return {
+    path: routePath,
+    namespace: { path: `/${pathParts[1]}` },
+    endpoints: createEndpoints(path, pathItem),
+    subroutes: [],
+  }
+}
+
+const createEndpoints = (
+  path: string,
+  pathItem: OpenapiPathItem,
+): Endpoint[] => {
+  return Object.entries(pathItem)
+    .filter(
+      ([, operation]) => typeof operation === 'object' && operation !== null,
+    )
+    .map(([method, operation]) =>
+      createEndpoint(method as Method, operation as OpenapiOperation, path),
+    )
+}
+
+const createEndpoint = (
+  method: Method,
+  operation: OpenapiOperation,
+  path: string,
+): Endpoint => {
+  const pathParts = path.split('/')
+  const endpointPath = `/${pathParts.slice(1, -1).join('/')}`
+
+  return {
+    name:
+      'operationId' in operation && typeof operation.operationId === 'string'
+        ? operation.operationId
+        : `${path.replace(/\//g, '')}${method.charAt(0).toUpperCase()}${method.slice(1).toLowerCase()}`,
+    path: endpointPath,
+    description:
+      'description' in operation && typeof operation.description === 'string'
+        ? operation.description
+        : '',
+    isUndocumented: false,
+    isDeprecated: false,
+    deprecationMessage: '',
+    parameters: createParameters(operation),
+    request: createRequest(method, operation),
+    response: createResponse(
+      'responses' in operation ? operation.responses : {},
+    ),
+  }
+}
+
+const createParameters = (operation: OpenapiOperation): Parameter[] => {
+  if ('parameters' in operation && Array.isArray(operation.parameters)) {
+    return operation.parameters
+      .filter((param) => typeof param === 'object' && param !== null)
+      .map(createParameter)
+  }
+  return []
+}
+
+const createParameter = (param: OpenapiParameter): Parameter => {
+  return {
+    name: 'name' in param && typeof param.name === 'string' ? param.name : '',
+    isRequired:
+      'required' in param && typeof param.required === 'boolean'
+        ? param.required
+        : false,
+    isUndocumented: false,
+    isDeprecated: false,
+    deprecationMessage: '',
+    description:
+      'description' in param && typeof param.description === 'string'
+        ? param.description
+        : '',
+  }
+}
+
+const createRequest = (
+  method: Method,
+  operation: OpenapiOperation,
+): Request => {
+  const uppercaseMethod = openapiMethodToMethod(method)
+
+  return {
+    methods: [uppercaseMethod],
+    semanticMethod: uppercaseMethod,
+    preferredMethod: uppercaseMethod,
+    parameters: createParameters(operation),
+  }
+}
+
+const createResources = (
+  schemas: Openapi['components']['schemas'],
+  isFakeData: boolean,
+  targetSchema: string,
+): Record<string, Resource> => {
+  return Object.entries(schemas)
+    .filter(([schemaName]) => isFakeData || schemaName === targetSchema)
+    .reduce<Record<string, Resource>>((acc, [schemaName, schema]) => {
+      if (
+        typeof schema === 'object' &&
+        schema !== null &&
+        'properties' in schema &&
+        typeof schema.properties === 'object' &&
+        schema.properties !== null
+      ) {
+        acc[schemaName] = {
+          resourceType: schemaName,
+          properties: createProperties(schema.properties),
+        }
+      }
+      return acc
+    }, {})
+}
+
+const createResponse = (responses: OpenapiOperation['responses']): Response => {
+  if (responses === null) {
+    return { responseType: 'void', description: '' }
+  }
+
+  const okResponse = responses['200']
+  if (typeof okResponse !== 'object' || okResponse === null) {
+    return { responseType: 'void', description: '' }
+  }
+
+  const content = 'content' in okResponse ? okResponse.content : null
+  if (typeof content !== 'object' || content === null) {
+    return {
+      responseType: 'void',
+      description:
+        'description' in okResponse &&
+        typeof okResponse.description === 'string'
+          ? okResponse.description
+          : '',
+    }
+  }
+
+  const jsonContent =
+    'application/json' in content ? content['application/json'] : null
+  if (jsonContent === null) {
+    return {
+      responseType: 'void',
+      description:
+        'description' in okResponse &&
+        typeof okResponse.description === 'string'
+          ? okResponse.description
+          : '',
+    }
+  }
+
+  const schema = 'schema' in jsonContent ? jsonContent.schema : null
+  if (schema === null) {
+    return {
+      responseType: 'void',
+      description:
+        'description' in okResponse &&
+        typeof okResponse.description === 'string'
+          ? okResponse.description
+          : '',
+    }
+  }
+
+  if ('type' in schema && 'properties' in schema) {
+    if (
+      schema.type === 'array' &&
+      'items' in schema &&
+      typeof schema.items === 'object' &&
+      schema.items !== null
+    ) {
+      const refString = '$ref' in schema.items ? schema.items.$ref : null
+      return {
+        responseType: 'resource_list',
+        responseKey: 'items',
+        resourceType:
+          typeof refString === 'string' && refString.length > 0
+            ? refString.split('/').pop() ?? 'unknown'
+            : 'unknown',
+        description:
+          'description' in okResponse &&
+          typeof okResponse.description === 'string'
+            ? okResponse.description
+            : '',
+      }
+    } else if (
+      schema.type === 'object' &&
+      typeof schema.properties === 'object' &&
+      schema.properties !== null
+    ) {
+      const properties = schema.properties
+      const refKey = Object.keys(properties).find((key) => {
+        const prop = properties[key]
+        return (
+          prop !== undefined &&
+          typeof prop === 'object' &&
+          prop !== null &&
+          '$ref' in prop &&
+          typeof prop.$ref === 'string'
+        )
+      })
+      if (refKey != null && properties[refKey] !== undefined) {
+        const refString = schema.properties[refKey]?.$ref
+
+        return {
+          responseType: 'resource',
+          responseKey: refKey,
+          resourceType:
+            typeof refString === 'string' && refString.length > 0
+              ? refString.split('/').pop() ?? 'unknown'
+              : 'unknown',
+          description:
+            'description' in okResponse &&
+            typeof okResponse.description === 'string'
+              ? okResponse.description
+              : '',
+        }
+      }
+    }
+  }
+
+  return {
+    responseType: 'void',
+    description: okResponse.description,
+  }
+}
+
+const createProperties = (
+  properties: Record<string, OpenapiSchema>,
+): Property[] => {
+  return Object.entries(properties).map(([name, prop]): Property => {
+    if (prop === null) {
+      return {
+        name,
+        type: 'string',
+        isDeprecated: false,
+        deprecationMessage: '',
+      }
+    }
+
+    const baseProperty = {
+      name,
+      description:
+        'description' in prop && typeof prop.description === 'string'
+          ? prop.description
+          : '',
+      isDeprecated: false,
+      deprecationMessage: '',
+    }
+
+    if ('type' in prop) {
+      switch (prop.type) {
+        case 'string':
+          return { ...baseProperty, type: 'string' }
+        case 'object':
+          return {
+            ...baseProperty,
+            type: 'object',
+            properties:
+              'properties' in prop &&
+              typeof prop.properties === 'object' &&
+              prop.properties !== null
+                ? createProperties(prop.properties)
+                : [],
+          }
+        case 'array':
+          return { ...baseProperty, type: 'list' }
+        default:
+          return { ...baseProperty, type: 'string' }
+      }
+    }
+
+    return { ...baseProperty, type: 'string' }
+  })
+}
+
+const openapiMethodToMethod = (openapiMethod: string): Method => {
+  switch (openapiMethod) {
+    case 'get':
+      return 'GET'
+    case 'post':
+      return 'POST'
+    case 'put':
+      return 'PUT'
+    case 'delete':
+      return 'DELETE'
+    case 'patch':
+      return 'PATCH'
+    default:
+      return 'POST'
   }
 }
