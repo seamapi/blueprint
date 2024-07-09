@@ -8,7 +8,7 @@ import type {
 } from './openapi.js'
 
 export interface Blueprint {
-  name: string
+  title: string
   routes: Route[]
   resources: Record<string, Resource>
 }
@@ -30,7 +30,7 @@ interface Namespace {
 }
 
 interface Endpoint {
-  name: string
+  title: string
   path: string
   description: string
   isUndocumented: boolean
@@ -114,6 +114,7 @@ interface RecordProperty extends BaseProperty {
 interface ListProperty extends BaseProperty {
   type: 'list'
 }
+
 interface BooleanProperty extends BaseProperty {
   type: 'boolean'
 }
@@ -135,7 +136,7 @@ export const createBlueprint = ({ openapi }: TypesModule): Blueprint => {
   const targetSchema = 'acs_system'
 
   return {
-    name: openapi.info.title,
+    title: openapi.info.title,
     routes: createRoutes(openapi.paths, isFakeData, targetPath),
     resources: createResources(
       openapi.components.schemas,
@@ -189,7 +190,7 @@ const createEndpoint = (
   const endpointPath = `/${pathParts.slice(1, -1).join('/')}`
 
   return {
-    name:
+    title:
       'operationId' in operation && typeof operation.operationId === 'string'
         ? operation.operationId
         : `${path.replace(/\//g, '')}${method.charAt(0).toUpperCase()}${method.slice(1).toLowerCase()}`,
