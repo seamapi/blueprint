@@ -3,9 +3,8 @@ import test from 'ava'
 
 import { createBlueprint } from '@seamapi/blueprint'
 
-import type { Openapi } from 'lib/openapi.js'
-
 test('createBlueprint', (t) => {
-  const blueprint = createBlueprint({ openapi: openapi as unknown as Openapi })
+  // @ts-expect-error Remove once the import is properly typed
+  const blueprint = createBlueprint({ openapi })
   t.snapshot(blueprint, 'blueprint')
 })
