@@ -194,7 +194,7 @@ const createEndpoint = (
     ? operation.description
     : ''
 
-  const isUndocumented = description === ''
+  const isUndocumented = description.includes('---\nundocumented\n---')
   const deprecatedMatch = description.match(/---\s*deprecated:(.+?)---/s)
   const isDeprecated = deprecatedMatch !== null
   const deprecationMessage = (deprecatedMatch?.[1] !== undefined)
@@ -414,7 +414,7 @@ const createProperties = (
       ? prop.description
       : ''
 
-    const isUndocumented = description === ''
+    const isUndocumented = description.includes('---\nundocumented\n---')
     const deprecatedMatch = description.match(/---\s*deprecated:(.+?)---/s)
     const isDeprecated = deprecatedMatch !== null
     const deprecationMessage = (deprecatedMatch?.[1] !== undefined)
@@ -435,7 +435,7 @@ const createProperties = (
         baseProperty.isDeprecated = true
         baseProperty.deprecationMessage = deprecatedMatch[1].trim()
       }
-      baseProperty.isUndocumented = baseProperty.description === ''
+      baseProperty.isUndocumented = baseProperty.description.includes('---\nundocumented\n---')
     }
 
     if ('type' in prop) {
