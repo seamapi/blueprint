@@ -410,15 +410,23 @@ const createProperties = (
       }
     }
 
+    const description = 'description' in prop && typeof prop.description === 'string'
+      ? prop.description
+      : ''
+
+    const isUndocumented = description.includes('---\nundocumented\n---')
+    const deprecatedMatch = description.match(/---\s*deprecated:(.+?)---/s)
+    const isDeprecated = deprecatedMatch !== null
+    const deprecationMessage = (deprecatedMatch?.[1] !== undefined)
+      ? deprecatedMatch[1].trim()
+      : ''
+
     const baseProperty = {
       name,
-      description:
-        'description' in prop && typeof prop.description === 'string'
-          ? prop.description
-          : '',
-      isDeprecated: false,
-      deprecationMessage: '',
-      isUndocumented: false,
+      description,
+      isDeprecated,
+      deprecationMessage,
+      isUndocumented,
     }
 
     if (baseProperty.description !== "") {
