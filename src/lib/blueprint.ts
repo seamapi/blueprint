@@ -84,6 +84,7 @@ interface BaseProperty {
   description?: string
   isDeprecated: boolean
   deprecationMessage: string
+  isUndocumented: boolean
 }
 
 type Property =
@@ -189,19 +190,27 @@ const createEndpoint = (
   const pathParts = path.split('/')
   const endpointPath = `/${pathParts.slice(1, -1).join('/')}`
 
+  const description = 'description' in operation && typeof operation.description === 'string'
+    ? operation.description
+    : ''
+
+  const isUndocumented = description.includes('---\nundocumented\n---')
+  const deprecatedMatch = description.match(/---\s*deprecated:(.+?)---/s)
+  const isDeprecated = deprecatedMatch !== null
+  const deprecationMessage = (deprecatedMatch?.[1] !== undefined)
+    ? deprecatedMatch[1].trim()
+    : ''
+
   return {
     title:
       'operationId' in operation && typeof operation.operationId === 'string'
         ? operation.operationId
         : `${path.replace(/\//g, '')}${method.charAt(0).toUpperCase()}${method.slice(1).toLowerCase()}`,
     path: endpointPath,
-    description:
-      'description' in operation && typeof operation.description === 'string'
-        ? operation.description
-        : '',
-    isUndocumented: false,
-    isDeprecated: false,
-    deprecationMessage: '',
+    description,
+    isUndocumented,
+    isDeprecated,
+    deprecationMessage,
     parameters: createParameters(operation),
     request: createRequest(method, operation),
     response: createResponse(
@@ -293,7 +302,7 @@ const createResponse = (responses: OpenapiOperation['responses']): Response => {
       responseType: 'void',
       description:
         'description' in okResponse &&
-        typeof okResponse.description === 'string'
+          typeof okResponse.description === 'string'
           ? okResponse.description
           : '',
     }
@@ -306,7 +315,7 @@ const createResponse = (responses: OpenapiOperation['responses']): Response => {
       responseType: 'void',
       description:
         'description' in okResponse &&
-        typeof okResponse.description === 'string'
+          typeof okResponse.description === 'string'
           ? okResponse.description
           : '',
     }
@@ -318,7 +327,7 @@ const createResponse = (responses: OpenapiOperation['responses']): Response => {
       responseType: 'void',
       description:
         'description' in okResponse &&
-        typeof okResponse.description === 'string'
+          typeof okResponse.description === 'string'
           ? okResponse.description
           : '',
     }
@@ -341,7 +350,7 @@ const createResponse = (responses: OpenapiOperation['responses']): Response => {
             : 'unknown',
         description:
           'description' in okResponse &&
-          typeof okResponse.description === 'string'
+            typeof okResponse.description === 'string'
             ? okResponse.description
             : '',
       }
@@ -373,7 +382,7 @@ const createResponse = (responses: OpenapiOperation['responses']): Response => {
               : 'unknown',
           description:
             'description' in okResponse &&
-            typeof okResponse.description === 'string'
+              typeof okResponse.description === 'string'
               ? okResponse.description
               : '',
         }
@@ -397,6 +406,7 @@ const createProperties = (
         type: 'string',
         isDeprecated: false,
         deprecationMessage: '',
+        isUndocumented: false,
       }
     }
 
@@ -408,6 +418,16 @@ const createProperties = (
           : '',
       isDeprecated: false,
       deprecationMessage: '',
+      isUndocumented: false,
+    }
+
+    if (baseProperty.description !== "") {
+      const deprecatedMatch = baseProperty.description.match(/---\s*deprecated:(.+?)---/s)
+      if (deprecatedMatch?.[1] !== undefined) {
+        baseProperty.isDeprecated = true
+        baseProperty.deprecationMessage = deprecatedMatch[1].trim()
+      }
+      baseProperty.isUndocumented = baseProperty.description.includes('---\nundocumented\n---')
     }
 
     if ('type' in prop) {
@@ -427,8 +447,8 @@ const createProperties = (
             type: 'object',
             properties:
               'properties' in prop &&
-              typeof prop.properties === 'object' &&
-              prop.properties !== null
+                typeof prop.properties === 'object' &&
+                prop.properties !== null
                 ? createProperties(prop.properties)
                 : [],
           }
