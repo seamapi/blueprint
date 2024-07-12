@@ -195,8 +195,7 @@ const createEndpoint = (
       ? operation.description
       : ''
 
-  const isUndocumented =
-    'x-undocumented' in operation && operation['x-undocumented'] !== undefined
+  const isUndocumented = 'x-undocumented' in operation
   const deprecatedMatch = description.match(/---\s*deprecated:(.+?)---/s)
   const isDeprecated = deprecatedMatch !== null
   const deprecationMessage =
@@ -420,8 +419,7 @@ const createProperties = (
         ? prop.description
         : ''
 
-    const isUndocumented =
-      'x-undocumented' in prop && prop['x-undocumented'] !== undefined
+    const isUndocumented = 'x-undocumented' in prop
     const deprecatedMatch = description.match(/---\s*deprecated:(.+?)---/s)
     const isDeprecated =
       ('deprecated' in prop && prop.deprecated === true) ||
