@@ -190,19 +190,21 @@ const createEndpoint = (
   const pathParts = path.split('/')
   const endpointPath = `/${pathParts.slice(1, -1).join('/')}`
 
-  const description = 'description' in operation && typeof operation.description === 'string'
-    ? operation.description
-    : ''
+  const description =
+    'description' in operation && typeof operation.description === 'string'
+      ? operation.description
+      : ''
 
-  const isUndocumented = ('x-undocumented' in operation && operation['x-undocumented'] !== undefined) 
+  const isUndocumented =
+    'x-undocumented' in operation && operation['x-undocumented'] !== undefined
   const deprecatedMatch = description.match(/---\s*deprecated:(.+?)---/s)
   const isDeprecated = deprecatedMatch !== null
-  const deprecationMessage = 
-  ('x-deprecated' in operation && typeof operation['x-deprecated'] === 'string')
-    ? operation['x-deprecated']
-    : (deprecatedMatch?.[1] !== undefined)
-      ? deprecatedMatch[1].trim()
-      : ''
+  const deprecationMessage =
+    'x-deprecated' in operation && typeof operation['x-deprecated'] === 'string'
+      ? operation['x-deprecated']
+      : deprecatedMatch?.[1] !== undefined
+        ? deprecatedMatch[1].trim()
+        : ''
 
   return {
     title:
@@ -305,7 +307,7 @@ const createResponse = (responses: OpenapiOperation['responses']): Response => {
       responseType: 'void',
       description:
         'description' in okResponse &&
-          typeof okResponse.description === 'string'
+        typeof okResponse.description === 'string'
           ? okResponse.description
           : '',
     }
@@ -318,7 +320,7 @@ const createResponse = (responses: OpenapiOperation['responses']): Response => {
       responseType: 'void',
       description:
         'description' in okResponse &&
-          typeof okResponse.description === 'string'
+        typeof okResponse.description === 'string'
           ? okResponse.description
           : '',
     }
@@ -330,7 +332,7 @@ const createResponse = (responses: OpenapiOperation['responses']): Response => {
       responseType: 'void',
       description:
         'description' in okResponse &&
-          typeof okResponse.description === 'string'
+        typeof okResponse.description === 'string'
           ? okResponse.description
           : '',
     }
@@ -353,7 +355,7 @@ const createResponse = (responses: OpenapiOperation['responses']): Response => {
             : 'unknown',
         description:
           'description' in okResponse &&
-            typeof okResponse.description === 'string'
+          typeof okResponse.description === 'string'
             ? okResponse.description
             : '',
       }
@@ -385,7 +387,7 @@ const createResponse = (responses: OpenapiOperation['responses']): Response => {
               : 'unknown',
           description:
             'description' in okResponse &&
-              typeof okResponse.description === 'string'
+            typeof okResponse.description === 'string'
               ? okResponse.description
               : '',
         }
@@ -413,18 +415,20 @@ const createProperties = (
       }
     }
 
-    const description = 'description' in prop && typeof prop.description === 'string'
-      ? prop.description
-      : ''
+    const description =
+      'description' in prop && typeof prop.description === 'string'
+        ? prop.description
+        : ''
 
-    const isUndocumented = ('x-undocumented' in prop && prop['x-undocumented'] !== undefined)
+    const isUndocumented =
+      'x-undocumented' in prop && prop['x-undocumented'] !== undefined
     const deprecatedMatch = description.match(/---\s*deprecated:(.+?)---/s)
-    const isDeprecated = ('deprecated' in prop && prop.deprecated === true) ||
+    const isDeprecated =
+      ('deprecated' in prop && prop.deprecated === true) ||
       ('x-deprecated' in prop && typeof prop['x-deprecated'] === 'string') ||
       deprecatedMatch !== null
-    const deprecationMessage = (deprecatedMatch?.[1] !== undefined)
-      ? deprecatedMatch[1].trim()
-      : ''
+    const deprecationMessage =
+      deprecatedMatch?.[1] !== undefined ? deprecatedMatch[1].trim() : ''
 
     const baseProperty = {
       name,
@@ -434,13 +438,17 @@ const createProperties = (
       isUndocumented,
     }
 
-    if (baseProperty.description !== "") {
-      const deprecatedMatch = baseProperty.description.match(/---\s*deprecated:(.+?)---/s)
+    if (baseProperty.description !== '') {
+      const deprecatedMatch = baseProperty.description.match(
+        /---\s*deprecated:(.+?)---/s,
+      )
       if (deprecatedMatch?.[1] !== undefined) {
         baseProperty.isDeprecated = true
         baseProperty.deprecationMessage = deprecatedMatch[1].trim()
       }
-      baseProperty.isUndocumented = baseProperty.description.includes('---\nundocumented\n---')
+      baseProperty.isUndocumented = baseProperty.description.includes(
+        '---\nundocumented\n---',
+      )
     }
 
     if ('type' in prop) {
@@ -460,8 +468,8 @@ const createProperties = (
             type: 'object',
             properties:
               'properties' in prop &&
-                typeof prop.properties === 'object' &&
-                prop.properties !== null
+              typeof prop.properties === 'object' &&
+              prop.properties !== null
                 ? createProperties(prop.properties)
                 : [],
           }
