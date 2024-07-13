@@ -195,15 +195,18 @@ const createEndpoint = (
       ? operation.description
       : ''
 
-  const isUndocumented = 'x-undocumented' in operation
-  const deprecatedMatch = description.match(/---\s*deprecated:(.+?)---/s)
-  const isDeprecated = deprecatedMatch !== null
+  const isUndocumented =
+    'x-undocumented' in operation && operation['x-undocumented'] !== undefined
+      ? Boolean(operation['x-undocumented'])
+      : false
+
+  const isDeprecated =
+    'deprecated' in operation && operation.deprecated === true
+
   const deprecationMessage =
     'x-deprecated' in operation && typeof operation['x-deprecated'] === 'string'
       ? operation['x-deprecated']
-      : deprecatedMatch?.[1] !== undefined
-        ? deprecatedMatch[1].trim()
-        : ''
+      : ''
 
   return {
     title:
@@ -419,14 +422,14 @@ const createProperties = (
         ? prop.description
         : ''
 
-    const isUndocumented = 'x-undocumented' in prop
-    const deprecatedMatch = description.match(/---\s*deprecated:(.+?)---/s)
-    const isDeprecated =
-      ('deprecated' in prop && prop.deprecated === true) ||
-      ('x-deprecated' in prop && typeof prop['x-deprecated'] === 'string') ||
-      deprecatedMatch !== null
+    const isUndocumented =
+      'x-undocumented' in prop ? Boolean(prop['x-undocumented']) : false
+    const isDeprecated = 'deprecated' in prop && prop.deprecated === true
+
     const deprecationMessage =
-      deprecatedMatch?.[1] !== undefined ? deprecatedMatch[1].trim() : ''
+      'x-deprecated' in prop && typeof prop['x-deprecated'] === 'string'
+        ? prop['x-deprecated']
+        : ''
 
     const baseProperty = {
       name,
