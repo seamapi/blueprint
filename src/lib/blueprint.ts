@@ -84,6 +84,7 @@ interface BaseProperty {
   description?: string
   isDeprecated: boolean
   deprecationMessage: string
+  isUndocumented: boolean
 }
 
 type Property =
@@ -189,19 +190,34 @@ const createEndpoint = (
   const pathParts = path.split('/')
   const endpointPath = `/${pathParts.slice(1, -1).join('/')}`
 
+  const description =
+    'description' in operation && typeof operation.description === 'string'
+      ? operation.description
+      : ''
+
+  const isUndocumented =
+    'x-undocumented' in operation && operation['x-undocumented'] !== undefined
+      ? Boolean(operation['x-undocumented'])
+      : false
+
+  const isDeprecated =
+    'deprecated' in operation && operation.deprecated === true
+
+  const deprecationMessage =
+    'x-deprecated' in operation && typeof operation['x-deprecated'] === 'string'
+      ? operation['x-deprecated']
+      : ''
+
   return {
     title:
       'operationId' in operation && typeof operation.operationId === 'string'
         ? operation.operationId
         : `${path.replace(/\//g, '')}${method.charAt(0).toUpperCase()}${method.slice(1).toLowerCase()}`,
     path: endpointPath,
-    description:
-      'description' in operation && typeof operation.description === 'string'
-        ? operation.description
-        : '',
-    isUndocumented: false,
-    isDeprecated: false,
-    deprecationMessage: '',
+    description,
+    isUndocumented,
+    isDeprecated,
+    deprecationMessage,
     parameters: createParameters(operation),
     request: createRequest(method, operation),
     response: createResponse(
@@ -397,17 +413,30 @@ const createProperties = (
         type: 'string',
         isDeprecated: false,
         deprecationMessage: '',
+        isUndocumented: false,
       }
     }
 
+    const description =
+      'description' in prop && typeof prop.description === 'string'
+        ? prop.description
+        : ''
+
+    const isUndocumented =
+      'x-undocumented' in prop ? Boolean(prop['x-undocumented']) : false
+    const isDeprecated = 'deprecated' in prop && prop.deprecated === true
+
+    const deprecationMessage =
+      'x-deprecated' in prop && typeof prop['x-deprecated'] === 'string'
+        ? prop['x-deprecated']
+        : ''
+
     const baseProperty = {
       name,
-      description:
-        'description' in prop && typeof prop.description === 'string'
-          ? prop.description
-          : '',
-      isDeprecated: false,
-      deprecationMessage: '',
+      description,
+      isDeprecated,
+      deprecationMessage,
+      isUndocumented,
     }
 
     if ('type' in prop) {
@@ -440,7 +469,6 @@ const createProperties = (
           return { ...baseProperty, type: 'string' }
       }
     }
-
     return { ...baseProperty, type: 'string' }
   })
 }
