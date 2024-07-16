@@ -56,7 +56,7 @@ $ npm install --save-dev @seamapi/blueprint
 
 ```ts
 import { createBlueprint } from '@seamapi/blueprint'
-import * as types from '@seamapi/types'
+import * as types from '@seamapi/types/connect'
 
 const blueprint = createBlueprint(types)
 console.log(JSON.stringify(blueprint)
