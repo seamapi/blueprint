@@ -439,19 +439,6 @@ const createProperties = (
       isUndocumented,
     }
 
-    if (baseProperty.description !== '') {
-      const deprecatedMatch = baseProperty.description.match(
-        /---\s*deprecated:(.+?)---/s,
-      )
-      if (deprecatedMatch?.[1] !== undefined) {
-        baseProperty.isDeprecated = true
-        baseProperty.deprecationMessage = deprecatedMatch[1].trim()
-      }
-      baseProperty.isUndocumented = baseProperty.description.includes(
-        '---\nundocumented\n---',
-      )
-    }
-
     if ('type' in prop) {
       switch (prop.type) {
         case 'string':
