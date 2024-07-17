@@ -188,7 +188,7 @@ const createEndpoint = (
   path: string,
 ): Endpoint => {
   const pathParts = path.split('/')
-  const endpointPath = `/${pathParts.slice(1, -1).join('/')}`
+  const endpointPath = `/${pathParts.slice(1).join('/')}`
 
   const description =
     'description' in operation && typeof operation.description === 'string'
