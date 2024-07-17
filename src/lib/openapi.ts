@@ -1,3 +1,5 @@
+import { z } from 'zod'
+
 export interface Openapi {
   openapi: string
   info: OpenapiInfo
@@ -40,6 +42,8 @@ export interface OpenapiOperation {
   responses: Record<string, OpenapiResponse>
   tags?: string[]
   security?: OpenapiSecurity[]
+  'x-undocumented'?: string
+  'x-deprecated'?: string
 }
 
 export interface OpenapiParameter {
@@ -80,3 +84,47 @@ export interface OpenapiComponents {
 }
 
 export type OpenapiSecurity = Record<string, string[]>
+
+export const openapiOperationSchemaValidator = z.object({
+  operationId: z.string(),
+  summary: z.string().optional(),
+  description: z.string().optional(),
+  parameters: z
+    .array(
+      z.object({
+        name: z.string(),
+        in: z.enum(['query', 'header', 'path', 'cookie']),
+        description: z.string().optional(),
+        required: z.boolean().optional(),
+        schema: z.any(),
+      }),
+    )
+    .optional(),
+  requestBody: z
+    .object({
+      content: z.record(
+        z.object({
+          schema: z.any(),
+        }),
+      ),
+      description: z.string().optional(),
+      required: z.boolean().optional(),
+    })
+    .optional(),
+  responses: z.record(
+    z.object({
+      description: z.string(),
+      content: z
+        .record(
+          z.object({
+            schema: z.any(),
+          }),
+        )
+        .optional(),
+    }),
+  ),
+  tags: z.array(z.string()).optional(),
+  security: z.record(z.string()).optional(),
+  'x-undocumented': z.string().default('true'),
+  'x-deprecated': z.string().default('false'),
+})
