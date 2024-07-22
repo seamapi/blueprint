@@ -18,11 +18,9 @@ export const CodeSampleDefinitionSchema = z.object({
       ),
     parameters: z.record(z.string().min(1), z.any()),
   }),
-  response: z
-    .object({
-      body: z.record(z.string().min(1), z.any()),
-    })
-    .nullable(),
+  response: z.object({
+    body: z.record(z.string().min(1), z.any()).nullable(),
+  }),
 })
 
 export type CodeSampleDefinitionInput = z.input<

@@ -12,6 +12,7 @@ export const createJavascriptRequest = (
 export const createJavascriptResponse = (
   response: CodeSampleDefinition['response'],
 ): string => {
-  if (response == null) return 'void'
-  return JSON.stringify(response.body)
+  const { body } = response
+  if (body == null) return 'void'
+  return JSON.stringify(body)
 }
