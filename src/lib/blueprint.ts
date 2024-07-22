@@ -1,3 +1,9 @@
+import {
+  type CodeSample,
+  type CodeSampleDefinitionInput,
+  CodeSampleDefinitionSchema,
+  createCodeSample,
+} from './code-sample/index.js'
 import type {
   Openapi,
   OpenapiOperation,
@@ -39,6 +45,7 @@ interface Endpoint {
   parameters: Parameter[]
   request: Request
   response: Response
+  codeSamples: CodeSample[]
 }
 
 interface Parameter {
@@ -127,18 +134,34 @@ interface ObjectProperty extends BaseProperty {
 
 type Method = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH'
 
-export interface TypesModule {
-  openapi: Openapi
+interface Context {
+  codeSamples: CodeSample[]
 }
 
-export const createBlueprint = ({ openapi }: TypesModule): Blueprint => {
+export interface TypesModule {
+  openapi: Openapi
+  codeSampleDefinitions: CodeSampleDefinitionInput[]
+}
+
+export const createBlueprint = ({
+  openapi,
+  codeSampleDefinitions = [],
+}: TypesModule): Blueprint => {
   const isFakeData = openapi.info.title === 'Foo'
   const targetPath = '/acs/systems/list'
   const targetSchema = 'acs_system'
 
+  const codeSamples = codeSampleDefinitions
+    .map((codeSampleDefinition) =>
+      CodeSampleDefinitionSchema.parse(codeSampleDefinition),
+    )
+    .map(createCodeSample)
+
   return {
     title: openapi.info.title,
-    routes: createRoutes(openapi.paths, isFakeData, targetPath),
+    routes: createRoutes(openapi.paths, isFakeData, targetPath, {
+      codeSamples,
+    }),
     resources: createResources(
       openapi.components.schemas,
       isFakeData,
@@ -151,20 +174,25 @@ const createRoutes = (
   paths: OpenapiPaths,
   isFakeData: boolean,
   targetPath: string,
+  context: Context,
 ): Route[] => {
   return Object.entries(paths)
     .filter(([path]) => isFakeData || path === targetPath)
-    .map(([path, pathItem]) => createRoute(path, pathItem))
+    .map(([path, pathItem]) => createRoute(path, pathItem, context))
 }
 
-const createRoute = (path: string, pathItem: OpenapiPathItem): Route => {
+const createRoute = (
+  path: string,
+  pathItem: OpenapiPathItem,
+  context: Context,
+): Route => {
   const pathParts = path.split('/')
   const routePath = `/${pathParts.slice(1, -1).join('/')}`
 
   return {
     path: routePath,
     namespace: { path: `/${pathParts[1]}` },
-    endpoints: createEndpoints(path, pathItem),
+    endpoints: createEndpoints(path, pathItem, context),
     subroutes: [],
   }
 }
@@ -172,13 +200,19 @@ const createRoute = (path: string, pathItem: OpenapiPathItem): Route => {
 const createEndpoints = (
   path: string,
   pathItem: OpenapiPathItem,
+  context: Context,
 ): Endpoint[] => {
   return Object.entries(pathItem)
     .filter(
       ([, operation]) => typeof operation === 'object' && operation !== null,
     )
     .map(([method, operation]) =>
-      createEndpoint(method as Method, operation as OpenapiOperation, path),
+      createEndpoint(
+        method as Method,
+        operation as OpenapiOperation,
+        path,
+        context,
+      ),
     )
 }
 
@@ -186,6 +220,7 @@ const createEndpoint = (
   method: Method,
   operation: OpenapiOperation,
   path: string,
+  context: Context,
 ): Endpoint => {
   const pathParts = path.split('/')
   const endpointPath = `/${pathParts.slice(1).join('/')}`
@@ -218,6 +253,9 @@ const createEndpoint = (
     isUndocumented,
     isDeprecated,
     deprecationMessage,
+    codeSamples: context.codeSamples.filter(
+      ({ request }) => request.path === endpointPath,
+    ),
     parameters: createParameters(operation),
     request: createRequest(method, operation),
     response: createResponse(
