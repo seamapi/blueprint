@@ -1,6 +1,7 @@
+import { z } from 'zod'
+
 import {
   type CodeSample,
-  type CodeSampleDefinitionInput,
   CodeSampleDefinitionSchema,
   createCodeSample,
 } from './code-sample/index.js'
@@ -138,30 +139,31 @@ interface Context {
   codeSamples: CodeSample[]
 }
 
-export interface TypesModule {
-  openapi: Openapi
-  codeSampleDefinitions: CodeSampleDefinitionInput[]
-}
+const TypesModuleSchema = z.object({
+  codeSampleDefinitions: z.array(CodeSampleDefinitionSchema),
+  // TODO: Import and use openapi zod schema here
+  openapi: z.any(),
+})
 
-export const createBlueprint = ({
-  openapi,
-  codeSampleDefinitions = [],
-}: TypesModule): Blueprint => {
+export type TypesModuleInput = z.input<typeof TypesModuleSchema>
+
+export const createBlueprint = (typesModule: TypesModuleInput): Blueprint => {
+  const { codeSampleDefinitions } = TypesModuleSchema.parse(typesModule)
+
+  // TODO: Move openapi to TypesModuleSchema
+  const openapi = typesModule.openapi as Openapi
+
   const isFakeData = openapi.info.title === 'Foo'
   const targetPath = '/acs/systems/list'
   const targetSchema = 'acs_system'
 
-  const codeSamples = codeSampleDefinitions
-    .map((codeSampleDefinition) =>
-      CodeSampleDefinitionSchema.parse(codeSampleDefinition),
-    )
-    .map(createCodeSample)
+  const context = {
+    codeSamples: codeSampleDefinitions.map(createCodeSample),
+  }
 
   return {
     title: openapi.info.title,
-    routes: createRoutes(openapi.paths, isFakeData, targetPath, {
-      codeSamples,
-    }),
+    routes: createRoutes(openapi.paths, isFakeData, targetPath, context),
     resources: createResources(
       openapi.components.schemas,
       isFakeData,
