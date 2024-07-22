@@ -147,6 +147,8 @@ const TypesModuleSchema = z.object({
 
 export type TypesModuleInput = z.input<typeof TypesModuleSchema>
 
+export type TypesModule = z.output<typeof TypesModuleSchema>
+
 export const createBlueprint = (typesModule: TypesModuleInput): Blueprint => {
   const { codeSampleDefinitions } = TypesModuleSchema.parse(typesModule)
 
