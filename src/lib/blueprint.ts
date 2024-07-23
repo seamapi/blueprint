@@ -139,7 +139,7 @@ interface Context {
   codeSamples: CodeSample[]
 }
 
-const TypesModuleSchema = z.object({
+export const TypesModuleSchema = z.object({
   codeSampleDefinitions: z.array(CodeSampleDefinitionSchema).default([]),
   // TODO: Import and use openapi zod schema here
   openapi: z.any(),
