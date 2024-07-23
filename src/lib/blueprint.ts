@@ -178,7 +178,9 @@ const createEndpoints = (
       ([, operation]) => typeof operation === 'object' && operation !== null,
     )
     .map(([method, operation]) =>
-      createEndpoint(method as Method, operation as OpenapiOperation, path),
+      // TODO: remove the non-null assertion, type cast
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      createEndpoint(method as Method, operation!, path),
     )
 }
 
@@ -281,11 +283,12 @@ const createResources = (
         typeof schema.properties === 'object' &&
         schema.properties !== null
       ) {
+        const properties: Record<string, OpenapiSchema> = schema.properties
         return {
           ...acc,
           [schemaName]: {
             resourceType: schemaName,
-            properties: createProperties(schema.properties),
+            properties: createProperties(properties),
           },
         }
       }
@@ -366,7 +369,7 @@ const createResponse = (responses: OpenapiOperation['responses']): Response => {
       typeof schema.properties === 'object' &&
       schema.properties !== null
     ) {
-      const properties = schema.properties
+      const properties: OpenapiOperation['responses'] = schema.properties
       const refKey = Object.keys(properties).find((key) => {
         const prop = properties[key]
         return (
@@ -446,7 +449,7 @@ const createProperties = (
             return {
               ...baseProperty,
               type: 'enum',
-              values: prop.enum.map((value) => ({ name: String(value) })),
+              values: prop.enum.map((value: string) => ({ name: String(value) })),
             }
           }
           return { ...baseProperty, type: 'string' }
@@ -458,7 +461,7 @@ const createProperties = (
               'properties' in prop &&
               typeof prop.properties === 'object' &&
               prop.properties !== null
-                ? createProperties(prop.properties)
+                ? createProperties(prop.properties as Record<string, OpenapiSchema>)
                 : [],
           }
         case 'array':
