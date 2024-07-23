@@ -1,5 +1,7 @@
 import { z } from 'zod'
 
+import type { Endpoint } from 'lib/blueprint.js'
+
 import {
   createJavascriptRequest,
   createJavascriptResponse,
@@ -41,15 +43,20 @@ const CodeSampleSchema = CodeSampleDefinitionSchema.extend({
 
 export type CodeSample = z.output<typeof CodeSampleSchema>
 
+export interface Context {
+  endpoint: Omit<Endpoint, 'codeSamples'>
+}
+
 export const createCodeSample = (
   codeSampleDefinition: CodeSampleDefinition,
+  context: Context,
 ): CodeSample => {
   return {
     ...codeSampleDefinition,
     code: {
       javascript: {
-        request: createJavascriptRequest(codeSampleDefinition.request),
-        response: createJavascriptResponse(codeSampleDefinition.response),
+        request: createJavascriptRequest(codeSampleDefinition, context),
+        response: createJavascriptResponse(codeSampleDefinition, context),
       },
     },
   }

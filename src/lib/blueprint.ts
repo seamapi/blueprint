@@ -5,6 +5,7 @@ import {
   CodeSampleDefinitionSchema,
   createCodeSample,
 } from './code-sample/index.js'
+import type { CodeSampleDefinition } from './code-sample/schema.js'
 import type {
   Openapi,
   OpenapiOperation,
@@ -136,7 +137,7 @@ interface ObjectProperty extends BaseProperty {
 type Method = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH'
 
 interface Context {
-  codeSamples: CodeSample[]
+  codeSampleDefinitions: CodeSampleDefinition[]
 }
 
 export const TypesModuleSchema = z.object({
@@ -160,7 +161,7 @@ export const createBlueprint = (typesModule: TypesModuleInput): Blueprint => {
   const targetSchema = 'acs_system'
 
   const context = {
-    codeSamples: codeSampleDefinitions.map(createCodeSample),
+    codeSampleDefinitions,
   }
 
   return {
@@ -247,7 +248,7 @@ const createEndpoint = (
       ? operation['x-deprecated']
       : ''
 
-  return {
+  const endpoint = {
     title:
       'operationId' in operation && typeof operation.operationId === 'string'
         ? operation.operationId
@@ -257,14 +258,20 @@ const createEndpoint = (
     isUndocumented,
     isDeprecated,
     deprecationMessage,
-    codeSamples: context.codeSamples.filter(
-      ({ request }) => request.path === endpointPath,
-    ),
     parameters: createParameters(operation),
     request: createRequest(method, operation),
     response: createResponse(
       'responses' in operation ? operation.responses : {},
     ),
+  }
+
+  return {
+    ...endpoint,
+    codeSamples: context.codeSampleDefinitions
+      .filter(({ request }) => request.path === endpointPath)
+      .map((codeSampleDefinition) =>
+        createCodeSample(codeSampleDefinition, { endpoint }),
+      ),
   }
 }
 
