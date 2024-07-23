@@ -13,23 +13,23 @@ export interface Blueprint {
   resources: Record<string, Resource>
 }
 
-interface Route {
+export interface Route {
   path: string
   namespace: Namespace | null
   endpoints: Endpoint[]
   subroutes: Route[]
 }
 
-interface Resource {
+export interface Resource {
   resourceType: string
   properties: Property[]
 }
 
-interface Namespace {
+export interface Namespace {
   path: string
 }
 
-interface Endpoint {
+export interface Endpoint {
   title: string
   path: string
   description: string
@@ -41,7 +41,7 @@ interface Endpoint {
   response: Response
 }
 
-interface Parameter {
+export interface Parameter {
   name: string
   isRequired: boolean
   isUndocumented: boolean
@@ -50,14 +50,14 @@ interface Parameter {
   description: string
 }
 
-interface Request {
+export interface Request {
   methods: Method[]
   semanticMethod: Method
   preferredMethod: Method
   parameters: Parameter[]
 }
 
-type Response = VoidResponse | ResourceResponse | ResourceListResponse
+export type Response = VoidResponse | ResourceResponse | ResourceListResponse
 
 interface BaseResponse {
   description: string
@@ -87,7 +87,7 @@ interface BaseProperty {
   isUndocumented: boolean
 }
 
-type Property =
+export type Property =
   | StringProperty
   | EnumProperty
   | RecordProperty
