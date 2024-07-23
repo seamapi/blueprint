@@ -1,132 +1,132 @@
 import { z } from 'zod'
 
-const ZStringWithFormat = z.object({
+const stringWithFormatSchema = z.object({
   type: z.literal('string'),
   format: z.string().optional(),
   description: z.string().optional(),
 })
 
-const ZNumber = z.object({
+const numberSchema = z.object({
   type: z.enum(['number', 'integer']),
   format: z.string().optional(),
   description: z.string().optional(),
 })
 
-const ZBoolean = z.object({
+const booleanSchema = z.object({
   type: z.literal('boolean'),
   description: z.string().optional(),
 })
 
-const ZSchema: z.ZodType<any> = z.lazy(() =>
+const modelSchema: z.ZodType<any> = z.lazy(() =>
   z.union([
     z.object({
       type: z.literal('object'),
-      properties: z.record(ZSchema).optional(),
+      properties: z.record(modelSchema).optional(),
       required: z.array(z.string()).optional(),
       description: z.string().optional(),
     }),
     z.object({
       type: z.literal('array'),
-      items: ZSchema,
+      items: modelSchema,
       description: z.string().optional(),
     }),
-    ZStringWithFormat,
-    ZNumber,
-    ZBoolean,
+    stringWithFormatSchema,
+    numberSchema,
+    booleanSchema,
     z.object({
       $ref: z.string(),
     }),
   ]),
 )
 
-export const ZOpenapiInfo = z.object({
+export const infoSchema = z.object({
   title: z.string(),
   version: z.string(),
 })
 
-export const ZOpenapiServer = z.object({
+export const serverSchema = z.object({
   url: z.string(),
 })
 
-export const ZOpenapiTag = z.object({
+export const tagSchema = z.object({
   name: z.string(),
   description: z.string(),
 })
 
-export const ZOpenapiParameter = z.object({
+export const parameterSchema = z.object({
   name: z.string(),
   in: z.enum(['query', 'header', 'path', 'cookie']),
   description: z.string().optional(),
   required: z.boolean().optional(),
-  schema: ZSchema,
+  schema: modelSchema,
 })
 
-export const ZOpenapiRequestBody = z.object({
+export const requestSchema = z.object({
   content: z.record(
     z.object({
-      schema: ZSchema,
+      schema: modelSchema,
     }),
   ),
   description: z.string().optional(),
   required: z.boolean().optional(),
 })
 
-export const ZOpenapiResponse = z.object({
+export const responseSchema = z.object({
   description: z.string(),
   content: z
     .record(
       z.object({
-        schema: ZSchema,
+        schema: modelSchema,
       }),
     )
     .optional(),
 })
 
-export const ZOpenapiOperation = z.object({
+export const operationSchema = z.object({
   operationId: z.string(),
   summary: z.string().optional(),
   description: z.string().optional(),
-  parameters: z.array(ZOpenapiParameter).optional(),
-  requestBody: ZOpenapiRequestBody.optional(),
-  responses: z.record(ZOpenapiResponse),
+  parameters: z.array(parameterSchema).optional(),
+  requestBody: requestSchema.optional(),
+  responses: z.record(responseSchema),
   tags: z.array(z.string()).optional(),
   security: z.array(z.record(z.array(z.string()))).optional(),
   'x-undocumented': z.string().optional(),
   'x-deprecated': z.string().optional(),
 })
 
-export const ZOpenapiPathItem = z.object({
-  get: ZOpenapiOperation.optional(),
-  post: ZOpenapiOperation.optional(),
-  put: ZOpenapiOperation.optional(),
-  delete: ZOpenapiOperation.optional(),
-  patch: ZOpenapiOperation.optional(),
+export const pathItemSchema = z.object({
+  get: operationSchema.optional(),
+  post: operationSchema.optional(),
+  put: operationSchema.optional(),
+  delete: operationSchema.optional(),
+  patch: operationSchema.optional(),
 })
 
-export const ZOpenapiPaths = z.record(ZOpenapiPathItem)
+export const pathsSchema = z.record(pathItemSchema)
 
-export const ZOpenapiComponents = z.object({
-  schemas: z.record(ZSchema),
+export const componentsSchema = z.object({
+  schemas: z.record(modelSchema),
 })
 
-export const ZOpenapi = z.object({
+export const openapiSchema = z.object({
   openapi: z.string(),
-  info: ZOpenapiInfo,
-  servers: z.array(ZOpenapiServer),
-  tags: z.array(ZOpenapiTag),
-  paths: ZOpenapiPaths,
-  components: ZOpenapiComponents,
+  info: infoSchema,
+  servers: z.array(serverSchema),
+  tags: z.array(tagSchema),
+  paths: pathsSchema,
+  components: componentsSchema,
 })
 
-export type Openapi = z.infer<typeof ZOpenapi>
-export type OpenapiInfo = z.infer<typeof ZOpenapiInfo>
-export type OpenapiServer = z.infer<typeof ZOpenapiServer>
-export type OpenapiTag = z.infer<typeof ZOpenapiTag>
-export type OpenapiPaths = z.infer<typeof ZOpenapiPaths>
-export type OpenapiPathItem = z.infer<typeof ZOpenapiPathItem>
-export type OpenapiOperation = z.infer<typeof ZOpenapiOperation>
-export type OpenapiParameter = z.infer<typeof ZOpenapiParameter>
-export type OpenapiRequestBody = z.infer<typeof ZOpenapiRequestBody>
-export type OpenapiResponse = z.infer<typeof ZOpenapiResponse>
-export type OpenapiSchema = z.infer<typeof ZSchema>
-export type OpenapiComponents = z.infer<typeof ZOpenapiComponents>
+export type Openapi = z.infer<typeof openapiSchema>
+export type OpenapiInfo = z.infer<typeof infoSchema>
+export type OpenapiServer = z.infer<typeof serverSchema>
+export type OpenapiTag = z.infer<typeof tagSchema>
+export type OpenapiPaths = z.infer<typeof pathsSchema>
+export type OpenapiPathItem = z.infer<typeof pathItemSchema>
+export type OpenapiOperation = z.infer<typeof operationSchema>
+export type OpenapiParameter = z.infer<typeof parameterSchema>
+export type OpenapiRequestBody = z.infer<typeof requestSchema>
+export type OpenapiResponse = z.infer<typeof responseSchema>
+export type OpenapiSchema = z.infer<typeof modelSchema>
+export type OpenapiComponents = z.infer<typeof componentsSchema>
