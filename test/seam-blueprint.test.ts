@@ -1,10 +1,10 @@
-import { openapi } from '@seamapi/types/connect'
+import * as types from '@seamapi/types/connect'
 import test from 'ava'
 
-import { createBlueprint } from '@seamapi/blueprint'
+import { createBlueprint, TypesModuleSchema } from '@seamapi/blueprint'
 
 test('createBlueprint', (t) => {
-  // @ts-expect-error Remove once the import is properly typed
-  const blueprint = createBlueprint({ openapi })
+  const typesModule = TypesModuleSchema.parse(types)
+  const blueprint = createBlueprint(typesModule)
   t.snapshot(blueprint, 'blueprint')
 })
