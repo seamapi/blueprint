@@ -1,11 +1,11 @@
 import test from 'ava'
 
-import { createBlueprint } from '@seamapi/blueprint'
+import { createBlueprint, TypesModuleSchema } from '@seamapi/blueprint'
 
 import * as types from './fixtures/types/index.js'
 
 test('createBlueprint', (t) => {
-  // @ts-expect-error Remove once the fixture is properly typed
-  const blueprint = createBlueprint(types)
+  const typesModule = TypesModuleSchema.parse(types)
+  const blueprint = createBlueprint(typesModule)
   t.snapshot(blueprint, 'blueprint')
 })

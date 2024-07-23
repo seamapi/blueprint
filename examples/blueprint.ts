@@ -1,6 +1,6 @@
 import type { Builder, Command, Describe, Handler } from 'landlubber'
 
-import { createBlueprint, type TypesModule } from '@seamapi/blueprint'
+import { createBlueprint, TypesModuleSchema } from '@seamapi/blueprint'
 
 interface Options {
   moduleName: string
@@ -19,6 +19,6 @@ export const builder: Builder = {
 }
 
 export const handler: Handler<Options> = async ({ moduleName, logger }) => {
-  const types = (await import(moduleName)) as TypesModule
+  const types = TypesModuleSchema.parse(await import(moduleName))
   logger.info({ data: createBlueprint(types) }, 'blueprint')
 }

@@ -1,3 +1,11 @@
+import { z } from 'zod'
+
+import {
+  type CodeSample,
+  CodeSampleDefinitionSchema,
+  createCodeSample,
+} from './code-sample/index.js'
+import type { CodeSampleDefinition } from './code-sample/schema.js'
 import type {
   Openapi,
   OpenapiOperation,
@@ -39,6 +47,7 @@ export interface Endpoint {
   parameters: Parameter[]
   request: Request
   response: Response
+  codeSamples: CodeSample[]
 }
 
 export interface Parameter {
@@ -127,18 +136,37 @@ interface ObjectProperty extends BaseProperty {
 
 type Method = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH'
 
-export interface TypesModule {
-  openapi: Openapi
+interface Context {
+  codeSampleDefinitions: CodeSampleDefinition[]
 }
 
-export const createBlueprint = ({ openapi }: TypesModule): Blueprint => {
+export const TypesModuleSchema = z.object({
+  codeSampleDefinitions: z.array(CodeSampleDefinitionSchema).default([]),
+  // TODO: Import and use openapi zod schema here
+  openapi: z.any(),
+})
+
+export type TypesModuleInput = z.input<typeof TypesModuleSchema>
+
+export type TypesModule = z.output<typeof TypesModuleSchema>
+
+export const createBlueprint = (typesModule: TypesModuleInput): Blueprint => {
+  const { codeSampleDefinitions } = TypesModuleSchema.parse(typesModule)
+
+  // TODO: Move openapi to TypesModuleSchema
+  const openapi = typesModule.openapi as Openapi
+
   const isFakeData = openapi.info.title === 'Foo'
   const targetPath = '/acs/systems/list'
   const targetSchema = 'acs_system'
 
+  const context = {
+    codeSampleDefinitions,
+  }
+
   return {
     title: openapi.info.title,
-    routes: createRoutes(openapi.paths, isFakeData, targetPath),
+    routes: createRoutes(openapi.paths, isFakeData, targetPath, context),
     resources: createResources(
       openapi.components.schemas,
       isFakeData,
@@ -151,20 +179,25 @@ const createRoutes = (
   paths: OpenapiPaths,
   isFakeData: boolean,
   targetPath: string,
+  context: Context,
 ): Route[] => {
   return Object.entries(paths)
     .filter(([path]) => isFakeData || path === targetPath)
-    .map(([path, pathItem]) => createRoute(path, pathItem))
+    .map(([path, pathItem]) => createRoute(path, pathItem, context))
 }
 
-const createRoute = (path: string, pathItem: OpenapiPathItem): Route => {
+const createRoute = (
+  path: string,
+  pathItem: OpenapiPathItem,
+  context: Context,
+): Route => {
   const pathParts = path.split('/')
   const routePath = `/${pathParts.slice(1, -1).join('/')}`
 
   return {
     path: routePath,
     namespace: { path: `/${pathParts[1]}` },
-    endpoints: createEndpoints(path, pathItem),
+    endpoints: createEndpoints(path, pathItem, context),
     subroutes: [],
   }
 }
@@ -172,13 +205,19 @@ const createRoute = (path: string, pathItem: OpenapiPathItem): Route => {
 const createEndpoints = (
   path: string,
   pathItem: OpenapiPathItem,
+  context: Context,
 ): Endpoint[] => {
   return Object.entries(pathItem)
     .filter(
       ([, operation]) => typeof operation === 'object' && operation !== null,
     )
     .map(([method, operation]) =>
-      createEndpoint(method as Method, operation as OpenapiOperation, path),
+      createEndpoint(
+        method as Method,
+        operation as OpenapiOperation,
+        path,
+        context,
+      ),
     )
 }
 
@@ -186,6 +225,7 @@ const createEndpoint = (
   method: Method,
   operation: OpenapiOperation,
   path: string,
+  context: Context,
 ): Endpoint => {
   const pathParts = path.split('/')
   const endpointPath = `/${pathParts.slice(1).join('/')}`
@@ -208,7 +248,7 @@ const createEndpoint = (
       ? operation['x-deprecated']
       : ''
 
-  return {
+  const endpoint = {
     title:
       'operationId' in operation && typeof operation.operationId === 'string'
         ? operation.operationId
@@ -223,6 +263,15 @@ const createEndpoint = (
     response: createResponse(
       'responses' in operation ? operation.responses : {},
     ),
+  }
+
+  return {
+    ...endpoint,
+    codeSamples: context.codeSampleDefinitions
+      .filter(({ request }) => request.path === endpointPath)
+      .map((codeSampleDefinition) =>
+        createCodeSample(codeSampleDefinition, { endpoint }),
+      ),
   }
 }
 
