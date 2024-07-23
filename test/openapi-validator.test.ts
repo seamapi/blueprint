@@ -11,7 +11,7 @@ test('Validate OpenAPI schema', (t) => {
     const validatedTypes = openApiSchema.parse(types.openapi)
     t.pass('OpenAPI schema is valid')
 
-      // @ts-expect-error Remove once the fixture is properly typed
+    // @ts-expect-error Remove once the fixture is properly typed
     const blueprint = createBlueprint({ openapi: validatedTypes })
 
     t.truthy(blueprint.title, 'Blueprint has a title')

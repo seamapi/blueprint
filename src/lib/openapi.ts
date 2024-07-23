@@ -36,7 +36,7 @@ const ZSchema: z.ZodType<any> = z.lazy(() =>
     z.object({
       $ref: z.string(),
     }),
-  ])
+  ]),
 )
 
 export const ZOpenapiInfo = z.object({
@@ -62,18 +62,24 @@ export const ZOpenapiParameter = z.object({
 })
 
 export const ZOpenapiRequestBody = z.object({
-  content: z.record(z.object({
-    schema: ZSchema,
-  })),
+  content: z.record(
+    z.object({
+      schema: ZSchema,
+    }),
+  ),
   description: z.string().optional(),
   required: z.boolean().optional(),
 })
 
 export const ZOpenapiResponse = z.object({
   description: z.string(),
-  content: z.record(z.object({
-    schema: ZSchema,
-  })).optional(),
+  content: z
+    .record(
+      z.object({
+        schema: ZSchema,
+      }),
+    )
+    .optional(),
 })
 
 export const ZOpenapiOperation = z.object({

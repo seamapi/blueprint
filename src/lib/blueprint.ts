@@ -449,7 +449,9 @@ const createProperties = (
             return {
               ...baseProperty,
               type: 'enum',
-              values: prop.enum.map((value: string) => ({ name: String(value) })),
+              values: prop.enum.map((value: string) => ({
+                name: String(value),
+              })),
             }
           }
           return { ...baseProperty, type: 'string' }
@@ -461,7 +463,9 @@ const createProperties = (
               'properties' in prop &&
               typeof prop.properties === 'object' &&
               prop.properties !== null
-                ? createProperties(prop.properties as Record<string, OpenapiSchema>)
+                ? createProperties(
+                    prop.properties as Record<string, OpenapiSchema>,
+                  )
                 : [],
           }
         case 'array':
