@@ -1,6 +1,7 @@
 import { z } from 'zod'
 
 import type { Endpoint } from 'lib/blueprint.js'
+import { JsonSchema } from 'lib/json.js'
 
 import {
   createJavascriptRequest,
@@ -18,10 +19,10 @@ export const CodeSampleDefinitionSchema = z.object({
         /^[a-z_/]+$/,
         'Can only contain the lowercase letters a-z, underscores, and forward slashes.',
       ),
-    parameters: z.record(z.string().min(1), z.any()),
+    parameters: z.record(z.string().min(1), JsonSchema),
   }),
   response: z.object({
-    body: z.record(z.string().min(1), z.any()).nullable(),
+    body: z.record(z.string().min(1), JsonSchema).nullable(),
   }),
 })
 
