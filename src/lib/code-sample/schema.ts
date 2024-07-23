@@ -4,6 +4,7 @@ import {
   createJavascriptRequest,
   createJavascriptResponse,
 } from './javascript.js'
+import { createPythonRequest, createPythonResponse } from './python.js'
 
 export const CodeSampleDefinitionSchema = z.object({
   title: z.string().trim().min(1),
@@ -31,7 +32,7 @@ export type CodeSampleDefinition = z.output<typeof CodeSampleDefinitionSchema>
 
 const CodeSampleSchema = CodeSampleDefinitionSchema.extend({
   code: z.record(
-    z.enum(['javascript']),
+    z.enum(['javascript', 'python']),
     z.object({
       request: z.string(),
       response: z.string(),
@@ -50,6 +51,10 @@ export const createCodeSample = (
       javascript: {
         request: createJavascriptRequest(codeSampleDefinition.request),
         response: createJavascriptResponse(codeSampleDefinition.response),
+      },
+      python: {
+        request: createPythonRequest(codeSampleDefinition.request),
+        response: createPythonResponse(codeSampleDefinition.response),
       },
     },
   }
