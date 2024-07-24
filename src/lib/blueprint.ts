@@ -258,9 +258,6 @@ const createEndpoint = (
     isUndocumented,
     isDeprecated,
     deprecationMessage,
-    codeSamples: context.codeSamples.filter(
-      ({ request }) => request.path === endpointPath,
-    ),
     parameters: createParameters(operation),
     request: createRequest(method, operation),
     response: createResponse(

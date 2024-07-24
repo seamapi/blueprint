@@ -1,9 +1,10 @@
 import { pascalCase, snakeCase } from 'change-case'
 
-import type { CodeSampleDefinition } from './schema.js'
+import type { CodeSampleDefinition, Context } from './schema.js'
 
 export const createPythonRequest = (
-  request: CodeSampleDefinition['request'],
+  { request }: CodeSampleDefinition,
+  _context: Context,
 ): string => {
   const parts = request.path.split('/')
   const params = Object.entries(request.parameters)
@@ -14,29 +15,27 @@ export const createPythonRequest = (
 }
 
 export const createPythonResponse = (
-  response: CodeSampleDefinition['response'],
+  { response, title }: CodeSampleDefinition,
+  context: Context,
 ): string => {
-  const { body } = response
-  if (body == null) return 'None'
+  const { endpoint } = context
 
-  const bodyEntry = Object.entries(body)[0]
-  if (bodyEntry == null) {
-    return 'None'
+  if (endpoint.response.responseType === 'void') return 'None'
+
+  const { responseKey } = endpoint.response
+  const responseValue = response?.body?.[responseKey]
+
+  if (responseValue == null) {
+    throw new Error(`Missing ${responseKey} for '${title}'`)
   }
 
-  const [responseKey, responseValue] = bodyEntry
-  const responseClassName = pascalCase(responseKey)
-
-  if (typeof responseValue !== 'object' || responseValue === null) {
-    return 'None'
-  }
-
-  const responseParams = Object.entries(responseValue as Record<string, any>)
+  const responsePythonClassName = pascalCase(responseKey)
+  const responsePythonParams = Object.entries(responseValue)
     .map(
       ([paramKey, paramValue]) =>
         `${snakeCase(paramKey)}=${JSON.stringify(paramValue)}`,
     )
     .join(', ')
 
-  return `${responseClassName}(${responseParams})`
+  return `${responsePythonClassName}(${responsePythonParams})`
 }
