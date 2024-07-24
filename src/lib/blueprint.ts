@@ -485,7 +485,7 @@ export const createProperties = (
         }
         return { ...baseProperty, type: 'record' }
       default:
-        return { ...baseProperty, type: 'string' }
+        throw new Error(`Unsupported property type: ${validatedProp.type}`)
     }
   })
 }
