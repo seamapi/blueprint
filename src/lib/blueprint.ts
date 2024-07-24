@@ -5,6 +5,7 @@ import {
   CodeSampleDefinitionSchema,
   createCodeSample,
 } from './code-sample/index.js'
+import type { CodeSampleDefinition } from './code-sample/schema.js'
 import type {
   Openapi,
   OpenapiOperation,
@@ -20,23 +21,23 @@ export interface Blueprint {
   resources: Record<string, Resource>
 }
 
-interface Route {
+export interface Route {
   path: string
   namespace: Namespace | null
   endpoints: Endpoint[]
   subroutes: Route[]
 }
 
-interface Resource {
+export interface Resource {
   resourceType: string
   properties: Property[]
 }
 
-interface Namespace {
+export interface Namespace {
   path: string
 }
 
-interface Endpoint {
+export interface Endpoint {
   title: string
   path: string
   description: string
@@ -49,7 +50,7 @@ interface Endpoint {
   codeSamples: CodeSample[]
 }
 
-interface Parameter {
+export interface Parameter {
   name: string
   isRequired: boolean
   isUndocumented: boolean
@@ -58,14 +59,14 @@ interface Parameter {
   description: string
 }
 
-interface Request {
+export interface Request {
   methods: Method[]
   semanticMethod: Method
   preferredMethod: Method
   parameters: Parameter[]
 }
 
-type Response = VoidResponse | ResourceResponse | ResourceListResponse
+export type Response = VoidResponse | ResourceResponse | ResourceListResponse
 
 interface BaseResponse {
   description: string
@@ -95,7 +96,7 @@ interface BaseProperty {
   isUndocumented: boolean
 }
 
-type Property =
+export type Property =
   | StringProperty
   | EnumProperty
   | RecordProperty
@@ -136,7 +137,7 @@ interface ObjectProperty extends BaseProperty {
 type Method = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH'
 
 interface Context {
-  codeSamples: CodeSample[]
+  codeSampleDefinitions: CodeSampleDefinition[]
 }
 
 export const TypesModuleSchema = z.object({
@@ -160,7 +161,7 @@ export const createBlueprint = (typesModule: TypesModuleInput): Blueprint => {
   const targetSchema = 'acs_system'
 
   const context = {
-    codeSamples: codeSampleDefinitions.map(createCodeSample),
+    codeSampleDefinitions,
   }
 
   return {
@@ -247,7 +248,7 @@ const createEndpoint = (
       ? operation['x-deprecated']
       : ''
 
-  return {
+  const endpoint = {
     title:
       'operationId' in operation && typeof operation.operationId === 'string'
         ? operation.operationId
@@ -265,6 +266,15 @@ const createEndpoint = (
     response: createResponse(
       'responses' in operation ? operation.responses : {},
     ),
+  }
+
+  return {
+    ...endpoint,
+    codeSamples: context.codeSampleDefinitions
+      .filter(({ request }) => request.path === endpointPath)
+      .map((codeSampleDefinition) =>
+        createCodeSample(codeSampleDefinition, { endpoint }),
+      ),
   }
 }
 

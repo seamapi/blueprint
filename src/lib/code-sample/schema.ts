@@ -1,10 +1,12 @@
 import { z } from 'zod'
 
+import type { Endpoint } from 'lib/blueprint.js'
+import { JsonSchema } from 'lib/json.js'
+
 import {
   createJavascriptRequest,
   createJavascriptResponse,
 } from './javascript.js'
-import { createPythonRequest, createPythonResponse } from './python.js'
 
 export const CodeSampleDefinitionSchema = z.object({
   title: z.string().trim().min(1),
@@ -17,10 +19,10 @@ export const CodeSampleDefinitionSchema = z.object({
         /^[a-z_/]+$/,
         'Can only contain the lowercase letters a-z, underscores, and forward slashes.',
       ),
-    parameters: z.record(z.string().min(1), z.any()),
+    parameters: z.record(z.string().min(1), JsonSchema),
   }),
   response: z.object({
-    body: z.record(z.string().min(1), z.any()).nullable(),
+    body: z.record(z.string().min(1), JsonSchema).nullable(),
   }),
 })
 
@@ -32,7 +34,7 @@ export type CodeSampleDefinition = z.output<typeof CodeSampleDefinitionSchema>
 
 const CodeSampleSchema = CodeSampleDefinitionSchema.extend({
   code: z.record(
-    z.enum(['javascript', 'python']),
+    z.enum(['javascript']),
     z.object({
       request: z.string(),
       response: z.string(),
@@ -42,19 +44,20 @@ const CodeSampleSchema = CodeSampleDefinitionSchema.extend({
 
 export type CodeSample = z.output<typeof CodeSampleSchema>
 
+export interface Context {
+  endpoint: Omit<Endpoint, 'codeSamples'>
+}
+
 export const createCodeSample = (
   codeSampleDefinition: CodeSampleDefinition,
+  context: Context,
 ): CodeSample => {
   return {
     ...codeSampleDefinition,
     code: {
       javascript: {
-        request: createJavascriptRequest(codeSampleDefinition.request),
-        response: createJavascriptResponse(codeSampleDefinition.response),
-      },
-      python: {
-        request: createPythonRequest(codeSampleDefinition.request),
-        response: createPythonResponse(codeSampleDefinition.response),
+        request: createJavascriptRequest(codeSampleDefinition, context),
+        response: createJavascriptResponse(codeSampleDefinition, context),
       },
     },
   }
