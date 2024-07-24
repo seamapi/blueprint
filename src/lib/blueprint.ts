@@ -453,10 +453,10 @@ const createProperties = (
 
     const baseProperty = {
       name,
-      description: validatedProp.description ?? '',
-      isDeprecated: validatedProp.deprecated ?? false,
-      deprecationMessage: validatedProp['x-deprecated'] ?? '',
-      isUndocumented: validatedProp['x-undocumented'] !== '',
+      description: validatedProp.description,
+      isDeprecated:  validatedProp['x-deprecated'].length > 0,
+      deprecationMessage: validatedProp['x-deprecated'],
+      isUndocumented: validatedProp['x-undocumented'].length > 0,
     }
 
     switch (validatedProp.type) {
@@ -478,7 +478,9 @@ const createProperties = (
           return {
             ...baseProperty,
             type: 'object',
-            properties: createProperties(validatedProp.properties as Record<string, OpenapiSchema>),
+            properties: createProperties(
+              validatedProp.properties as Record<string, OpenapiSchema>,
+            ),
           }
         }
         return { ...baseProperty, type: 'record' }

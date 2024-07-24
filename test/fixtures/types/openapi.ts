@@ -25,7 +25,7 @@ export default {
           undocumented_prop: {
             description: 'This prop is undocumented',
             type: 'string',
-            'x-undocumented': "This prop is intentionally left undocumented.",
+            'x-undocumented': 'This prop is intentionally left undocumented.',
           },
         },
         required: ['foo_id', 'name'],

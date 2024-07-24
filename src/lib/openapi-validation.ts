@@ -70,12 +70,14 @@ export const propertySchema: z.ZodSchema<any> = z.object({
   'x-undocumented': z.string().default(''),
   'x-deprecated': z.string().default(''),
   enum: z.array(z.string()).optional(),
-  items: z.union([
-    z.object({
-      type: z.string().optional(),
-      $ref: z.string().optional(),
-    }),
-    z.lazy(() => propertySchema),
-  ]).optional(),
+  items: z
+    .union([
+      z.object({
+        type: z.string().optional(),
+        $ref: z.string().optional(),
+      }),
+      z.lazy(() => propertySchema),
+    ])
+    .optional(),
   $ref: z.string().optional(),
 })

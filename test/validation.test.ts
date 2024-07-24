@@ -55,9 +55,9 @@ test('createBlueprint', (t) => {
     'This prop is deprecated',
     'Deprecated property should have correct description',
   )
-  t.false(
+  t.true(
     deprecatedProperty?.isDeprecated,
-    'Deprecated property isDeprecated flag should be false',
+    'Deprecated property isDeprecated flag should be true',
   )
   t.is(
     deprecatedProperty?.deprecationMessage,
