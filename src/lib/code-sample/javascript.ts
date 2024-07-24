@@ -6,7 +6,7 @@ export const createJavascriptRequest = (
   request: CodeSampleDefinition['request'],
 ): string => {
   const parts = request.path.split('/')
-  return `await seam.${parts.map((p) => camelCase(p)).join('.')}(${JSON.stringify(request.parameters)})`
+  return `await seam${parts.map((p) => camelCase(p)).join('.')}(${JSON.stringify(request.parameters)})`
 }
 
 export const createJavascriptResponse = (

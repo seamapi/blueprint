@@ -1,4 +1,4 @@
-import { snakeCase } from 'change-case'
+import { pascalCase, snakeCase } from 'change-case'
 
 import type { CodeSampleDefinition } from './schema.js'
 
@@ -18,5 +18,25 @@ export const createPythonResponse = (
 ): string => {
   const { body } = response
   if (body == null) return 'None'
-  return JSON.stringify(body)
+
+  const bodyEntry = Object.entries(body)[0]
+  if (bodyEntry == null) {
+    return 'None'
+  }
+
+  const [responseKey, responseValue] = bodyEntry
+  const responseClassName = pascalCase(responseKey)
+
+  if (typeof responseValue !== 'object' || responseValue === null) {
+    return 'None'
+  }
+
+  const responseParams = Object.entries(responseValue as Record<string, any>)
+    .map(
+      ([paramKey, paramValue]) =>
+        `${snakeCase(paramKey)}=${JSON.stringify(paramValue)}`,
+    )
+    .join(', ')
+
+  return `${responseClassName}(${responseParams})`
 }
