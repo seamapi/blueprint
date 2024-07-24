@@ -45,60 +45,56 @@ test('createBlueprint', (t) => {
     (p) => p.name === 'deprecated_field',
   )
   t.truthy(deprecatedProperty, 'Deprecated property should exist')
-  if (deprecatedProperty != null) {
-    t.is(
-      deprecatedProperty.type,
-      'string',
-      'Deprecated property should be of type string',
-    )
-    t.is(
-      deprecatedProperty.description,
-      'This field is deprecated',
-      'Deprecated property should have correct description',
-    )
-    t.false(
-      deprecatedProperty.isDeprecated,
-      'Deprecated property isDeprecated flag should be false',
-    )
-    t.is(
-      deprecatedProperty.deprecationMessage,
-      'This field will be removed in the next version',
-      'Deprecated property should have correct deprecation message',
-    )
-    t.false(
-      deprecatedProperty.isUndocumented,
-      'Deprecated property should not be undocumented',
-    )
-  }
+  t.is(
+    deprecatedProperty?.type,
+    'string',
+    'Deprecated property should be of type string',
+  )
+  t.is(
+    deprecatedProperty?.description,
+    'This field is deprecated',
+    'Deprecated property should have correct description',
+  )
+  t.false(
+    deprecatedProperty?.isDeprecated,
+    'Deprecated property isDeprecated flag should be false',
+  )
+  t.is(
+    deprecatedProperty?.deprecationMessage,
+    'This field will be removed in the next version',
+    'Deprecated property should have correct deprecation message',
+  )
+  t.false(
+    deprecatedProperty?.isUndocumented,
+    'Deprecated property should not be undocumented',
+  )
 
   // Test undocumented property
   const undocumentedProperty = fooResource?.properties.find(
     (p) => p.name === 'undocumented_field',
   )
   t.truthy(undocumentedProperty, 'Undocumented property should exist')
-  if (undocumentedProperty != null) {
-    t.is(
-      undocumentedProperty.type,
-      'string',
-      'Undocumented property should be of type string',
-    )
-    t.is(
-      undocumentedProperty.description,
-      'This field is undocumented',
-      'Undocumented property should have correct description',
-    )
-    t.false(
-      undocumentedProperty.isDeprecated,
-      'Undocumented property should not be deprecated',
-    )
-    t.is(
-      undocumentedProperty.deprecationMessage,
-      '',
-      'Undocumented property should have empty deprecation message',
-    )
-    t.true(
-      undocumentedProperty.isUndocumented,
-      'Undocumented property should be marked as undocumented',
-    )
-  }
+  t.is(
+    undocumentedProperty?.type,
+    'string',
+    'Undocumented property should be of type string',
+  )
+  t.is(
+    undocumentedProperty?.description,
+    'This field is undocumented',
+    'Undocumented property should have correct description',
+  )
+  t.false(
+    undocumentedProperty?.isDeprecated,
+    'Undocumented property should not be deprecated',
+  )
+  t.is(
+    undocumentedProperty?.deprecationMessage,
+    '',
+    'Undocumented property should have empty deprecation message',
+  )
+  t.true(
+    undocumentedProperty?.isUndocumented,
+    'Undocumented property should be marked as undocumented',
+  )
 })

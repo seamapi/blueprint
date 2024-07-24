@@ -83,7 +83,6 @@ export default {
         security: [],
         summary: '/foos/get',
         tags: ['/foos'],
-        'x-deprecated': 'Use GET method instead',
       },
     },
   },
