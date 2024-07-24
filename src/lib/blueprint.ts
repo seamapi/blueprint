@@ -15,10 +15,10 @@ import type {
   OpenapiSchema,
 } from './openapi.js'
 import {
-  openapiOperationSchema,
-  parameterSchema,
-  propertySchema,
-} from './openapi-validation.js'
+  OpenapiOperationSchema,
+  ParameterSchema,
+  PropertySchema,
+} from './openapi-schema.js'
 
 export interface Blueprint {
   title: string
@@ -235,7 +235,7 @@ const createEndpoint = (
   const pathParts = path.split('/')
   const endpointPath = `/${pathParts.slice(1).join('/')}`
 
-  const validatedOperation = openapiOperationSchema.parse(operation)
+  const validatedOperation = OpenapiOperationSchema.parse(operation)
 
   const description = validatedOperation.description
 
@@ -282,7 +282,7 @@ const createParameters = (operation: OpenapiOperation): Parameter[] => {
 }
 
 const createParameter = (param: OpenapiParameter): Parameter => {
-  const validatedParam = parameterSchema.parse(param)
+  const validatedParam = ParameterSchema.parse(param)
 
   return {
     name: validatedParam.name,
@@ -449,7 +449,7 @@ const createProperties = (
   properties: Record<string, OpenapiSchema>,
 ): Property[] => {
   return Object.entries(properties).map(([name, prop]): Property => {
-    const validatedProp = propertySchema.parse(prop)
+    const validatedProp = PropertySchema.parse(prop)
 
     const baseProperty = {
       name,
