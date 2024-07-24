@@ -445,7 +445,7 @@ const createResponse = (responses: OpenapiOperation['responses']): Response => {
   }
 }
 
-const createProperties = (
+export const createProperties = (
   properties: Record<string, OpenapiSchema>,
 ): Property[] => {
   return Object.entries(properties).map(([name, prop]): Property => {

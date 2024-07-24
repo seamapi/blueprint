@@ -1,100 +1,71 @@
 import test from 'ava'
 
-import { createBlueprint } from '@seamapi/blueprint'
+import { createProperties } from 'lib/blueprint.js'
+import type { OpenapiSchema } from 'lib/openapi.js'
 
-import * as types from './fixtures/types/index.js'
-
-test('createBlueprint', (t) => {
-  const blueprint = createBlueprint(types)
-
-  t.is(blueprint.title, 'Foo')
-
-  // Test resources
-  t.truthy(blueprint.resources['foo'], 'Blueprint should have a "foo" resource')
-  const fooResource = blueprint.resources['foo']
-  t.is(fooResource?.resourceType, 'foo', 'Foo resource type should be "foo"')
-  t.is(
-    fooResource?.properties.length,
-    4,
-    'Foo resource should have 4 properties',
-  )
-
-  const nameProperty = fooResource?.properties.find((p) => p.name === 'name')
-  t.truthy(nameProperty, 'Name property should exist')
-  if (nameProperty != null) {
-    t.is(nameProperty.type, 'string', 'Name property should be of type string')
-    t.is(
-      nameProperty.description,
-      'Foo name',
-      'Name property should have correct description',
-    )
-    t.false(nameProperty.isDeprecated, 'Name property should not be deprecated')
-    t.is(
-      nameProperty.deprecationMessage,
-      '',
-      'Name property should have empty deprecation message',
-    )
-    t.false(
-      nameProperty.isUndocumented,
-      'Name property should not be undocumented',
-    )
+test('createProperties assigns appropriate default values', (t) => {
+  const minimalProperties = {
+    minimalProperty: {
+      type: 'string',
+    },
   }
 
-  // Test deprecated property
-  const deprecatedProperty = fooResource?.properties.find(
-    (p) => p.name === 'deprecated_prop',
-  )
-  t.truthy(deprecatedProperty, 'Deprecated property should exist')
-  t.is(
-    deprecatedProperty?.type,
-    'string',
-    'Deprecated property should be of type string',
-  )
-  t.is(
-    deprecatedProperty?.description,
-    'This prop is deprecated',
-    'Deprecated property should have correct description',
-  )
-  t.true(
-    deprecatedProperty?.isDeprecated,
-    'Deprecated property isDeprecated flag should be true',
-  )
-  t.is(
-    deprecatedProperty?.deprecationMessage,
-    'This prop will be removed in the next version',
-    'Deprecated property should have correct deprecation message',
-  )
-  t.false(
-    deprecatedProperty?.isUndocumented,
-    'Deprecated property should not be undocumented',
+  const properties = createProperties(
+    minimalProperties as Record<string, OpenapiSchema>,
   )
 
-  // Test undocumented property
-  const undocumentedProperty = fooResource?.properties.find(
-    (p) => p.name === 'undocumented_prop',
-  )
-  t.truthy(undocumentedProperty, 'Undocumented property should exist')
+  t.is(properties.length, 1, 'Should create one property')
+  const [property] = properties
+  if (property === undefined) {
+    throw new Error('Property should not be undefined')
+  }
+  t.is(property.type, 'string', 'Property type should be string')
+  t.is(property.description, '', 'Description should default to empty string')
+  t.false(property.isDeprecated, 'isDeprecated should default to false')
   t.is(
-    undocumentedProperty?.type,
-    'string',
-    'Undocumented property should be of type string',
-  )
-  t.is(
-    undocumentedProperty?.description,
-    'This prop is undocumented',
-    'Undocumented property should have correct description',
-  )
-  t.false(
-    undocumentedProperty?.isDeprecated,
-    'Undocumented property should not be deprecated',
-  )
-  t.is(
-    undocumentedProperty?.deprecationMessage,
+    property.deprecationMessage,
     '',
-    'Undocumented property should have empty deprecation message',
+    'deprecationMessage should default to empty string',
+  )
+  t.false(property.isUndocumented, 'isUndocumented should default to false')
+})
+
+test('createProperties uses provided values', (t) => {
+  const fullProperties = {
+    fullProperty: {
+      type: 'string',
+      description: 'Test description',
+      deprecated: true,
+      'x-deprecated': 'This property is deprecated',
+      'x-undocumented': 'true',
+    },
+  }
+
+  const properties = createProperties(
+    fullProperties as Record<string, OpenapiSchema>,
+  )
+
+  t.is(properties.length, 1, 'Should create one property')
+  const [property] = properties
+  if (property === undefined) {
+    throw new Error('Property should not be undefined')
+  }
+  t.is(
+    property.description,
+    'Test description',
+    'Description should match provided value',
   )
   t.true(
-    undocumentedProperty?.isUndocumented,
-    'Undocumented property should be marked as undocumented',
+    property.isDeprecated,
+    'isDeprecated should be true when deprecated is true',
+  )
+  t.is(
+    property.deprecationMessage,
+    'This property is deprecated',
+    'deprecationMessage should match x-deprecated value',
+  )
+  t.true(
+    property.isUndocumented,
+    'isUndocumented should be true when x-undocumented is provided',
   )
 })
