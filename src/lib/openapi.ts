@@ -40,6 +40,9 @@ export interface OpenapiOperation {
   responses: Record<string, OpenapiResponse>
   tags?: string[]
   security?: OpenapiSecurity[]
+  isDeprecated?: boolean
+  deprecationMessage?: string
+  isUndocumented?: boolean
 }
 
 export interface OpenapiParameter {

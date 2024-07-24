@@ -14,7 +14,10 @@ import type {
   OpenapiPaths,
   OpenapiSchema,
 } from './openapi.js'
-import { openapiOperationSchema } from './openapi-validation.js'
+import {
+  openapiOperationSchema,
+  parameterSchema,
+} from './openapi-validation.js'
 
 export interface Blueprint {
   title: string
@@ -235,7 +238,7 @@ const createEndpoint = (
 
   const description = validatedOperation.description
 
-  const isUndocumented = validatedOperation['x-undocumented']
+  const isUndocumented = validatedOperation['x-undocumented'].length > 0
 
   const isDeprecated = validatedOperation.deprecated
 
@@ -278,19 +281,15 @@ const createParameters = (operation: OpenapiOperation): Parameter[] => {
 }
 
 const createParameter = (param: OpenapiParameter): Parameter => {
+  const validatedParam = parameterSchema.parse(param)
+
   return {
-    name: 'name' in param && typeof param.name === 'string' ? param.name : '',
-    isRequired:
-      'required' in param && typeof param.required === 'boolean'
-        ? param.required
-        : false,
-    isUndocumented: false,
-    isDeprecated: false,
-    deprecationMessage: '',
-    description:
-      'description' in param && typeof param.description === 'string'
-        ? param.description
-        : '',
+    name: validatedParam.name,
+    isRequired: validatedParam.required,
+    isUndocumented: validatedParam['x-undocumented'].length > 0,
+    isDeprecated: validatedParam.deprecated,
+    deprecationMessage: validatedParam['x-deprecated'],
+    description: validatedParam.description,
   }
 }
 
