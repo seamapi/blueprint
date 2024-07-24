@@ -29,7 +29,9 @@ export const createPythonResponse = (
     throw new Error(`Missing ${responseKey} for '${title}'`)
   }
 
-  const responsePythonClassName = pascalCase(responseKey)
+  const responsePythonClassName = pascalCase(
+    responseKeyToPythonResourceNameMap[responseKey] ?? responseKey,
+  )
   const responsePythonParams = Object.entries(responseValue)
     .map(
       ([paramKey, paramValue]) =>
@@ -38,4 +40,8 @@ export const createPythonResponse = (
     .join(', ')
 
   return `${responsePythonClassName}(${responsePythonParams})`
+}
+
+const responseKeyToPythonResourceNameMap: Record<string, string> = {
+  event: 'SeamEvent',
 }
