@@ -17,15 +17,15 @@ export default {
             description: 'Foo name',
             type: 'string',
           },
-          deprecated_field: {
-            description: 'This field is deprecated',
+          deprecated_prop: {
+            description: 'This prop is deprecated',
             type: 'string',
-            'x-deprecated': 'This field will be removed in the next version',
+            'x-deprecated': 'This prop will be removed in the next version',
           },
-          undocumented_field: {
-            description: 'This field is undocumented',
+          undocumented_prop: {
+            description: 'This prop is undocumented',
             type: 'string',
-            'x-undocumented': true,
+            'x-undocumented': "This prop is intentionally left undocumented.",
           },
         },
         required: ['foo_id', 'name'],

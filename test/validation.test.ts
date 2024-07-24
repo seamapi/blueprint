@@ -42,7 +42,7 @@ test('createBlueprint', (t) => {
 
   // Test deprecated property
   const deprecatedProperty = fooResource?.properties.find(
-    (p) => p.name === 'deprecated_field',
+    (p) => p.name === 'deprecated_prop',
   )
   t.truthy(deprecatedProperty, 'Deprecated property should exist')
   t.is(
@@ -52,7 +52,7 @@ test('createBlueprint', (t) => {
   )
   t.is(
     deprecatedProperty?.description,
-    'This field is deprecated',
+    'This prop is deprecated',
     'Deprecated property should have correct description',
   )
   t.false(
@@ -61,7 +61,7 @@ test('createBlueprint', (t) => {
   )
   t.is(
     deprecatedProperty?.deprecationMessage,
-    'This field will be removed in the next version',
+    'This prop will be removed in the next version',
     'Deprecated property should have correct deprecation message',
   )
   t.false(
@@ -71,7 +71,7 @@ test('createBlueprint', (t) => {
 
   // Test undocumented property
   const undocumentedProperty = fooResource?.properties.find(
-    (p) => p.name === 'undocumented_field',
+    (p) => p.name === 'undocumented_prop',
   )
   t.truthy(undocumentedProperty, 'Undocumented property should exist')
   t.is(
@@ -81,7 +81,7 @@ test('createBlueprint', (t) => {
   )
   t.is(
     undocumentedProperty?.description,
-    'This field is undocumented',
+    'This prop is undocumented',
     'Undocumented property should have correct description',
   )
   t.false(

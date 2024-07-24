@@ -17,6 +17,7 @@ import type {
 import {
   openapiOperationSchema,
   parameterSchema,
+  propertySchema,
 } from './openapi-validation.js'
 
 export interface Blueprint {
@@ -448,69 +449,42 @@ const createProperties = (
   properties: Record<string, OpenapiSchema>,
 ): Property[] => {
   return Object.entries(properties).map(([name, prop]): Property => {
-    if (prop === null) {
-      return {
-        name,
-        type: 'string',
-        isDeprecated: false,
-        deprecationMessage: '',
-        isUndocumented: false,
-      }
-    }
-
-    const description =
-      'description' in prop && typeof prop.description === 'string'
-        ? prop.description
-        : ''
-
-    const isUndocumented =
-      'x-undocumented' in prop ? Boolean(prop['x-undocumented']) : false
-    const isDeprecated = 'deprecated' in prop && prop.deprecated === true
-
-    const deprecationMessage =
-      'x-deprecated' in prop && typeof prop['x-deprecated'] === 'string'
-        ? prop['x-deprecated']
-        : ''
+    const validatedProp = propertySchema.parse(prop)
 
     const baseProperty = {
       name,
-      description,
-      isDeprecated,
-      deprecationMessage,
-      isUndocumented,
+      description: validatedProp.description ?? '',
+      isDeprecated: validatedProp.deprecated ?? false,
+      deprecationMessage: validatedProp['x-deprecated'] ?? '',
+      isUndocumented: validatedProp['x-undocumented'] !== '',
     }
 
-    if ('type' in prop) {
-      switch (prop.type) {
-        case 'string':
-          if ('enum' in prop && Array.isArray(prop.enum)) {
-            return {
-              ...baseProperty,
-              type: 'enum',
-              values: prop.enum.map((value) => ({ name: String(value) })),
-            }
+    switch (validatedProp.type) {
+      case 'string':
+        if (validatedProp.enum !== undefined) {
+          return {
+            ...baseProperty,
+            type: 'enum',
+            values: validatedProp.enum.map((value: any) => ({ name: value })),
           }
-          return { ...baseProperty, type: 'string' }
-        case 'object':
+        }
+        return { ...baseProperty, type: 'string' }
+      case 'boolean':
+        return { ...baseProperty, type: 'boolean' }
+      case 'array':
+        return { ...baseProperty, type: 'list' }
+      case 'object':
+        if (validatedProp.properties !== undefined) {
           return {
             ...baseProperty,
             type: 'object',
-            properties:
-              'properties' in prop &&
-              typeof prop.properties === 'object' &&
-              prop.properties !== null
-                ? createProperties(prop.properties)
-                : [],
+            properties: createProperties(validatedProp.properties as Record<string, OpenapiSchema>),
           }
-        case 'array':
-          return { ...baseProperty, type: 'list' }
-        case 'boolean':
-          return { ...baseProperty, type: 'boolean' }
-        default:
-          return { ...baseProperty, type: 'string' }
-      }
+        }
+        return { ...baseProperty, type: 'record' }
+      default:
+        return { ...baseProperty, type: 'string' }
     }
-    return { ...baseProperty, type: 'string' }
   })
 }
 
