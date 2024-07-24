@@ -235,15 +235,15 @@ const createEndpoint = (
   const pathParts = path.split('/')
   const endpointPath = `/${pathParts.slice(1).join('/')}`
 
-  const validatedOperation = OpenapiOperationSchema.parse(operation)
+  const parsedOperation = OpenapiOperationSchema.parse(operation)
 
-  const description = validatedOperation.description
+  const description = parsedOperation.description
 
-  const isUndocumented = validatedOperation['x-undocumented'].length > 0
+  const isUndocumented = parsedOperation['x-undocumented'].length > 0
 
-  const isDeprecated = validatedOperation.deprecated
+  const isDeprecated = parsedOperation.deprecated
 
-  const deprecationMessage = validatedOperation['x-deprecated']
+  const deprecationMessage = parsedOperation['x-deprecated']
 
   const endpoint = {
     title:
@@ -282,15 +282,15 @@ const createParameters = (operation: OpenapiOperation): Parameter[] => {
 }
 
 const createParameter = (param: OpenapiParameter): Parameter => {
-  const validatedParam = ParameterSchema.parse(param)
+  const parsedParam = ParameterSchema.parse(param)
 
   return {
-    name: validatedParam.name,
-    isRequired: validatedParam.required,
-    isUndocumented: validatedParam['x-undocumented'].length > 0,
-    isDeprecated: validatedParam.deprecated,
-    deprecationMessage: validatedParam['x-deprecated'],
-    description: validatedParam.description,
+    name: parsedParam.name,
+    isRequired: parsedParam.required,
+    isUndocumented: parsedParam['x-undocumented'].length > 0,
+    isDeprecated: parsedParam.deprecated,
+    deprecationMessage: parsedParam['x-deprecated'],
+    description: parsedParam.description,
   }
 }
 
@@ -449,23 +449,23 @@ export const createProperties = (
   properties: Record<string, OpenapiSchema>,
 ): Property[] => {
   return Object.entries(properties).map(([name, prop]): Property => {
-    const validatedProp = PropertySchema.parse(prop)
+    const parsedProp = PropertySchema.parse(prop)
 
     const baseProperty = {
       name,
-      description: validatedProp.description,
-      isDeprecated: validatedProp['x-deprecated'].length > 0,
-      deprecationMessage: validatedProp['x-deprecated'],
-      isUndocumented: validatedProp['x-undocumented'].length > 0,
+      description: parsedProp.description,
+      isDeprecated: parsedProp['x-deprecated'].length > 0,
+      deprecationMessage: parsedProp['x-deprecated'],
+      isUndocumented: parsedProp['x-undocumented'].length > 0,
     }
 
-    switch (validatedProp.type) {
+    switch (parsedProp.type) {
       case 'string':
-        if (validatedProp.enum !== undefined) {
+        if (parsedProp.enum !== undefined) {
           return {
             ...baseProperty,
             type: 'enum',
-            values: validatedProp.enum.map((value: any) => ({ name: value })),
+            values: parsedProp.enum.map((value: any) => ({ name: value })),
           }
         }
         return { ...baseProperty, type: 'string' }
@@ -474,18 +474,18 @@ export const createProperties = (
       case 'array':
         return { ...baseProperty, type: 'list' }
       case 'object':
-        if (validatedProp.properties !== undefined) {
+        if (parsedProp.properties !== undefined) {
           return {
             ...baseProperty,
             type: 'object',
             properties: createProperties(
-              validatedProp.properties as Record<string, OpenapiSchema>,
+              parsedProp.properties as Record<string, OpenapiSchema>,
             ),
           }
         }
         return { ...baseProperty, type: 'record' }
       default:
-        throw new Error(`Unsupported property type: ${validatedProp.type}`)
+        throw new Error(`Unsupported property type: ${parsedProp.type}`)
     }
   })
 }

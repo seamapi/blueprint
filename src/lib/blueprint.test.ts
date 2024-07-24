@@ -3,7 +3,7 @@ import test from 'ava'
 import { createProperties } from 'lib/blueprint.js'
 import type { OpenapiSchema } from 'lib/openapi.js'
 
-test('createProperties assigns appropriate default values', (t) => {
+test('createProperties: assigns appropriate default values', (t) => {
   const minimalProperties = {
     minimalProperty: {
       type: 'string',
@@ -17,7 +17,8 @@ test('createProperties assigns appropriate default values', (t) => {
   t.is(properties.length, 1, 'Should create one property')
   const [property] = properties
   if (property === undefined) {
-    throw new Error('Property should not be undefined')
+    t.fail('Property should not be undefined')
+    return
   }
   t.is(property.type, 'string', 'Property type should be string')
   t.is(property.description, '', 'Description should default to empty string')
@@ -30,7 +31,7 @@ test('createProperties assigns appropriate default values', (t) => {
   t.false(property.isUndocumented, 'isUndocumented should default to false')
 })
 
-test('createProperties uses provided values', (t) => {
+test('createProperties: uses provided values', (t) => {
   const fullProperties = {
     fullProperty: {
       type: 'string',
@@ -48,7 +49,8 @@ test('createProperties uses provided values', (t) => {
   t.is(properties.length, 1, 'Should create one property')
   const [property] = properties
   if (property === undefined) {
-    throw new Error('Property should not be undefined')
+    t.fail('Property should not be undefined')
+    return
   }
   t.is(
     property.description,
