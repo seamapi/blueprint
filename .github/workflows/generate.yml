@@ -33,6 +33,8 @@ jobs:
           install_dependencies: 'false'
       - name: Normalize package-lock.json
         run: npm install
+      - name: Update test snapshots
+        run: npm run test:update
       - name: Commit
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
