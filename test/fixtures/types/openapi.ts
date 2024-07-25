@@ -17,6 +17,16 @@ export default {
             description: 'Foo name',
             type: 'string',
           },
+          deprecated_prop: {
+            description: 'This prop is deprecated',
+            type: 'string',
+            'x-deprecated': 'This prop will be removed in the next version',
+          },
+          undocumented_prop: {
+            description: 'This prop is undocumented',
+            type: 'string',
+            'x-undocumented': 'This prop is intentionally left undocumented.',
+          },
         },
         required: ['foo_id', 'name'],
       },

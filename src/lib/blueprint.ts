@@ -14,6 +14,11 @@ import type {
   OpenapiPaths,
   OpenapiSchema,
 } from './openapi.js'
+import {
+  OpenapiOperationSchema,
+  ParameterSchema,
+  PropertySchema,
+} from './openapi-schema.js'
 
 export interface Blueprint {
   title: string
@@ -230,23 +235,15 @@ const createEndpoint = (
   const pathParts = path.split('/')
   const endpointPath = `/${pathParts.slice(1).join('/')}`
 
-  const description =
-    'description' in operation && typeof operation.description === 'string'
-      ? operation.description
-      : ''
+  const parsedOperation = OpenapiOperationSchema.parse(operation)
 
-  const isUndocumented =
-    'x-undocumented' in operation && operation['x-undocumented'] !== undefined
-      ? Boolean(operation['x-undocumented'])
-      : false
+  const description = parsedOperation.description
 
-  const isDeprecated =
-    'deprecated' in operation && operation.deprecated === true
+  const isUndocumented = parsedOperation['x-undocumented'].length > 0
 
-  const deprecationMessage =
-    'x-deprecated' in operation && typeof operation['x-deprecated'] === 'string'
-      ? operation['x-deprecated']
-      : ''
+  const isDeprecated = parsedOperation.deprecated
+
+  const deprecationMessage = parsedOperation['x-deprecated']
 
   const endpoint = {
     title:
@@ -285,19 +282,15 @@ const createParameters = (operation: OpenapiOperation): Parameter[] => {
 }
 
 const createParameter = (param: OpenapiParameter): Parameter => {
+  const parsedParam = ParameterSchema.parse(param)
+
   return {
-    name: 'name' in param && typeof param.name === 'string' ? param.name : '',
-    isRequired:
-      'required' in param && typeof param.required === 'boolean'
-        ? param.required
-        : false,
-    isUndocumented: false,
-    isDeprecated: false,
-    deprecationMessage: '',
-    description:
-      'description' in param && typeof param.description === 'string'
-        ? param.description
-        : '',
+    name: parsedParam.name,
+    isRequired: parsedParam.required,
+    isUndocumented: parsedParam['x-undocumented'].length > 0,
+    isDeprecated: parsedParam.deprecated,
+    deprecationMessage: parsedParam['x-deprecated'],
+    description: parsedParam.description,
   }
 }
 
@@ -452,73 +445,48 @@ const createResponse = (responses: OpenapiOperation['responses']): Response => {
   }
 }
 
-const createProperties = (
+export const createProperties = (
   properties: Record<string, OpenapiSchema>,
 ): Property[] => {
   return Object.entries(properties).map(([name, prop]): Property => {
-    if (prop === null) {
-      return {
-        name,
-        type: 'string',
-        isDeprecated: false,
-        deprecationMessage: '',
-        isUndocumented: false,
-      }
-    }
-
-    const description =
-      'description' in prop && typeof prop.description === 'string'
-        ? prop.description
-        : ''
-
-    const isUndocumented =
-      'x-undocumented' in prop ? Boolean(prop['x-undocumented']) : false
-    const isDeprecated = 'deprecated' in prop && prop.deprecated === true
-
-    const deprecationMessage =
-      'x-deprecated' in prop && typeof prop['x-deprecated'] === 'string'
-        ? prop['x-deprecated']
-        : ''
+    const parsedProp = PropertySchema.parse(prop)
 
     const baseProperty = {
       name,
-      description,
-      isDeprecated,
-      deprecationMessage,
-      isUndocumented,
+      description: parsedProp.description,
+      isDeprecated: parsedProp['x-deprecated'].length > 0,
+      deprecationMessage: parsedProp['x-deprecated'],
+      isUndocumented: parsedProp['x-undocumented'].length > 0,
     }
 
-    if ('type' in prop) {
-      switch (prop.type) {
-        case 'string':
-          if ('enum' in prop && Array.isArray(prop.enum)) {
-            return {
-              ...baseProperty,
-              type: 'enum',
-              values: prop.enum.map((value) => ({ name: String(value) })),
-            }
+    switch (parsedProp.type) {
+      case 'string':
+        if (parsedProp.enum !== undefined) {
+          return {
+            ...baseProperty,
+            type: 'enum',
+            values: parsedProp.enum.map((value: any) => ({ name: value })),
           }
-          return { ...baseProperty, type: 'string' }
-        case 'object':
+        }
+        return { ...baseProperty, type: 'string' }
+      case 'boolean':
+        return { ...baseProperty, type: 'boolean' }
+      case 'array':
+        return { ...baseProperty, type: 'list' }
+      case 'object':
+        if (parsedProp.properties !== undefined) {
           return {
             ...baseProperty,
             type: 'object',
-            properties:
-              'properties' in prop &&
-              typeof prop.properties === 'object' &&
-              prop.properties !== null
-                ? createProperties(prop.properties)
-                : [],
+            properties: createProperties(
+              parsedProp.properties as Record<string, OpenapiSchema>,
+            ),
           }
-        case 'array':
-          return { ...baseProperty, type: 'list' }
-        case 'boolean':
-          return { ...baseProperty, type: 'boolean' }
-        default:
-          return { ...baseProperty, type: 'string' }
-      }
+        }
+        return { ...baseProperty, type: 'record' }
+      default:
+        throw new Error(`Unsupported property type: ${parsedProp.type}`)
     }
-    return { ...baseProperty, type: 'string' }
   })
 }
 
