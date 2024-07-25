@@ -35,6 +35,8 @@ jobs:
         run: npm install
       - name: Update test snapshots
         run: npm run test:update
+        env:
+          AVA_FORCE_CI: not-ci
       - name: Commit
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
