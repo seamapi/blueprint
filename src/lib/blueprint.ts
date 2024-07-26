@@ -108,13 +108,17 @@ export type Property =
   | ListProperty
   | ObjectProperty
   | BooleanProperty
+  | DatetimeProperty
+  | IdProperty
 
 interface StringProperty extends BaseProperty {
-  type: 'string'
+  format: 'string'
+  jsonType: 'string'
 }
 
 interface EnumProperty extends BaseProperty {
-  type: 'enum'
+  format: 'enum'
+  jsonType: 'string'
   values: EnumValue[]
 }
 
@@ -123,20 +127,34 @@ interface EnumValue {
 }
 
 interface RecordProperty extends BaseProperty {
-  type: 'record'
+  format: 'record'
+  jsonType: 'object'
 }
 
 interface ListProperty extends BaseProperty {
-  type: 'list'
+  format: 'list'
+  jsonType: 'array'
 }
 
 interface BooleanProperty extends BaseProperty {
-  type: 'boolean'
+  format: 'boolean'
+  jsonType: 'boolean'
 }
 
 interface ObjectProperty extends BaseProperty {
-  type: 'object'
+  format: 'object'
+  jsonType: 'object'
   properties: Property[]
+}
+
+interface DatetimeProperty extends BaseProperty {
+  format: 'datetime'
+  jsonType: 'string'
+}
+
+interface IdProperty extends BaseProperty {
+  format: 'id'
+  jsonType: 'string'
 }
 
 type Method = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH'
@@ -507,26 +525,34 @@ export const createProperties = (
         if (parsedProp.enum !== undefined) {
           return {
             ...baseProperty,
-            type: 'enum',
+            format: 'enum',
+            jsonType: 'string',
             values: parsedProp.enum.map((value: any) => ({ name: value })),
           }
         }
-        return { ...baseProperty, type: 'string' }
+        if (parsedProp.format === 'date-time') {
+          return { ...baseProperty, format: 'datetime', jsonType: 'string' }
+        }
+        if (parsedProp.format === 'uuid') {
+          return { ...baseProperty, format: 'id', jsonType: 'string' }
+        }
+        return { ...baseProperty, format: 'string', jsonType: 'string' }
       case 'boolean':
-        return { ...baseProperty, type: 'boolean' }
+        return { ...baseProperty, format: 'boolean', jsonType: 'boolean' }
       case 'array':
-        return { ...baseProperty, type: 'list' }
+        return { ...baseProperty, format: 'list', jsonType: 'array' }
       case 'object':
         if (parsedProp.properties !== undefined) {
           return {
             ...baseProperty,
-            type: 'object',
+            format: 'object',
+            jsonType: 'object',
             properties: createProperties(
               parsedProp.properties as Record<string, OpenapiSchema>,
             ),
           }
         }
-        return { ...baseProperty, type: 'record' }
+        return { ...baseProperty, format: 'record', jsonType: 'object' }
       default:
         throw new Error(`Unsupported property type: ${parsedProp.type}`)
     }
