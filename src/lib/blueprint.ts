@@ -76,7 +76,7 @@ export interface RequestBodyProperty {
   type: string
   format?: string
   description?: string
-  isRequired: string[]
+  isRequired: boolean
 }
 
 export type Response = VoidResponse | ResourceResponse | ResourceListResponse
@@ -342,13 +342,12 @@ const createRequestBody = (
   return Object.entries(schema.properties).map(
     ([name, property]: [string, any]): RequestBodyProperty => ({
       name,
-      type: property.type ?? 'string',
+      type: property.type ?? '',
       format: property.format,
       description: property.description ?? '',
-      isRequired: requiredProperties,
+      isRequired: requiredProperties.includes(name),
     }),
-  )
-}
+  )}
 
 const createResources = (
   schemas: Openapi['components']['schemas'],
