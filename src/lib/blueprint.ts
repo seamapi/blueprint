@@ -71,6 +71,14 @@ export interface Request {
   parameters: Parameter[]
 }
 
+export interface RequestBodyProperty {
+  name: string
+  type: string
+  format?: string
+  description?: string
+  isRequired: string[]
+}
+
 export type Response = VoidResponse | ResourceResponse | ResourceListResponse
 
 interface BaseResponse {
@@ -304,8 +312,37 @@ const createRequest = (
     methods: [uppercaseMethod],
     semanticMethod: uppercaseMethod,
     preferredMethod: uppercaseMethod,
-    parameters: createParameters(operation),
+    // @ts-expect-error TODO: resolve property and request properties difference between required and isRequired
+    parameters: createRequestBody(operation),
   }
+}
+
+const createRequestBody = (operation: OpenapiOperation): RequestBodyProperty[] => {
+  if (!('requestBody' in operation) || operation.requestBody === undefined) {
+    return []
+  }
+
+  const requestBody = operation.requestBody
+
+  if (
+    requestBody.content?.['application/json']?.schema?.properties === undefined
+  ) return []
+
+  const schema = requestBody.content['application/json'].schema
+
+  if (schema.type !== 'object' || (schema.properties == null)) {
+    return []
+  }
+
+  const requiredProperties = schema.required ?? []
+
+  return Object.entries(schema.properties).map(([name, property]: [string, any]): RequestBodyProperty => ({
+    name,
+    type: property.type ?? 'string',
+    format: property.format,
+    description: property.description ?? "",
+    isRequired: requiredProperties,
+  }))
 }
 
 const createResources = (
@@ -351,7 +388,7 @@ const createResponse = (responses: OpenapiOperation['responses']): Response => {
       responseType: 'void',
       description:
         'description' in okResponse &&
-        typeof okResponse.description === 'string'
+          typeof okResponse.description === 'string'
           ? okResponse.description
           : '',
     }
@@ -364,7 +401,7 @@ const createResponse = (responses: OpenapiOperation['responses']): Response => {
       responseType: 'void',
       description:
         'description' in okResponse &&
-        typeof okResponse.description === 'string'
+          typeof okResponse.description === 'string'
           ? okResponse.description
           : '',
     }
@@ -376,7 +413,7 @@ const createResponse = (responses: OpenapiOperation['responses']): Response => {
       responseType: 'void',
       description:
         'description' in okResponse &&
-        typeof okResponse.description === 'string'
+          typeof okResponse.description === 'string'
           ? okResponse.description
           : '',
     }
@@ -399,7 +436,7 @@ const createResponse = (responses: OpenapiOperation['responses']): Response => {
             : 'unknown',
         description:
           'description' in okResponse &&
-          typeof okResponse.description === 'string'
+            typeof okResponse.description === 'string'
             ? okResponse.description
             : '',
       }
@@ -431,7 +468,7 @@ const createResponse = (responses: OpenapiOperation['responses']): Response => {
               : 'unknown',
           description:
             'description' in okResponse &&
-            typeof okResponse.description === 'string'
+              typeof okResponse.description === 'string'
               ? okResponse.description
               : '',
         }
