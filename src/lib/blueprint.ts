@@ -212,22 +212,27 @@ const createEndpoints = (
   pathItem: OpenapiPathItem,
   context: Context,
 ): Endpoint[] => {
+  const validMethods: Method[] = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH']
+
   return Object.entries(pathItem)
-    .filter(
-      ([, operation]) => typeof operation === 'object' && operation !== null,
+    .filter(([method, operation]) =>
+      validMethods.includes(method.toUpperCase() as Method) &&
+      typeof operation === 'object' &&
+      operation !== null
     )
-    .map(([method, operation]) =>
-      createEndpoint(
-        method as Method,
+    .map(([method, operation]) => {
+      const uppercaseMethod = method.toUpperCase() as Method
+      return createEndpoint(
+        [uppercaseMethod],
         operation as OpenapiOperation,
         path,
-        context,
-      ),
-    )
+        context
+      )
+    })
 }
 
 const createEndpoint = (
-  method: Method,
+  methods: Method[],
   operation: OpenapiOperation,
   path: string,
   context: Context,
@@ -245,21 +250,20 @@ const createEndpoint = (
 
   const deprecationMessage = parsedOperation['x-deprecated']
 
+  const request = createRequest(methods, operation)
+
   const endpoint = {
-    title:
-      'operationId' in operation && typeof operation.operationId === 'string'
-        ? operation.operationId
-        : `${path.replace(/\//g, '')}${method.charAt(0).toUpperCase()}${method.slice(1).toLowerCase()}`,
+    title: 'operationId' in operation && typeof operation.operationId === 'string'
+      ? operation.operationId
+      : `${path.replace(/\//g, '')}${request.preferredMethod}`,
     path: endpointPath,
     description,
     isUndocumented,
     isDeprecated,
     deprecationMessage,
     parameters: createParameters(operation),
-    request: createRequest(method, operation),
-    response: createResponse(
-      'responses' in operation ? operation.responses : {},
-    ),
+    request,
+    response: createResponse('responses' in operation ? operation.responses : {}),
   }
 
   return {
@@ -295,16 +299,61 @@ const createParameter = (param: OpenapiParameter): Parameter => {
 }
 
 const createRequest = (
-  method: Method,
+  methods: Method[],
   operation: OpenapiOperation,
 ): Request => {
-  const uppercaseMethod = openapiMethodToMethod(method)
+  const parameters = createParameters(operation)
+
+  const hasPost = methods.includes('POST')
+  const otherMethods = methods.filter(m => m !== 'POST')
+
+  let preferredMethod: Method
+  let semanticMethod: Method
+
+  if (methods.length === 1 && hasPost) {
+    // Case 1: only POST
+
+    preferredMethod = semanticMethod = 'POST'
+  } else if (methods.length === 2 && hasPost) {
+    // Case 2: POST and another method
+
+    // @ts-expect-error if otherMethods is undefined, something went very wrong
+    semanticMethod = otherMethods[0]
+    if ((semanticMethod === 'GET' || semanticMethod === 'DELETE') &&
+        (((operation.parameters?.some(param => 
+          param.schema?.type === 'array' || param.schema?.type === 'object'
+        )) ?? false) || 
+        operation.requestBody?.content?.['application/json']?.schema?.type === 'object')) {
+      preferredMethod = 'POST'
+    } else {
+      preferredMethod = semanticMethod
+    }
+  } else if (!hasPost) {
+    // Case 3: POST is missing
+
+    // TODO: what do we want to use for warnings?
+    // eslint-disable-next-line no-console 
+    console.warn('Warning: POST method is missing')
+    semanticMethod = preferredMethod = otherMethods[0] ?? 'GET'
+  } else if (methods.length > 2) {
+    // Case 4: More than two methods
+
+    // eslint-disable-next-line no-console 
+    console.warn('Warning: More than two methods detected. Was this intended?')
+
+    // prioritize in order: PUT, PATCH, POST, GET, DELETE
+    const priorityOrder: Method[] = ['PUT', 'PATCH', 'POST', 'GET', 'DELETE']
+    semanticMethod = methods.find(m => priorityOrder.includes(m)) ?? 'POST'
+    preferredMethod = hasPost ? 'POST' : semanticMethod
+  } else {
+    semanticMethod = preferredMethod = 'POST'
+  }
 
   return {
-    methods: [uppercaseMethod],
-    semanticMethod: uppercaseMethod,
-    preferredMethod: uppercaseMethod,
-    parameters: createParameters(operation),
+    methods,
+    semanticMethod,
+    preferredMethod,
+    parameters,
   }
 }
 
@@ -351,7 +400,7 @@ const createResponse = (responses: OpenapiOperation['responses']): Response => {
       responseType: 'void',
       description:
         'description' in okResponse &&
-        typeof okResponse.description === 'string'
+          typeof okResponse.description === 'string'
           ? okResponse.description
           : '',
     }
@@ -364,7 +413,7 @@ const createResponse = (responses: OpenapiOperation['responses']): Response => {
       responseType: 'void',
       description:
         'description' in okResponse &&
-        typeof okResponse.description === 'string'
+          typeof okResponse.description === 'string'
           ? okResponse.description
           : '',
     }
@@ -376,7 +425,7 @@ const createResponse = (responses: OpenapiOperation['responses']): Response => {
       responseType: 'void',
       description:
         'description' in okResponse &&
-        typeof okResponse.description === 'string'
+          typeof okResponse.description === 'string'
           ? okResponse.description
           : '',
     }
@@ -399,7 +448,7 @@ const createResponse = (responses: OpenapiOperation['responses']): Response => {
             : 'unknown',
         description:
           'description' in okResponse &&
-          typeof okResponse.description === 'string'
+            typeof okResponse.description === 'string'
             ? okResponse.description
             : '',
       }
@@ -431,7 +480,7 @@ const createResponse = (responses: OpenapiOperation['responses']): Response => {
               : 'unknown',
           description:
             'description' in okResponse &&
-            typeof okResponse.description === 'string'
+              typeof okResponse.description === 'string'
               ? okResponse.description
               : '',
         }
@@ -488,21 +537,4 @@ export const createProperties = (
         throw new Error(`Unsupported property type: ${parsedProp.type}`)
     }
   })
-}
-
-const openapiMethodToMethod = (openapiMethod: string): Method => {
-  switch (openapiMethod) {
-    case 'get':
-      return 'GET'
-    case 'post':
-      return 'POST'
-    case 'put':
-      return 'PUT'
-    case 'delete':
-      return 'DELETE'
-    case 'patch':
-      return 'PATCH'
-    default:
-      return 'POST'
-  }
 }
