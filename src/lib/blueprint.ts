@@ -71,14 +71,6 @@ export interface Request {
   parameters: Parameter[]
 }
 
-export interface RequestBodyProperty {
-  name: string
-  type: string
-  format?: string
-  description?: string
-  isRequired: boolean
-}
-
 export type Response = VoidResponse | ResourceResponse | ResourceListResponse
 
 interface BaseResponse {
@@ -312,14 +304,13 @@ const createRequest = (
     methods: [uppercaseMethod],
     semanticMethod: uppercaseMethod,
     preferredMethod: uppercaseMethod,
-    // @ts-expect-error TODO: resolve property and request properties difference between required and isRequired
     parameters: createRequestBody(operation),
   }
 }
 
-const createRequestBody = (
-  operation: OpenapiOperation,
-): RequestBodyProperty[] => {
+const createRequestBody = (operation: OpenapiOperation): Parameter[] => {
+  // This should be done by the createParameters but for some reason it's not
+  // TODO: remove this in favour of using createParameters
   if (!('requestBody' in operation) || operation.requestBody === undefined) {
     return []
   }
@@ -340,14 +331,25 @@ const createRequestBody = (
   const requiredProperties = schema.required ?? []
 
   return Object.entries(schema.properties).map(
-    ([name, property]: [string, any]): RequestBodyProperty => ({
-      name,
-      type: property.type ?? '',
-      format: property.format,
-      description: property.description ?? '',
-      isRequired: requiredProperties.includes(name),
-    }),
-  )}
+    ([name, property]: [string, any]): Parameter & {
+      type: string
+      format: string
+    } => {
+      const parsedProperty = PropertySchema.parse(property)
+
+      return {
+        name,
+        type: parsedProperty.type,
+        format: property.format,
+        description: parsedProperty.description,
+        isRequired: requiredProperties.includes(name),
+        isDeprecated: parsedProperty.deprecated,
+        isUndocumented: parsedProperty['x-undocumented'].length > 0,
+        deprecationMessage: parsedProperty['x-deprecated'],
+      }
+    },
+  )
+}
 
 const createResources = (
   schemas: Openapi['components']['schemas'],
