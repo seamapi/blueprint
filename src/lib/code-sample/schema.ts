@@ -68,7 +68,7 @@ export const createCodeSample = (
       ruby: {
         request: createRubyRequest(codeSampleDefinition, context),
         response: createRubyResponse(codeSampleDefinition, context),
-      }
+      },
     },
   }
 }
