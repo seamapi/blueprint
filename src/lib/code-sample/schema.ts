@@ -7,8 +7,8 @@ import {
   createJavascriptRequest,
   createJavascriptResponse,
 } from './javascript.js'
-import { createPythonRequest, createPythonResponse } from './python.js'
 import { createPhpRequest, createPhpResponse } from './php.js'
+import { createPythonRequest, createPythonResponse } from './python.js'
 
 export const CodeSampleDefinitionSchema = z.object({
   title: z.string().trim().min(1),
