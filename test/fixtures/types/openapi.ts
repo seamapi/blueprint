@@ -58,6 +58,7 @@ export default {
         security: [],
         summary: '/foos/get',
         tags: ['/foos'],
+        'x-title': 'Get a foo',
       },
       post: {
         operationId: 'foosGetPost',
@@ -83,6 +84,7 @@ export default {
         security: [],
         summary: '/foos/get',
         tags: ['/foos'],
+        'x-title': 'Get a foo',
       },
     },
   },

@@ -255,6 +255,9 @@ const createEndpoint = (
 
   const parsedOperation = OpenapiOperationSchema.parse(operation)
 
+
+  const title = parsedOperation['x-title']
+
   const description = parsedOperation.description
 
   const isUndocumented = parsedOperation['x-undocumented'].length > 0
@@ -264,10 +267,7 @@ const createEndpoint = (
   const deprecationMessage = parsedOperation['x-deprecated']
 
   const endpoint = {
-    title:
-      'operationId' in operation && typeof operation.operationId === 'string'
-        ? operation.operationId
-        : `${path.replace(/\//g, '')}${method.charAt(0).toUpperCase()}${method.slice(1).toLowerCase()}`,
+    title,
     path: endpointPath,
     description,
     isUndocumented,
