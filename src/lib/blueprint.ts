@@ -95,7 +95,7 @@ interface ResourceListResponse extends BaseResponse {
 
 interface BaseProperty {
   name: string
-  description?: string
+  description: string
   isDeprecated: boolean
   deprecationMessage: string
   isUndocumented: boolean
