@@ -38,6 +38,7 @@ const CodeSampleSchema = CodeSampleDefinitionSchema.extend({
   code: z.record(
     z.enum(['javascript', 'python', 'php']),
     z.object({
+      title: z.string().min(1),
       request: z.string(),
       response: z.string(),
     }),
@@ -58,14 +59,17 @@ export const createCodeSample = (
     ...codeSampleDefinition,
     code: {
       javascript: {
+        title: 'JavaScript',
         request: createJavascriptRequest(codeSampleDefinition, context),
         response: createJavascriptResponse(codeSampleDefinition, context),
       },
       python: {
+        title: 'Python',
         request: createPythonRequest(codeSampleDefinition, context),
         response: createPythonResponse(codeSampleDefinition, context),
       },
       php: {
+        title: 'PHP',
         request: createPhpRequest(codeSampleDefinition, context),
         response: createPhpResponse(codeSampleDefinition, context),
       },
