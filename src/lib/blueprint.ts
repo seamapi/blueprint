@@ -274,9 +274,7 @@ const createEndpoint = (
     deprecationMessage,
     parameters: createParameters(operation),
     request: createRequest(method, operation),
-    response: createResponse(
-      'responses' in operation ? operation.responses : {},
-    ),
+    response: createResponse(operation),
   }
 
   return {
@@ -395,25 +393,37 @@ const createResources = (
     }, {})
 }
 
-const createResponse = (responses: OpenapiOperation['responses']): Response => {
-  if (responses === null) {
-    return { responseType: 'void', description: '' }
+const createResponse = (operation: OpenapiOperation): Response => {
+  if (!('responses' in operation) || operation.responses == null) {
+    throw new Error(
+      `Missing responses in operation for ${operation.operationId}`,
+    )
   }
 
+  const parsedOperation = OpenapiOperationSchema.parse(operation)
+  const { responses } = operation
+
   const okResponse = responses['200']
-  if (typeof okResponse !== 'object' || okResponse === null) {
-    return { responseType: 'void', description: '' }
+
+  if (typeof okResponse !== 'object' || okResponse == null) {
+    return { responseType: 'void', description: 'Unknown' }
+  }
+
+  const description = okResponse.description ?? ''
+  const responseKey = parsedOperation['x-response-key']
+
+  if (responseKey == null) {
+    return {
+      responseType: 'void',
+      description,
+    }
   }
 
   const content = 'content' in okResponse ? okResponse.content : null
   if (typeof content !== 'object' || content === null) {
     return {
       responseType: 'void',
-      description:
-        'description' in okResponse &&
-        typeof okResponse.description === 'string'
-          ? okResponse.description
-          : '',
+      description,
     }
   }
 
@@ -422,11 +432,7 @@ const createResponse = (responses: OpenapiOperation['responses']): Response => {
   if (jsonContent === null) {
     return {
       responseType: 'void',
-      description:
-        'description' in okResponse &&
-        typeof okResponse.description === 'string'
-          ? okResponse.description
-          : '',
+      description,
     }
   }
 
@@ -434,78 +440,37 @@ const createResponse = (responses: OpenapiOperation['responses']): Response => {
   if (schema === null) {
     return {
       responseType: 'void',
-      description:
-        'description' in okResponse &&
-        typeof okResponse.description === 'string'
-          ? okResponse.description
-          : '',
+      description,
     }
   }
 
-  if ('type' in schema && 'properties' in schema) {
-    if (
-      schema.type === 'array' &&
-      'items' in schema &&
-      typeof schema.items === 'object' &&
-      schema.items !== null
-    ) {
-      const refString = '$ref' in schema.items ? schema.items.$ref : null
+  if (
+    'type' in schema &&
+    'properties' in schema &&
+    schema.type === 'object' &&
+    typeof schema.properties === 'object' &&
+    schema.properties !== null
+  ) {
+    const properties = schema.properties
+
+    const refKey = responseKey
+
+    if (refKey != null && properties[refKey] != null) {
+      const props = schema.properties[refKey]
+      const refString = props?.$ref ?? props?.items?.$ref
+
       return {
-        responseType: 'resource_list',
-        responseKey: 'items',
-        resourceType:
-          typeof refString === 'string' && refString.length > 0
-            ? refString.split('/').pop() ?? 'unknown'
-            : 'unknown',
-        description:
-          'description' in okResponse &&
-          typeof okResponse.description === 'string'
-            ? okResponse.description
-            : '',
-      }
-    }
-
-    if (
-      schema.type === 'object' &&
-      typeof schema.properties === 'object' &&
-      schema.properties !== null
-    ) {
-      const properties = schema.properties
-
-      const refKey = Object.keys(properties).find((key) => {
-        const prop = properties[key]
-        return (
-          prop !== undefined &&
-          typeof prop === 'object' &&
-          prop !== null &&
-          '$ref' in prop &&
-          typeof prop.$ref === 'string'
-        )
-      })
-
-      if (refKey != null && properties[refKey] !== undefined) {
-        const refString = schema.properties[refKey]?.$ref
-
-        return {
-          responseType: 'resource',
-          responseKey: refKey,
-          resourceType:
-            typeof refString === 'string' && refString.length > 0
-              ? refString.split('/').pop() ?? 'unknown'
-              : 'unknown',
-          description:
-            'description' in okResponse &&
-            typeof okResponse.description === 'string'
-              ? okResponse.description
-              : '',
-        }
+        responseType: props?.type === 'array' ? 'resource_list' : 'resource',
+        responseKey: refKey,
+        resourceType: refString?.split('/').at(-1) ?? 'unknown',
+        description,
       }
     }
   }
 
   return {
     responseType: 'void',
-    description: okResponse.description,
+    description: 'Unknown',
   }
 }
 
