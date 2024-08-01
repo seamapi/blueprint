@@ -463,12 +463,15 @@ const createResponse = (responses: OpenapiOperation['responses']): Response => {
             ? okResponse.description
             : '',
       }
-    } else if (
+    }
+
+    if (
       schema.type === 'object' &&
       typeof schema.properties === 'object' &&
       schema.properties !== null
     ) {
       const properties = schema.properties
+
       const refKey = Object.keys(properties).find((key) => {
         const prop = properties[key]
         return (
@@ -479,6 +482,7 @@ const createResponse = (responses: OpenapiOperation['responses']): Response => {
           typeof prop.$ref === 'string'
         )
       })
+
       if (refKey != null && properties[refKey] !== undefined) {
         const refString = schema.properties[refKey]?.$ref
 
