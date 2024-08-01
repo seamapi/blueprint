@@ -255,7 +255,6 @@ const createEndpoint = (
 
   const parsedOperation = OpenapiOperationSchema.parse(operation)
 
-
   const title = parsedOperation['x-title']
 
   const description = parsedOperation.description
