@@ -108,13 +108,17 @@ export type Property =
   | ListProperty
   | ObjectProperty
   | BooleanProperty
+  | DatetimeProperty
+  | IdProperty
 
 interface StringProperty extends BaseProperty {
-  type: 'string'
+  format: 'string'
+  jsonType: 'string'
 }
 
 interface EnumProperty extends BaseProperty {
-  type: 'enum'
+  format: 'enum'
+  jsonType: 'string'
   values: EnumValue[]
 }
 
@@ -123,20 +127,34 @@ interface EnumValue {
 }
 
 interface RecordProperty extends BaseProperty {
-  type: 'record'
+  format: 'record'
+  jsonType: 'object'
 }
 
 interface ListProperty extends BaseProperty {
-  type: 'list'
+  format: 'list'
+  jsonType: 'array'
 }
 
 interface BooleanProperty extends BaseProperty {
-  type: 'boolean'
+  format: 'boolean'
+  jsonType: 'boolean'
 }
 
 interface ObjectProperty extends BaseProperty {
-  type: 'object'
+  format: 'object'
+  jsonType: 'object'
   properties: Property[]
+}
+
+interface DatetimeProperty extends BaseProperty {
+  format: 'datetime'
+  jsonType: 'string'
+}
+
+interface IdProperty extends BaseProperty {
+  format: 'id'
+  jsonType: 'string'
 }
 
 type Method = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH'
@@ -304,8 +322,51 @@ const createRequest = (
     methods: [uppercaseMethod],
     semanticMethod: uppercaseMethod,
     preferredMethod: uppercaseMethod,
-    parameters: createParameters(operation),
+    parameters: createRequestBody(operation),
   }
+}
+
+const createRequestBody = (operation: OpenapiOperation): Parameter[] => {
+  // This should be done by the createParameters but for some reason it's not
+  // TODO: remove this in favour of using createParameters
+  if (!('requestBody' in operation) || operation.requestBody === undefined) {
+    return []
+  }
+
+  const requestBody = operation.requestBody
+
+  if (
+    requestBody.content?.['application/json']?.schema?.properties === undefined
+  )
+    return []
+
+  const schema = requestBody.content['application/json'].schema
+
+  if (schema.type !== 'object' || schema.properties == null) {
+    return []
+  }
+
+  const requiredProperties = schema.required ?? []
+
+  return Object.entries(schema.properties).map(
+    ([name, property]: [string, any]): Parameter & {
+      type: string
+      format: string
+    } => {
+      const parsedProperty = PropertySchema.parse(property)
+
+      return {
+        name,
+        type: parsedProperty.type,
+        format: property.format,
+        description: parsedProperty.description,
+        isRequired: requiredProperties.includes(name),
+        isDeprecated: parsedProperty.deprecated,
+        isUndocumented: parsedProperty['x-undocumented'].length > 0,
+        deprecationMessage: parsedProperty['x-deprecated'],
+      }
+    },
+  )
 }
 
 const createResources = (
@@ -464,26 +525,34 @@ export const createProperties = (
         if (parsedProp.enum !== undefined) {
           return {
             ...baseProperty,
-            type: 'enum',
+            format: 'enum',
+            jsonType: 'string',
             values: parsedProp.enum.map((value: any) => ({ name: value })),
           }
         }
-        return { ...baseProperty, type: 'string' }
+        if (parsedProp.format === 'date-time') {
+          return { ...baseProperty, format: 'datetime', jsonType: 'string' }
+        }
+        if (parsedProp.format === 'uuid') {
+          return { ...baseProperty, format: 'id', jsonType: 'string' }
+        }
+        return { ...baseProperty, format: 'string', jsonType: 'string' }
       case 'boolean':
-        return { ...baseProperty, type: 'boolean' }
+        return { ...baseProperty, format: 'boolean', jsonType: 'boolean' }
       case 'array':
-        return { ...baseProperty, type: 'list' }
+        return { ...baseProperty, format: 'list', jsonType: 'array' }
       case 'object':
         if (parsedProp.properties !== undefined) {
           return {
             ...baseProperty,
-            type: 'object',
+            format: 'object',
+            jsonType: 'object',
             properties: createProperties(
               parsedProp.properties as Record<string, OpenapiSchema>,
             ),
           }
         }
-        return { ...baseProperty, type: 'record' }
+        return { ...baseProperty, format: 'record', jsonType: 'object' }
       default:
         throw new Error(`Unsupported property type: ${parsedProp.type}`)
     }
