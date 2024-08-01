@@ -58,6 +58,7 @@ export default {
         security: [],
         summary: '/foos/get',
         tags: ['/foos'],
+        'x-response-key': 'foo',
         'x-title': 'Get a foo',
       },
       post: {
@@ -84,6 +85,7 @@ export default {
         security: [],
         summary: '/foos/get',
         tags: ['/foos'],
+        'x-response-key': 'foo',
         'x-title': 'Get a foo',
       },
     },
