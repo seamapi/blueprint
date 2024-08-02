@@ -9,6 +9,7 @@ import {
 } from './javascript.js'
 import { createPhpRequest, createPhpResponse } from './php.js'
 import { createPythonRequest, createPythonResponse } from './python.js'
+import { createRubyRequest, createRubyResponse } from './ruby.js'
 
 export const CodeSampleDefinitionSchema = z.object({
   title: z.string().trim().min(1),
@@ -36,7 +37,7 @@ export type CodeSampleDefinition = z.output<typeof CodeSampleDefinitionSchema>
 
 const CodeSampleSchema = CodeSampleDefinitionSchema.extend({
   code: z.record(
-    z.enum(['javascript', 'python', 'php']),
+    z.enum(['javascript', 'python', 'php', 'ruby']),
     z.object({
       title: z.string().min(1),
       request: z.string(),
@@ -67,6 +68,11 @@ export const createCodeSample = (
         title: 'Python',
         request: createPythonRequest(codeSampleDefinition, context),
         response: createPythonResponse(codeSampleDefinition, context),
+      },
+      ruby: {
+        title: 'Ruby',
+        request: createRubyRequest(codeSampleDefinition, context),
+        response: createRubyResponse(codeSampleDefinition, context),
       },
       php: {
         title: 'PHP',
