@@ -38,5 +38,5 @@ export const createRubyResponse = (
     })
     .join('\n')
 
-  return `<Seam::${responseRubyClassName}:0x00438\n${responseRubyParams}>`
+  return `<Seam::${responseRubyClassName}:0x00000\n${responseRubyParams}>`
 }
