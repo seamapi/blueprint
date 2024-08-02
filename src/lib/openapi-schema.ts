@@ -59,6 +59,8 @@ export const OpenapiOperationSchema = z.object({
     .optional(),
   responses: ResponseSchema,
   deprecated: z.boolean().default(false),
+  'x-response-key': z.string().nullable().default(null),
+  'x-title': z.string().default(''),
   'x-undocumented': z.string().default(''),
   'x-deprecated': z.string().default(''),
 })

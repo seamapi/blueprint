@@ -50,7 +50,7 @@ export default {
                 },
               },
             },
-            description: 'OK',
+            description: 'Get a foo by ID.',
           },
           400: { description: 'Bad Request' },
           401: { description: 'Unauthorized' },
@@ -58,6 +58,8 @@ export default {
         security: [],
         summary: '/foos/get',
         tags: ['/foos'],
+        'x-response-key': 'foo',
+        'x-title': 'Get a foo',
       },
       post: {
         operationId: 'foosGetPost',
@@ -75,7 +77,7 @@ export default {
                 },
               },
             },
-            description: 'OK',
+            description: 'Get a foo by ID.',
           },
           400: { description: 'Bad Request' },
           401: { description: 'Unauthorized' },
@@ -83,6 +85,70 @@ export default {
         security: [],
         summary: '/foos/get',
         tags: ['/foos'],
+        'x-response-key': 'foo',
+        'x-title': 'Get a foo',
+      },
+    },
+    '/foos/list': {
+      get: {
+        operationId: 'foosListGet',
+        responses: {
+          200: {
+            content: {
+              'application/json': {
+                schema: {
+                  properties: {
+                    ok: { type: 'boolean' },
+                    foos: {
+                      items: { $ref: '#/components/schemas/foo' },
+                      type: 'array',
+                    },
+                  },
+                  required: ['foos', 'ok'],
+                  type: 'object',
+                },
+              },
+            },
+            description: 'List foos.',
+          },
+          400: { description: 'Bad Request' },
+          401: { description: 'Unauthorized' },
+        },
+        security: [],
+        summary: '/foos/list',
+        tags: ['/foos'],
+        'x-response-key': 'foos',
+        'x-title': 'Get a foo',
+      },
+      post: {
+        operationId: 'foosListPost',
+        responses: {
+          200: {
+            content: {
+              'application/json': {
+                schema: {
+                  properties: {
+                    ok: { type: 'boolean' },
+                    foos: {
+                      items: { $ref: '#/components/schemas/foo' },
+                      type: 'array',
+                    },
+                  },
+                  required: ['foos', 'ok'],
+                  type: 'object',
+                },
+              },
+            },
+            description: 'List all foos.',
+          },
+          400: { description: 'Bad Request' },
+          401: { description: 'Unauthorized' },
+        },
+        security: [],
+        summary: '/foos/list',
+        tags: ['/foos'],
+        'x-response-key': 'foos',
+        'x-title': 'Get a foo',
       },
     },
   },
