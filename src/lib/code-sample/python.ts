@@ -1,7 +1,8 @@
 import { pascalCase, snakeCase } from 'change-case'
 
-import type { CodeSampleDefinition, Context } from './schema.js'
 import type { Json } from 'lib/json.js'
+
+import type { CodeSampleDefinition, Context } from './schema.js'
 
 export const createPythonRequest = (
   { request }: CodeSampleDefinition,
@@ -40,7 +41,7 @@ export const createPythonResponse = (
   }
 
   const pythonResponse = Array.isArray(responseValue)
-    ? `[${responseValue.map((v) => formatPythonResponse(v as NonNullJson)).join(', ')}]`
+    ? `[${responseValue.map((v) => formatPythonResponse(v!)).join(', ')}]`
     : formatPythonResponse(responseValue)
 
   return pythonResponse
