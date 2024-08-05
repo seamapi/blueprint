@@ -8,7 +8,12 @@ export const createJavascriptRequest = (
   _context: Context,
 ): string => {
   const parts = request.path.split('/')
-  return `await seam${parts.map((p) => camelCase(p)).join('.')}(${JSON.stringify(request.parameters)})`
+  const isWithoutParams = Object.keys(request.parameters).length === 0
+  const formattedParams = isWithoutParams
+    ? ''
+    : JSON.stringify(request.parameters)
+
+  return `await seam${parts.map((p) => camelCase(p)).join('.')}(${formattedParams})`
 }
 
 export const createJavascriptResponse = createJsonResponse
