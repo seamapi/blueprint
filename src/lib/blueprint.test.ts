@@ -77,7 +77,7 @@ test('createProperties: uses provided values', (t) => {
   )
 })
 
-const postOnlyEndpoint: OpenapiOperation = {
+const postEndpoint: OpenapiOperation = {
   summary: '/users/create',
   responses: {
     '200': {
@@ -85,7 +85,6 @@ const postOnlyEndpoint: OpenapiOperation = {
       content: {
         'application/json': {
           schema: {
-            type: 'object',
             properties: {
               user: {
                 $ref: '#/components/schemas/user',
@@ -131,6 +130,183 @@ const getPostEndpoint: OpenapiOperation = {
   operationId: 'workspacesGetPost',
 }
 
+const patchPostEndpoint: OpenapiOperation = {
+  summary: '/user_identities/update',
+  responses: {
+    '200': {
+      description: 'OK',
+      content: {
+        'application/json': {
+          schema: {
+            properties: {
+              ok: {
+                type: 'boolean',
+              },
+            },
+            required: ['ok'],
+          },
+        },
+      },
+    },
+    '400': {
+      description: 'Bad Request',
+    },
+    '401': {
+      description: 'Unauthorized',
+    },
+  },
+  security: [
+    { pat_with_workspace: [] },
+    { console_session: [] },
+    { api_key: [] },
+  ],
+  requestBody: {
+    content: {
+      'application/json': {
+        schema: {
+          type: 'object',
+          properties: {
+            user_identity_id: {
+              type: 'string',
+              format: 'uuid',
+            },
+            user_identity_key: {
+              type: 'string',
+            },
+            email_address: {
+              type: 'string',
+              format: 'email',
+            },
+            phone_number: {
+              type: 'string',
+            },
+            full_name: {
+              type: 'string',
+            },
+          },
+          required: ['user_identity_id'],
+        },
+      },
+    },
+  },
+  tags: ['/user_identities'],
+  operationId: 'userIdentitiesUpdatePost',
+}
+
+const deletePostEndpoint: OpenapiOperation = {
+  summary: '/user_identities/delete',
+  responses: {
+    '200': {
+      description: 'OK',
+      content: {
+        'application/json': {
+          schema: {
+            properties: {
+              ok: {
+                type: 'boolean',
+              },
+            },
+            required: ['ok'],
+          },
+        },
+      },
+    },
+    '400': {
+      description: 'Bad Request',
+    },
+    '401': {
+      description: 'Unauthorized',
+    },
+  },
+  security: [
+    { api_key: [] },
+    { pat_with_workspace: [] },
+    { console_session: [] },
+  ],
+  requestBody: {
+    content: {
+      'application/json': {
+        schema: {
+          type: 'object',
+          properties: {
+            user_identity_id: {
+              type: 'string',
+              format: 'uuid',
+            },
+          },
+          required: ['user_identity_id'],
+        },
+      },
+    },
+  },
+  tags: ['/user_identities'],
+  operationId: 'userIdentitiesDeletePost',
+}
+
+const putPatchPostEndpoint: OpenapiOperation = {
+  summary: '/access_codes/update',
+  responses: {
+    '200': {
+      description: 'OK',
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            properties: {
+              action_attempt: {
+                $ref: '#/components/schemas/action_attempt',
+              },
+              ok: {
+                type: 'boolean',
+              },
+            },
+            required: ['action_attempt', 'ok'],
+          },
+        },
+      },
+    },
+    '400': {
+      description: 'Bad Request',
+    },
+    '401': {
+      description: 'Unauthorized',
+    },
+  },
+  security: [
+    { client_session: [] },
+    { pat_with_workspace: [] },
+    { console_session: [] },
+    { api_key: [] },
+  ],
+  requestBody: {
+    content: {
+      'application/json': {
+        schema: {
+          type: 'object',
+          properties: {
+            name: { type: 'string' },
+            starts_at: { type: 'string' },
+            ends_at: { type: 'string' },
+            code: {
+              type: 'string',
+            },
+            sync: {
+              type: 'boolean',
+            },
+            access_code_id: {
+              type: 'string',
+              format: 'uuid',
+            },
+          },
+          required: ['access_code_id'],
+        },
+      },
+    },
+  },
+  tags: ['/access_codes'],
+  operationId: 'accessCodesUpdatePost',
+}
+
 test('Method detection for different endpoints', (t) => {
   // only POST method available
   const postOnlyMethods: Method[] = ['POST']
@@ -140,7 +316,7 @@ test('Method detection for different endpoints', (t) => {
     'Semantic method should be POST when only POST is available',
   )
   t.is(
-    getPreferredMethod(postOnlyMethods, 'POST', postOnlyEndpoint),
+    getPreferredMethod(postOnlyMethods, 'POST', postEndpoint),
     'POST',
     'Preferred method should be POST when only POST is available',
   )
@@ -156,5 +332,44 @@ test('Method detection for different endpoints', (t) => {
     getPreferredMethod(bothMethods, 'GET', getPostEndpoint),
     'GET',
     'Preferred method should be GET when both methods are available and no complex parameters',
+  )
+
+  // PATCH and POST methods available
+  const patchPostMethods: Method[] = ['PATCH', 'POST']
+  t.is(
+    getSemanticMethod(patchPostMethods),
+    'PATCH',
+    'Semantic method should be PATCH when both PATCH and POST are available',
+  )
+  t.is(
+    getPreferredMethod(patchPostMethods, 'PATCH', patchPostEndpoint),
+    'PATCH',
+    'Preferred method should be PATCH when both PATCH and POST are available',
+  )
+
+  // DELETE and POST methods available
+  const deletePostMethods: Method[] = ['DELETE', 'POST']
+  t.is(
+    getSemanticMethod(deletePostMethods),
+    'DELETE',
+    'Semantic method should be DELETE when both DELETE and POST are available',
+  )
+  t.is(
+    getPreferredMethod(deletePostMethods, 'DELETE', deletePostEndpoint),
+    'POST',
+    'Preferred method should be POST when both DELETE and POST are available',
+  )
+
+  // PUT, POST and PATCH methods available
+  const putPatchPostMethods: Method[] = ['PUT', 'PATCH', 'POST']
+  t.is(
+    getSemanticMethod(putPatchPostMethods),
+    'PUT',
+    'Semantic method should be PUT when PUT, PATCH and POST are available',
+  )
+  t.is(
+    getPreferredMethod(putPatchPostMethods, 'PUT', putPatchPostEndpoint),
+    'PUT',
+    'Preferred method should be PUT when PUT, PATCH and POST are available',
   )
 })

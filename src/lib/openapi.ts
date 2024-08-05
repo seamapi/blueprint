@@ -66,7 +66,7 @@ export interface OpenapiMediaType {
 }
 
 export interface OpenapiSchema {
-  type: 'object' | 'array' | 'string' | 'number' | 'integer' | 'boolean'
+  type?: 'object' | 'array' | 'string' | 'number' | 'integer' | 'boolean'
   properties?: Record<string, OpenapiSchema>
   items?: OpenapiSchema
   $ref?: string
