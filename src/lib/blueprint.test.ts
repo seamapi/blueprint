@@ -1,7 +1,12 @@
 import test from 'ava'
 
-import { createProperties } from 'lib/blueprint.js'
-import type { OpenapiSchema } from 'lib/openapi.js'
+import {
+  createProperties,
+  getPreferredMethod,
+  getSemanticMethod,
+  type Method,
+} from 'lib/blueprint.js'
+import type { OpenapiOperation, OpenapiSchema } from 'lib/openapi.js'
 
 test('createProperties: assigns appropriate default values', (t) => {
   const minimalProperties = {
@@ -69,5 +74,87 @@ test('createProperties: uses provided values', (t) => {
   t.true(
     property.isUndocumented,
     'isUndocumented should be true when x-undocumented is provided',
+  )
+})
+
+const postOnlyEndpoint: OpenapiOperation = {
+  summary: '/users/create',
+  responses: {
+    '200': {
+      description: 'OK',
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            properties: {
+              user: {
+                $ref: '#/components/schemas/user',
+                type: 'object',
+              },
+              ok: {
+                type: 'boolean',
+              },
+            },
+            required: ['user', 'ok'],
+          },
+        },
+      },
+    },
+  },
+  operationId: 'usersCreatePost',
+}
+
+const getPostEndpoint: OpenapiOperation = {
+  summary: '/workspaces/get',
+  responses: {
+    '200': {
+      description: 'OK',
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            properties: {
+              workspace: {
+                type: 'object',
+                $ref: '#/components/schemas/workspace',
+              },
+              ok: {
+                type: 'boolean',
+              },
+            },
+            required: ['workspace', 'ok'],
+          },
+        },
+      },
+    },
+  },
+  operationId: 'workspacesGetPost',
+}
+
+test('Method detection for different endpoints', (t) => {
+  // only POST method available
+  const postOnlyMethods: Method[] = ['POST']
+  t.is(
+    getSemanticMethod(postOnlyMethods),
+    'POST',
+    'Semantic method should be POST when only POST is available',
+  )
+  t.is(
+    getPreferredMethod(postOnlyMethods, 'POST', postOnlyEndpoint),
+    'POST',
+    'Preferred method should be POST when only POST is available',
+  )
+
+  // both GET and POST methods available
+  const bothMethods: Method[] = ['GET', 'POST']
+  t.is(
+    getSemanticMethod(bothMethods),
+    'GET',
+    'Semantic method should be GET when both GET and POST are available',
+  )
+  t.is(
+    getPreferredMethod(bothMethods, 'GET', getPostEndpoint),
+    'GET',
+    'Preferred method should be GET when both methods are available and no complex parameters',
   )
 })

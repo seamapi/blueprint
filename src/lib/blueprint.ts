@@ -139,7 +139,7 @@ interface ObjectProperty extends BaseProperty {
   properties: Property[]
 }
 
-type Method = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH'
+export type Method = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH'
 
 interface Context {
   codeSampleDefinitions: CodeSampleDefinition[]
@@ -302,7 +302,7 @@ const createParameter = (param: OpenapiParameter): Parameter => {
   }
 }
 
-const createRequest = (
+export const createRequest = (
   methods: Method[],
   operation: OpenapiOperation,
 ): Request => {
@@ -515,7 +515,7 @@ export const createProperties = (
   })
 }
 
-const getSemanticMethod = (methods: Method[]): Method => {
+export const getSemanticMethod = (methods: Method[]): Method => {
   if (methods.length === 1) {
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     return methods[0]!
@@ -525,7 +525,7 @@ const getSemanticMethod = (methods: Method[]): Method => {
   return methods.find((m) => priorityOrder.includes(m)) ?? 'POST'
 }
 
-const getPreferredMethod = (
+export const getPreferredMethod = (
   methods: Method[],
   semanticMethod: Method,
   operation: OpenapiOperation,
