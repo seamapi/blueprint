@@ -306,57 +306,24 @@ const createRequest = (
   methods: Method[],
   operation: OpenapiOperation,
 ): Request => {
+  if (methods.length === 0) {
+    // eslint-disable-next-line no-console
+    console.warn('At least one HTTP method should be specified')
+  }
   const parameters = createParameters(operation)
 
-  const hasPost = methods.includes('POST')
-  const otherMethods = methods.filter((m) => m !== 'POST')
-
-  let preferredMethod: Method
-  let semanticMethod: Method
-
-  if (methods.length === 1 && hasPost) {
-    // Case 1: only POST
-
-    preferredMethod = semanticMethod = 'POST'
-  } else if (methods.length === 2 && hasPost) {
-    // Case 2: POST and another method
-
-    // @ts-expect-error if otherMethods is undefined, something went very wrong
-    semanticMethod = otherMethods[0]
-    if (
-      (semanticMethod === 'GET' || semanticMethod === 'DELETE') &&
-      ((operation.parameters?.some(
-        (param) =>
-          param.schema?.type === 'array' || param.schema?.type === 'object',
-      ) ??
-        false) ||
-        operation.requestBody?.content?.['application/json']?.schema?.type ===
-          'object')
-    ) {
-      preferredMethod = 'POST'
-    } else {
-      preferredMethod = semanticMethod
-    }
-  } else if (!hasPost) {
-    // Case 3: POST is missing
-
-    // TODO: what do we want to use for warnings?
+  if (methods.length > 2) {
     // eslint-disable-next-line no-console
-    console.warn('Warning: POST method is missing')
-    semanticMethod = preferredMethod = otherMethods[0] ?? 'GET'
-  } else if (methods.length > 2) {
-    // Case 4: More than two methods
-
-    // eslint-disable-next-line no-console
-    console.warn('Warning: More than two methods detected. Was this intended?')
-
-    // prioritize in order: PUT, PATCH, POST, GET, DELETE
-    const priorityOrder: Method[] = ['PUT', 'PATCH', 'POST', 'GET', 'DELETE']
-    semanticMethod = methods.find((m) => priorityOrder.includes(m)) ?? 'POST'
-    preferredMethod = hasPost ? 'POST' : semanticMethod
-  } else {
-    semanticMethod = preferredMethod = 'POST'
+    console.warn('More than two methods detected. Was this intended?')
   }
+
+  if (!methods.includes('POST')) {
+    // eslint-disable-next-line no-console
+    console.warn('POST method is missing')
+  }
+
+  const semanticMethod = getSemanticMethod(methods)
+  const preferredMethod = getPreferredMethod(methods, semanticMethod, operation)
 
   return {
     methods,
@@ -546,4 +513,44 @@ export const createProperties = (
         throw new Error(`Unsupported property type: ${parsedProp.type}`)
     }
   })
+}
+
+const getSemanticMethod = (methods: Method[]): Method => {
+  if (methods.length === 1) {
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    return methods[0]!
+  }
+
+  const priorityOrder: Method[] = ['PUT', 'PATCH', 'POST', 'GET', 'DELETE']
+  return methods.find((m) => priorityOrder.includes(m)) ?? 'POST'
+}
+
+const getPreferredMethod = (
+  methods: Method[],
+  semanticMethod: Method,
+  operation: OpenapiOperation,
+): Method => {
+  if (methods.length === 1) {
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    return methods[0]!
+  }
+
+  if (methods.includes('POST')) {
+    if (semanticMethod === 'GET' || semanticMethod === 'DELETE') {
+      const hasComplexParameters =
+        (operation.parameters?.some(
+          (param) =>
+            param.schema?.type === 'array' || param.schema?.type === 'object',
+        ) ??
+          false) ||
+        operation.requestBody?.content?.['application/json']?.schema?.type ===
+          'object'
+
+      if (hasComplexParameters) {
+        return 'POST'
+      }
+    }
+  }
+
+  return semanticMethod
 }
