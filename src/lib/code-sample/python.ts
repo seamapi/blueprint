@@ -16,6 +16,14 @@ export const createPythonRequest = (
 
 type NonNullJson = Exclude<Json, null>
 
+const formatPythonArgs = (jsonParams: NonNullJson): string =>
+  Object.entries(jsonParams)
+    .map(
+      ([paramKey, paramValue]) =>
+        `${snakeCase(paramKey)}=${JSON.stringify(paramValue)}`,
+    )
+    .join(', ')
+
 export const createPythonResponse = (
   { response, title }: CodeSampleDefinition,
   context: Context,
@@ -35,25 +43,24 @@ export const createPythonResponse = (
     RESOURCE_TYPE_TO_PYTHON_CLASS_NAME[resourceType] ?? resourceType,
   )
 
-  const formatPythonResponse = (value: NonNullJson): string => {
-    const params = formatPythonArgs(value)
-    return `${responsePythonClassName}(${params})`
-  }
-
-  const pythonResponse = Array.isArray(responseValue)
-    ? `[${responseValue.map((v) => formatPythonResponse(v!)).join(', ')}]`
-    : formatPythonResponse(responseValue)
-
-  return pythonResponse
+  return Array.isArray(responseValue)
+    ? `[${responseValue
+        .map((v) => {
+          if (v == null)
+            throw new Error(`Null value in response array for '${title}'`)
+          return formatPythonResponse(v, responsePythonClassName)
+        })
+        .join(', ')}]`
+    : formatPythonResponse(responseValue, responsePythonClassName)
 }
 
-const formatPythonArgs = (jsonParams: NonNullJson): string =>
-  Object.entries(jsonParams)
-    .map(
-      ([paramKey, paramValue]) =>
-        `${snakeCase(paramKey)}=${JSON.stringify(paramValue)}`,
-    )
-    .join(', ')
+const formatPythonResponse = (
+  responseParams: NonNullJson,
+  responsePythonClassName: string,
+): string => {
+  const params = formatPythonArgs(responseParams)
+  return `${responsePythonClassName}(${params})`
+}
 
 const RESOURCE_TYPE_TO_PYTHON_CLASS_NAME: Readonly<Record<string, string>> = {
   event: 'SeamEvent',
