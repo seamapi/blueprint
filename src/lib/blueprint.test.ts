@@ -360,7 +360,7 @@ test('Method detection for different endpoints', (t) => {
     'Preferred method should be POST when both DELETE and POST are available',
   )
 
-  // PUT, POST and PATCH methods available
+  // more than two methods available
   const putPatchPostMethods: Method[] = ['PUT', 'PATCH', 'POST']
   t.is(
     getSemanticMethod(putPatchPostMethods),
