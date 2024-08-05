@@ -1,18 +1,19 @@
 import { pascalCase, snakeCase } from 'change-case'
 
 import type { CodeSampleDefinition, Context } from './schema.js'
+import type { Json } from 'lib/json.js'
 
 export const createPythonRequest = (
   { request }: CodeSampleDefinition,
   _context: Context,
 ): string => {
   const parts = request.path.split('/')
-  const params = Object.entries(request.parameters)
-    .map(([key, value]) => `${snakeCase(key)}=${JSON.stringify(value)}`)
-    .join(', ')
+  const params = formatPythonArgs(request.parameters)
 
   return `seam${parts.map((p) => snakeCase(p)).join('.')}(${params})`
 }
+
+type NonNullJson = Exclude<Json, null>
 
 export const createPythonResponse = (
   { response, title }: CodeSampleDefinition,
@@ -22,7 +23,7 @@ export const createPythonResponse = (
 
   if (endpoint.response.responseType === 'void') return 'None'
 
-  const { responseKey } = endpoint.response
+  const { responseKey, resourceType } = endpoint.response
   const responseValue = response?.body?.[responseKey]
 
   if (responseValue == null) {
@@ -30,18 +31,29 @@ export const createPythonResponse = (
   }
 
   const responsePythonClassName = pascalCase(
-    responseKeyToPythonResourceNameMap[responseKey] ?? responseKey,
+    RESOURCE_TYPE_TO_PYTHON_CLASS_NAME[resourceType] ?? resourceType,
   )
-  const responsePythonParams = Object.entries(responseValue)
+
+  const formatPythonResponse = (value: NonNullJson): string => {
+    const params = formatPythonArgs(value)
+    return `${responsePythonClassName}(${params})`
+  }
+
+  const pythonResponse = Array.isArray(responseValue)
+    ? `[${responseValue.map((v) => formatPythonResponse(v as NonNullJson)).join(', ')}]`
+    : formatPythonResponse(responseValue)
+
+  return pythonResponse
+}
+
+const formatPythonArgs = (jsonParams: NonNullJson): string =>
+  Object.entries(jsonParams)
     .map(
       ([paramKey, paramValue]) =>
         `${snakeCase(paramKey)}=${JSON.stringify(paramValue)}`,
     )
     .join(', ')
 
-  return `${responsePythonClassName}(${responsePythonParams})`
-}
-
-const responseKeyToPythonResourceNameMap: Record<string, string> = {
+const RESOURCE_TYPE_TO_PYTHON_CLASS_NAME: Readonly<Record<string, string>> = {
   event: 'SeamEvent',
 }
