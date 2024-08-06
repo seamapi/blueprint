@@ -1,6 +1,6 @@
 import { pascalCase, snakeCase } from 'change-case'
 
-import type { Json } from 'lib/json.js'
+import type { NonNullJson } from 'lib/json.js'
 
 import type { CodeSampleDefinition, Context } from './schema.js'
 
@@ -13,8 +13,6 @@ export const createPythonRequest = (
 
   return `seam${parts.map((p) => snakeCase(p)).join('.')}(${params})`
 }
-
-type NonNullJson = Exclude<Json, null>
 
 const formatPythonArgs = (jsonParams: NonNullJson): string =>
   Object.entries(jsonParams)
