@@ -1,6 +1,7 @@
 import { pascalCase, snakeCase } from 'change-case'
 
 import type { CodeSampleDefinition, Context } from './schema.js'
+import type { NonNullJson } from 'lib/json.js'
 
 export const createRubyRequest = (
   { request }: CodeSampleDefinition,
@@ -30,13 +31,33 @@ export const createRubyResponse = (
   }
 
   const responseRubyClassName = pascalCase(responseKey)
-  const responseRubyParams = Object.entries(responseValue)
+
+  return Array.isArray(responseValue)
+    ? `[${responseValue
+        .map((v) => {
+          if (v == null) {
+            throw new Error(`Null value in response array for '${title}'`)
+          }
+          return formatRubyResponse(v, responseRubyClassName)
+        })
+        .join(',\n')}]`
+    : formatRubyResponse(responseValue, responseRubyClassName)
+}
+
+const formatRubyArgs = (jsonParams: NonNullJson): string =>
+  Object.entries(jsonParams)
     .map(([paramKey, paramValue]) => {
       const formattedValue =
         paramValue === null ? 'nil' : JSON.stringify(paramValue)
-      return `  ${snakeCase(paramKey)}=${formattedValue}`
+
+      return `${snakeCase(paramKey)}=${formattedValue}`
     })
     .join('\n')
 
-  return `<Seam::${responseRubyClassName}:0x00000\n${responseRubyParams}>`
+const formatRubyResponse = (
+  responseParams: NonNullJson,
+  responseRubyClassName: string,
+): string => {
+  const params = formatRubyArgs(responseParams)
+  return `<Seam::${responseRubyClassName}:0x00000\n${params}>`
 }
