@@ -77,247 +77,262 @@ test('createProperties: uses provided values', (t) => {
   )
 })
 
-test('Method detection for different endpoints', (t) => {
-  // POST only endpoint
-  const postEndpoint: OpenapiOperation = {
-    summary: '/users/create',
-    responses: {
-      '200': {
-        description: 'OK',
-        content: {
-          'application/json': {
-            schema: {
-              properties: {
-                user: {
-                  $ref: '#/components/schemas/user',
-                  type: 'object',
-                },
-                ok: {
-                  type: 'boolean',
-                },
+const postEndpoint: OpenapiOperation = {
+  summary: '/users/create',
+  responses: {
+    '200': {
+      description: 'OK',
+      content: {
+        'application/json': {
+          schema: {
+            properties: {
+              user: {
+                $ref: '#/components/schemas/user',
+                type: 'object',
               },
-              required: ['user', 'ok'],
+              ok: {
+                type: 'boolean',
+              },
             },
+            required: ['user', 'ok'],
           },
         },
       },
     },
-    operationId: 'usersCreatePost',
-  }
+  },
+  operationId: 'usersCreatePost',
+}
 
+test('getSemanticMethod: post only', (t) => {
   const postOnlyMethods: Method[] = ['POST']
   t.is(
     getSemanticMethod(postOnlyMethods),
     'POST',
     'Semantic method should be POST when only POST is available',
   )
+})
+
+test('getPreferredMethod: post only', (t) => {
+  const postOnlyMethods: Method[] = ['POST']
   t.is(
     getPreferredMethod(postOnlyMethods, 'POST', postEndpoint),
     'POST',
     'Preferred method should be POST when only POST is available',
   )
+})
 
-  // GET and POST endpoint
-  const getPostEndpoint: OpenapiOperation = {
-    summary: '/workspaces/get',
-    responses: {
-      '200': {
-        description: 'OK',
-        content: {
-          'application/json': {
-            schema: {
-              type: 'object',
-              properties: {
-                workspace: {
-                  type: 'object',
-                  $ref: '#/components/schemas/workspace',
-                },
-                ok: {
-                  type: 'boolean',
-                },
+const getPostEndpoint: OpenapiOperation = {
+  summary: '/workspaces/get',
+  responses: {
+    '200': {
+      description: 'OK',
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            properties: {
+              workspace: {
+                type: 'object',
+                $ref: '#/components/schemas/workspace',
               },
-              required: ['workspace', 'ok'],
+              ok: {
+                type: 'boolean',
+              },
             },
+            required: ['workspace', 'ok'],
           },
         },
       },
     },
-    operationId: 'workspacesGetPost',
-  }
+  },
+  operationId: 'workspacesGetPost',
+}
 
+test('getSemanticMethod: get and post', (t) => {
   const bothMethods: Method[] = ['GET', 'POST']
   t.is(
     getSemanticMethod(bothMethods),
     'GET',
     'Semantic method should be GET when both GET and POST are available',
   )
+})
+
+test('getPreferredMethod: get and post without complex parameters', (t) => {
+  const bothMethods: Method[] = ['GET', 'POST']
   t.is(
     getPreferredMethod(bothMethods, 'GET', getPostEndpoint),
     'GET',
     'Preferred method should be GET when both methods are available and no complex parameters',
   )
+})
 
-  // GET and POST with complex parameters
-  const getPostComplexParamsEndpoint: OpenapiOperation = {
-    ...getPostEndpoint,
-    requestBody: {
-      content: {
-        'application/json': {
-          schema: {
-            type: 'object',
-            properties: {
-              complexParam: { type: 'object' },
-            },
+const getPostComplexParamsEndpoint: OpenapiOperation = {
+  ...getPostEndpoint,
+  requestBody: {
+    content: {
+      'application/json': {
+        schema: {
+          type: 'object',
+          properties: {
+            complexParam: { type: 'object' },
           },
         },
       },
     },
-  }
+  },
+}
 
-  t.is(
-    getSemanticMethod(bothMethods),
-    'GET',
-    'Semantic method should be GET when both GET and POST are available',
-  )
+test('getPreferredMethod: get and post with complex parameters', (t) => {
+  const bothMethods: Method[] = ['GET', 'POST']
   t.is(
     getPreferredMethod(bothMethods, 'GET', getPostComplexParamsEndpoint),
     'POST',
     'Preferred method should be POST when both GET and POST are available and complex parameters are present',
   )
+})
 
-  // PATCH and POST endpoint
-  const patchPostEndpoint: OpenapiOperation = {
-    summary: '/user_identities/update',
-    responses: {
-      '200': {
-        description: 'OK',
-        content: {
-          'application/json': {
-            schema: {
-              properties: {
-                ok: {
-                  type: 'boolean',
-                },
-              },
-              required: ['ok'],
-            },
-          },
-        },
-      },
-      '400': {
-        description: 'Bad Request',
-      },
-      '401': {
-        description: 'Unauthorized',
-      },
-    },
-    security: [
-      { pat_with_workspace: [] },
-      { console_session: [] },
-      { api_key: [] },
-    ],
-    requestBody: {
+const patchPostEndpoint: OpenapiOperation = {
+  summary: '/user_identities/update',
+  responses: {
+    '200': {
+      description: 'OK',
       content: {
         'application/json': {
           schema: {
-            type: 'object',
             properties: {
-              user_identity_id: {
-                type: 'string',
-                format: 'uuid',
-              },
-              user_identity_key: {
-                type: 'string',
-              },
-              email_address: {
-                type: 'string',
-                format: 'email',
-              },
-              phone_number: {
-                type: 'string',
-              },
-              full_name: {
-                type: 'string',
+              ok: {
+                type: 'boolean',
               },
             },
-            required: ['user_identity_id'],
+            required: ['ok'],
           },
         },
       },
     },
-    tags: ['/user_identities'],
-    operationId: 'userIdentitiesUpdatePost',
-  }
+    '400': {
+      description: 'Bad Request',
+    },
+    '401': {
+      description: 'Unauthorized',
+    },
+  },
+  security: [
+    { pat_with_workspace: [] },
+    { console_session: [] },
+    { api_key: [] },
+  ],
+  requestBody: {
+    content: {
+      'application/json': {
+        schema: {
+          type: 'object',
+          properties: {
+            user_identity_id: {
+              type: 'string',
+              format: 'uuid',
+            },
+            user_identity_key: {
+              type: 'string',
+            },
+            email_address: {
+              type: 'string',
+              format: 'email',
+            },
+            phone_number: {
+              type: 'string',
+            },
+            full_name: {
+              type: 'string',
+            },
+          },
+          required: ['user_identity_id'],
+        },
+      },
+    },
+  },
+  tags: ['/user_identities'],
+  operationId: 'userIdentitiesUpdatePost',
+}
 
+test('getSemanticMethod: patch and post', (t) => {
   const patchPostMethods: Method[] = ['PATCH', 'POST']
   t.is(
     getSemanticMethod(patchPostMethods),
     'PATCH',
     'Semantic method should be PATCH when both PATCH and POST are available',
   )
+})
+
+test('getPreferredMethod: patch and post', (t) => {
+  const patchPostMethods: Method[] = ['PATCH', 'POST']
   t.is(
     getPreferredMethod(patchPostMethods, 'PATCH', patchPostEndpoint),
     'PATCH',
     'Preferred method should be PATCH when both PATCH and POST are available',
   )
+})
 
-  // DELETE and POST endpoint
-  const deletePostEndpoint: OpenapiOperation = {
-    summary: '/user_identities/delete',
-    responses: {
-      '200': {
-        description: 'OK',
-        content: {
-          'application/json': {
-            schema: {
-              properties: {
-                ok: {
-                  type: 'boolean',
-                },
-              },
-              required: ['ok'],
-            },
-          },
-        },
-      },
-      '400': {
-        description: 'Bad Request',
-      },
-      '401': {
-        description: 'Unauthorized',
-      },
-    },
-    security: [
-      { api_key: [] },
-      { pat_with_workspace: [] },
-      { console_session: [] },
-    ],
-    requestBody: {
+const deletePostEndpoint: OpenapiOperation = {
+  summary: '/user_identities/delete',
+  responses: {
+    '200': {
+      description: 'OK',
       content: {
         'application/json': {
           schema: {
-            type: 'object',
             properties: {
-              user_identity_id: {
-                type: 'string',
-                format: 'uuid',
+              ok: {
+                type: 'boolean',
               },
             },
-            required: ['user_identity_id'],
+            required: ['ok'],
           },
         },
       },
     },
-    tags: ['/user_identities'],
-    operationId: 'userIdentitiesDeletePost',
-  }
+    '400': {
+      description: 'Bad Request',
+    },
+    '401': {
+      description: 'Unauthorized',
+    },
+  },
+  security: [
+    { api_key: [] },
+    { pat_with_workspace: [] },
+    { console_session: [] },
+  ],
+  requestBody: {
+    content: {
+      'application/json': {
+        schema: {
+          type: 'object',
+          properties: {
+            user_identity_id: {
+              type: 'string',
+              format: 'uuid',
+            },
+          },
+          required: ['user_identity_id'],
+        },
+      },
+    },
+  },
+  tags: ['/user_identities'],
+  operationId: 'userIdentitiesDeletePost',
+}
 
+test('getSemanticMethod: delete and post', (t) => {
   const deletePostMethods: Method[] = ['DELETE', 'POST']
   t.is(
     getSemanticMethod(deletePostMethods),
     'DELETE',
     'Semantic method should be DELETE when both DELETE and POST are available',
   )
+})
+
+test('getPreferredMethod: delete and post', (t) => {
+  const deletePostMethods: Method[] = ['DELETE', 'POST']
   t.is(
     getPreferredMethod(deletePostMethods, 'DELETE', deletePostEndpoint),
     'POST',
