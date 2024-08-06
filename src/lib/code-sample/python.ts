@@ -20,10 +20,12 @@ export const createPythonRequest = (
 
 const formatPythonArgs = (jsonParams: NonNullJson): string =>
   Object.entries(jsonParams)
-    .map(
-      ([paramKey, paramValue]) =>
-        `${snakeCase(paramKey)}=${JSON.stringify(paramValue)}`,
-    )
+    .map(([paramKey, paramValue]) => {
+      const formattedValue =
+        paramValue == null ? 'None' : JSON.stringify(paramValue)
+
+      return `${snakeCase(paramKey)}=${formattedValue}`
+    })
     .join(', ')
 
 export const createPythonResponse = (
