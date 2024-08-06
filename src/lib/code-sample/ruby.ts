@@ -38,7 +38,7 @@ export const createRubyResponse = (
 
   return Array.isArray(responseValue)
     ? formatRubyArrayResponse(responseValue, responseRubyClassName, title)
-    : formatRubyResponse(responseValue as NonNullJson, responseRubyClassName)
+    : formatRubyResponse(responseValue, responseRubyClassName)
 }
 
 const formatRubyArrayResponse = (
@@ -59,7 +59,7 @@ const formatRubyArrayResponse = (
 }
 
 const formatRubyArgs = (jsonParams: NonNullJson): string =>
-  Object.entries(jsonParams)
+  Object.entries(jsonParams as Record<string, Json>)
     .map(
       ([paramKey, paramValue]) =>
         `${snakeCase(paramKey)}=${formatRubyValue(paramValue)}`,
