@@ -275,22 +275,14 @@ const createEndpoint = (
 
   const endpoint = {
     title,
-    title:
-      'operationId' in operation && typeof operation.operationId === 'string'
-        ? operation.operationId
-        : `${path.replace(/\//g, '')}${request.preferredMethod}`,
     path: endpointPath,
     description,
     isUndocumented,
     isDeprecated,
     deprecationMessage,
     parameters: createParameters(operation),
-    request: createRequest(method, operation),
     response: createResponse(operation),
     request,
-    response: createResponse(
-      'responses' in operation ? operation.responses : {},
-    ),
   }
 
   return {
