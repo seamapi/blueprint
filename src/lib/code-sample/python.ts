@@ -4,6 +4,10 @@ import type { NonNullJson } from 'lib/json.js'
 
 import type { CodeSampleDefinition, Context } from './schema.js'
 
+const responseKeyToPythonResourceNameMap: Readonly<Record<string, string>> = {
+  event: 'SeamEvent',
+}
+
 export const createPythonRequest = (
   { request }: CodeSampleDefinition,
   _context: Context,
@@ -38,7 +42,7 @@ export const createPythonResponse = (
   }
 
   const responsePythonClassName = pascalCase(
-    RESOURCE_TYPE_TO_PYTHON_CLASS_NAME[resourceType] ?? resourceType,
+    responseKeyToPythonResourceNameMap[resourceType] ?? resourceType,
   )
 
   return Array.isArray(responseValue)
@@ -58,8 +62,4 @@ const formatPythonResponse = (
 ): string => {
   const params = formatPythonArgs(responseParams)
   return `${responsePythonClassName}(${params})`
-}
-
-const RESOURCE_TYPE_TO_PYTHON_CLASS_NAME: Readonly<Record<string, string>> = {
-  event: 'SeamEvent',
 }
