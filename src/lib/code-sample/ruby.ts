@@ -1,7 +1,5 @@
 import { pascalCase, snakeCase } from 'change-case'
-
 import type { Json, NonNullJson } from 'lib/json.js'
-
 import type { CodeSampleDefinition, Context } from './schema.js'
 
 export const createRubyRequest = (
@@ -37,15 +35,25 @@ export const createRubyResponse = (
   const responseRubyClassName = pascalCase(responseKey)
 
   return Array.isArray(responseValue)
-    ? `[${responseValue
-        .map((v) => {
-          if (v == null) {
-            throw new Error(`Null value in response array for '${title}'`)
-          }
-          return formatRubyResponse(v, responseRubyClassName)
-        })
-        .join(',\n')}]`
-    : formatRubyResponse(responseValue, responseRubyClassName)
+    ? formatRubyArrayResponse(responseValue, responseRubyClassName, title)
+    : formatRubyResponse(responseValue as NonNullJson, responseRubyClassName)
+}
+
+const formatRubyArrayResponse = (
+  responseArray: Json[],
+  responseRubyClassName: string,
+  title: string,
+): string => {
+  const formattedItems = responseArray
+    .map((item) => {
+      if (item == null) {
+        throw new Error(`Null value in response array for '${title}'`)
+      }
+      return formatRubyResponse(item, responseRubyClassName)
+    })
+    .join(',\n')
+
+  return `[${formattedItems}]`
 }
 
 const formatRubyArgs = (jsonParams: NonNullJson): string =>
