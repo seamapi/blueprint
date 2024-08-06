@@ -166,12 +166,12 @@ test('Method detection for different endpoints', (t) => {
           schema: {
             type: 'object',
             properties: {
-              complexParam: { type: 'object' }
-            }
-          }
-        }
-      }
-    }
+              complexParam: { type: 'object' },
+            },
+          },
+        },
+      },
+    },
   }
 
   t.is(
