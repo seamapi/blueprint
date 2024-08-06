@@ -180,7 +180,7 @@ export const createBlueprint = (typesModule: TypesModuleInput): Blueprint => {
   const openapi = typesModule.openapi as Openapi
 
   const isFakeData = openapi.info.title === 'Foo'
-  const targetPath = '/acs/systems/list'
+  const targetPath = '/acs/systems/'
   const targetSchema = 'acs_system'
 
   const context = {
@@ -205,7 +205,7 @@ const createRoutes = (
   context: Context,
 ): Route[] => {
   return Object.entries(paths)
-    .filter(([path]) => isFakeData || path === targetPath)
+    .filter(([path]) => isFakeData || path.startsWith(targetPath))
     .map(([path, pathItem]) => createRoute(path, pathItem, context))
 }
 
