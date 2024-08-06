@@ -207,7 +207,7 @@ const createRoutes = (
   const routeMap = new Map<string, Route>()
 
   Object.entries(paths)
-    .filter(([path]) => isFakeData || path.startsWith(targetPath))
+    .filter(([path]) => isFakeData || path === targetPath)
     .forEach(([path, pathItem]) => {
       const route = createRoute(path, pathItem, context)
 
