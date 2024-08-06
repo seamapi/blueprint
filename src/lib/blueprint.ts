@@ -325,7 +325,6 @@ export const createRequest = (
     // eslint-disable-next-line no-console
     console.warn('At least one HTTP method should be specified')
   }
-  const parameters = createParameters(operation)
 
   if (methods.length > 2) {
     // eslint-disable-next-line no-console
@@ -344,8 +343,51 @@ export const createRequest = (
     methods,
     semanticMethod,
     preferredMethod,
-    parameters,
+    parameters: createRequestBody(operation),
   }
+}
+
+const createRequestBody = (operation: OpenapiOperation): Parameter[] => {
+  // This should be done by the createParameters but for some reason it's not
+  // TODO: remove this in favour of using createParameters
+  if (!('requestBody' in operation) || operation.requestBody === undefined) {
+    return []
+  }
+
+  const requestBody = operation.requestBody
+
+  if (
+    requestBody.content?.['application/json']?.schema?.properties === undefined
+  )
+    return []
+
+  const schema = requestBody.content['application/json'].schema
+
+  if (schema.type !== 'object' || schema.properties == null) {
+    return []
+  }
+
+  const requiredProperties = schema.required ?? []
+
+  return Object.entries(schema.properties).map(
+    ([name, property]: [string, any]): Parameter & {
+      type: string
+      format: string
+    } => {
+      const parsedProperty = PropertySchema.parse(property)
+
+      return {
+        name,
+        type: parsedProperty.type,
+        format: property.format,
+        description: parsedProperty.description,
+        isRequired: requiredProperties.includes(name),
+        isDeprecated: parsedProperty.deprecated,
+        isUndocumented: parsedProperty['x-undocumented'].length > 0,
+        deprecationMessage: parsedProperty['x-deprecated'],
+      }
+    },
+  )
 }
 
 const createResources = (
