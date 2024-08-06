@@ -1,7 +1,8 @@
 import { pascalCase, snakeCase } from 'change-case'
 
-import type { CodeSampleDefinition, Context } from './schema.js'
 import type { NonNullJson } from 'lib/json.js'
+
+import type { CodeSampleDefinition, Context } from './schema.js'
 
 export const createRubyRequest = (
   { request }: CodeSampleDefinition,
