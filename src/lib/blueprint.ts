@@ -157,7 +157,7 @@ interface IdProperty extends BaseProperty {
   jsonType: 'string'
 }
 
-type Method = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH'
+export type Method = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH'
 
 interface Context {
   codeSampleDefinitions: CodeSampleDefinition[]
@@ -230,22 +230,28 @@ const createEndpoints = (
   pathItem: OpenapiPathItem,
   context: Context,
 ): Endpoint[] => {
+  const validMethods: Method[] = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH']
+
   return Object.entries(pathItem)
     .filter(
-      ([, operation]) => typeof operation === 'object' && operation !== null,
+      ([method, operation]) =>
+        validMethods.includes(method.toUpperCase() as Method) &&
+        typeof operation === 'object' &&
+        operation !== null,
     )
-    .map(([method, operation]) =>
-      createEndpoint(
-        method as Method,
+    .map(([method, operation]) => {
+      const uppercaseMethod = method.toUpperCase() as Method
+      return createEndpoint(
+        [uppercaseMethod],
         operation as OpenapiOperation,
         path,
         context,
-      ),
-    )
+      )
+    })
 }
 
 const createEndpoint = (
-  method: Method,
+  methods: Method[],
   operation: OpenapiOperation,
   path: string,
   context: Context,
@@ -265,6 +271,8 @@ const createEndpoint = (
 
   const deprecationMessage = parsedOperation['x-deprecated']
 
+  const request = createRequest(methods, operation)
+
   const endpoint = {
     title,
     path: endpointPath,
@@ -273,8 +281,8 @@ const createEndpoint = (
     isDeprecated,
     deprecationMessage,
     parameters: createParameters(operation),
-    request: createRequest(method, operation),
     response: createResponse(operation),
+    request,
   }
 
   return {
@@ -309,16 +317,32 @@ const createParameter = (param: OpenapiParameter): Parameter => {
   }
 }
 
-const createRequest = (
-  method: Method,
+export const createRequest = (
+  methods: Method[],
   operation: OpenapiOperation,
 ): Request => {
-  const uppercaseMethod = openapiMethodToMethod(method)
+  if (methods.length === 0) {
+    // eslint-disable-next-line no-console
+    console.warn('At least one HTTP method should be specified')
+  }
+
+  if (methods.length > 2) {
+    // eslint-disable-next-line no-console
+    console.warn('More than two methods detected. Was this intended?')
+  }
+
+  if (!methods.includes('POST')) {
+    // eslint-disable-next-line no-console
+    console.warn('POST method is missing')
+  }
+
+  const semanticMethod = getSemanticMethod(methods)
+  const preferredMethod = getPreferredMethod(methods, semanticMethod, operation)
 
   return {
-    methods: [uppercaseMethod],
-    semanticMethod: uppercaseMethod,
-    preferredMethod: uppercaseMethod,
+    methods,
+    semanticMethod,
+    preferredMethod,
     parameters: createRequestBody(operation),
   }
 }
@@ -527,19 +551,42 @@ export const createProperties = (
   })
 }
 
-const openapiMethodToMethod = (openapiMethod: string): Method => {
-  switch (openapiMethod) {
-    case 'get':
-      return 'GET'
-    case 'post':
-      return 'POST'
-    case 'put':
-      return 'PUT'
-    case 'delete':
-      return 'DELETE'
-    case 'patch':
-      return 'PATCH'
-    default:
-      return 'POST'
+export const getSemanticMethod = (methods: Method[]): Method => {
+  if (methods.length === 1) {
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    return methods[0]!
   }
+
+  const priorityOrder: Method[] = ['PUT', 'PATCH', 'POST', 'GET', 'DELETE']
+  return methods.find((m) => priorityOrder.includes(m)) ?? 'POST'
+}
+
+export const getPreferredMethod = (
+  methods: Method[],
+  semanticMethod: Method,
+  operation: OpenapiOperation,
+): Method => {
+  if (methods.length === 1) {
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    return methods[0]!
+  }
+
+  if (methods.includes('POST')) {
+    if (semanticMethod === 'GET' || semanticMethod === 'DELETE') {
+      const hasComplexParameters =
+        (operation.parameters?.some(
+          (param) =>
+            param.schema?.type === 'array' || param.schema?.type === 'object',
+        ) ??
+          false) ||
+        operation.requestBody?.content?.['application/json']?.schema?.type ===
+          'object'
+
+      if (hasComplexParameters) {
+        return 'POST'
+      }
+    }
+  }
+
+  return semanticMethod
 }
