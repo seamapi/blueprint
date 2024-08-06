@@ -1,6 +1,6 @@
 import { pascalCase, snakeCase } from 'change-case'
 
-import type { NonNullJson } from 'lib/json.js'
+import type { Json, NonNullJson } from 'lib/json.js'
 
 import type { CodeSampleDefinition, Context } from './schema.js'
 
@@ -48,15 +48,25 @@ export const createPythonResponse = (
   )
 
   return Array.isArray(responseValue)
-    ? `[${responseValue
-        .map((v) => {
-          if (v == null) {
-            throw new Error(`Null value in response array for '${title}'`)
-          }
-          return formatPythonResponse(v, responsePythonClassName)
-        })
-        .join(', ')}]`
+    ? formatPythonArrayResponse(responseValue, responsePythonClassName, title)
     : formatPythonResponse(responseValue, responsePythonClassName)
+}
+
+const formatPythonArrayResponse = (
+  responseArray: Json[],
+  responsePythonClassName: string,
+  title: string,
+): string => {
+  const formattedItems = responseArray
+    .map((v) => {
+      if (v == null) {
+        throw new Error(`Null value in response array for '${title}'`)
+      }
+      return formatPythonResponse(v, responsePythonClassName)
+    })
+    .join(', ')
+
+  return `[${formattedItems}]`
 }
 
 const formatPythonResponse = (
