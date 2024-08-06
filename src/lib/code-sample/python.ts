@@ -48,8 +48,9 @@ export const createPythonResponse = (
   return Array.isArray(responseValue)
     ? `[${responseValue
         .map((v) => {
-          if (v == null)
+          if (v == null) {
             throw new Error(`Null value in response array for '${title}'`)
+          }
           return formatPythonResponse(v, responsePythonClassName)
         })
         .join(', ')}]`
