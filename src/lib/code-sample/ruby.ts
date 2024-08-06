@@ -1,6 +1,6 @@
 import { pascalCase, snakeCase } from 'change-case'
 
-import type { NonNullJson } from 'lib/json.js'
+import type { Json, NonNullJson } from 'lib/json.js'
 
 import type { CodeSampleDefinition, Context } from './schema.js'
 
@@ -10,11 +10,14 @@ export const createRubyRequest = (
 ): string => {
   const parts = request.path.split('/')
   const params = Object.entries(request.parameters)
-    .map(([key, value]) => `${snakeCase(key)}: ${JSON.stringify(value)}`)
+    .map(([key, value]) => `${snakeCase(key)}: ${formatRubyValue(value)}`)
     .join(', ')
 
   return `seam${parts.map((p) => snakeCase(p)).join('.')}(${params})`
 }
+
+const formatRubyValue = (value: Json): string =>
+  value == null ? 'nil' : JSON.stringify(value)
 
 export const createRubyResponse = (
   { response, title }: CodeSampleDefinition,
@@ -47,12 +50,10 @@ export const createRubyResponse = (
 
 const formatRubyArgs = (jsonParams: NonNullJson): string =>
   Object.entries(jsonParams)
-    .map(([paramKey, paramValue]) => {
-      const formattedValue =
-        paramValue === null ? 'nil' : JSON.stringify(paramValue)
-
-      return `${snakeCase(paramKey)}=${formattedValue}`
-    })
+    .map(
+      ([paramKey, paramValue]) =>
+        `${snakeCase(paramKey)}=${formatRubyValue(paramValue)}`,
+    )
     .join('\n')
 
 const formatRubyResponse = (
