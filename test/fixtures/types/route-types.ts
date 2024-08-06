@@ -10,6 +10,8 @@ export interface Routes {
       foo: {
         foo_id: string
         name: string
+        deprecated_prop?: string
+        undocumented_prop?: string
       }
     }
   }

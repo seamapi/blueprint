@@ -25,7 +25,7 @@ test('createProperties: assigns appropriate default values', (t) => {
     t.fail('Property should not be undefined')
     return
   }
-  t.is(property.type, 'string', 'Property type should be string')
+  t.is(property.format, 'string', 'Property format should be string')
   t.is(property.description, '', 'Description should default to empty string')
   t.false(property.isDeprecated, 'isDeprecated should default to false')
   t.is(

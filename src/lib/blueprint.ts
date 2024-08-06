@@ -95,7 +95,7 @@ interface ResourceListResponse extends BaseResponse {
 
 interface BaseProperty {
   name: string
-  description?: string
+  description: string
   isDeprecated: boolean
   deprecationMessage: string
   isUndocumented: boolean
@@ -108,13 +108,17 @@ export type Property =
   | ListProperty
   | ObjectProperty
   | BooleanProperty
+  | DatetimeProperty
+  | IdProperty
 
 interface StringProperty extends BaseProperty {
-  type: 'string'
+  format: 'string'
+  jsonType: 'string'
 }
 
 interface EnumProperty extends BaseProperty {
-  type: 'enum'
+  format: 'enum'
+  jsonType: 'string'
   values: EnumValue[]
 }
 
@@ -123,20 +127,34 @@ interface EnumValue {
 }
 
 interface RecordProperty extends BaseProperty {
-  type: 'record'
+  format: 'record'
+  jsonType: 'object'
 }
 
 interface ListProperty extends BaseProperty {
-  type: 'list'
+  format: 'list'
+  jsonType: 'array'
 }
 
 interface BooleanProperty extends BaseProperty {
-  type: 'boolean'
+  format: 'boolean'
+  jsonType: 'boolean'
 }
 
 interface ObjectProperty extends BaseProperty {
-  type: 'object'
+  format: 'object'
+  jsonType: 'object'
   properties: Property[]
+}
+
+interface DatetimeProperty extends BaseProperty {
+  format: 'datetime'
+  jsonType: 'string'
+}
+
+interface IdProperty extends BaseProperty {
+  format: 'id'
+  jsonType: 'string'
 }
 
 export type Method = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH'
@@ -243,6 +261,8 @@ const createEndpoint = (
 
   const parsedOperation = OpenapiOperationSchema.parse(operation)
 
+  const title = parsedOperation['x-title']
+
   const description = parsedOperation.description
 
   const isUndocumented = parsedOperation['x-undocumented'].length > 0
@@ -254,6 +274,7 @@ const createEndpoint = (
   const request = createRequest(methods, operation)
 
   const endpoint = {
+    title,
     title:
       'operationId' in operation && typeof operation.operationId === 'string'
         ? operation.operationId
@@ -264,6 +285,8 @@ const createEndpoint = (
     isDeprecated,
     deprecationMessage,
     parameters: createParameters(operation),
+    request: createRequest(method, operation),
+    response: createResponse(operation),
     request,
     response: createResponse(
       'responses' in operation ? operation.responses : {},
@@ -360,25 +383,37 @@ const createResources = (
     }, {})
 }
 
-const createResponse = (responses: OpenapiOperation['responses']): Response => {
-  if (responses === null) {
-    return { responseType: 'void', description: '' }
+const createResponse = (operation: OpenapiOperation): Response => {
+  if (!('responses' in operation) || operation.responses == null) {
+    throw new Error(
+      `Missing responses in operation for ${operation.operationId}`,
+    )
   }
 
+  const parsedOperation = OpenapiOperationSchema.parse(operation)
+  const { responses } = operation
+
   const okResponse = responses['200']
-  if (typeof okResponse !== 'object' || okResponse === null) {
-    return { responseType: 'void', description: '' }
+
+  if (typeof okResponse !== 'object' || okResponse == null) {
+    return { responseType: 'void', description: 'Unknown' }
+  }
+
+  const description = okResponse.description ?? ''
+  const responseKey = parsedOperation['x-response-key']
+
+  if (responseKey == null) {
+    return {
+      responseType: 'void',
+      description,
+    }
   }
 
   const content = 'content' in okResponse ? okResponse.content : null
   if (typeof content !== 'object' || content === null) {
     return {
       responseType: 'void',
-      description:
-        'description' in okResponse &&
-        typeof okResponse.description === 'string'
-          ? okResponse.description
-          : '',
+      description,
     }
   }
 
@@ -387,11 +422,7 @@ const createResponse = (responses: OpenapiOperation['responses']): Response => {
   if (jsonContent === null) {
     return {
       responseType: 'void',
-      description:
-        'description' in okResponse &&
-        typeof okResponse.description === 'string'
-          ? okResponse.description
-          : '',
+      description,
     }
   }
 
@@ -399,74 +430,37 @@ const createResponse = (responses: OpenapiOperation['responses']): Response => {
   if (schema === null) {
     return {
       responseType: 'void',
-      description:
-        'description' in okResponse &&
-        typeof okResponse.description === 'string'
-          ? okResponse.description
-          : '',
+      description,
     }
   }
 
-  if ('type' in schema && 'properties' in schema) {
-    if (
-      schema.type === 'array' &&
-      'items' in schema &&
-      typeof schema.items === 'object' &&
-      schema.items !== null
-    ) {
-      const refString = '$ref' in schema.items ? schema.items.$ref : null
-      return {
-        responseType: 'resource_list',
-        responseKey: 'items',
-        resourceType:
-          typeof refString === 'string' && refString.length > 0
-            ? refString.split('/').pop() ?? 'unknown'
-            : 'unknown',
-        description:
-          'description' in okResponse &&
-          typeof okResponse.description === 'string'
-            ? okResponse.description
-            : '',
-      }
-    } else if (
-      schema.type === 'object' &&
-      typeof schema.properties === 'object' &&
-      schema.properties !== null
-    ) {
-      const properties = schema.properties
-      const refKey = Object.keys(properties).find((key) => {
-        const prop = properties[key]
-        return (
-          prop !== undefined &&
-          typeof prop === 'object' &&
-          prop !== null &&
-          '$ref' in prop &&
-          typeof prop.$ref === 'string'
-        )
-      })
-      if (refKey != null && properties[refKey] !== undefined) {
-        const refString = schema.properties[refKey]?.$ref
+  if (
+    'type' in schema &&
+    'properties' in schema &&
+    schema.type === 'object' &&
+    typeof schema.properties === 'object' &&
+    schema.properties !== null
+  ) {
+    const properties = schema.properties
 
-        return {
-          responseType: 'resource',
-          responseKey: refKey,
-          resourceType:
-            typeof refString === 'string' && refString.length > 0
-              ? refString.split('/').pop() ?? 'unknown'
-              : 'unknown',
-          description:
-            'description' in okResponse &&
-            typeof okResponse.description === 'string'
-              ? okResponse.description
-              : '',
-        }
+    const refKey = responseKey
+
+    if (refKey != null && properties[refKey] != null) {
+      const props = schema.properties[refKey]
+      const refString = props?.$ref ?? props?.items?.$ref
+
+      return {
+        responseType: props?.type === 'array' ? 'resource_list' : 'resource',
+        responseKey: refKey,
+        resourceType: refString?.split('/').at(-1) ?? 'unknown',
+        description,
       }
     }
   }
 
   return {
     responseType: 'void',
-    description: okResponse.description,
+    description: 'Unknown',
   }
 }
 
@@ -489,26 +483,34 @@ export const createProperties = (
         if (parsedProp.enum !== undefined) {
           return {
             ...baseProperty,
-            type: 'enum',
+            format: 'enum',
+            jsonType: 'string',
             values: parsedProp.enum.map((value: any) => ({ name: value })),
           }
         }
-        return { ...baseProperty, type: 'string' }
+        if (parsedProp.format === 'date-time') {
+          return { ...baseProperty, format: 'datetime', jsonType: 'string' }
+        }
+        if (parsedProp.format === 'uuid') {
+          return { ...baseProperty, format: 'id', jsonType: 'string' }
+        }
+        return { ...baseProperty, format: 'string', jsonType: 'string' }
       case 'boolean':
-        return { ...baseProperty, type: 'boolean' }
+        return { ...baseProperty, format: 'boolean', jsonType: 'boolean' }
       case 'array':
-        return { ...baseProperty, type: 'list' }
+        return { ...baseProperty, format: 'list', jsonType: 'array' }
       case 'object':
         if (parsedProp.properties !== undefined) {
           return {
             ...baseProperty,
-            type: 'object',
+            format: 'object',
+            jsonType: 'object',
             properties: createProperties(
               parsedProp.properties as Record<string, OpenapiSchema>,
             ),
           }
         }
-        return { ...baseProperty, type: 'record' }
+        return { ...baseProperty, format: 'record', jsonType: 'object' }
       default:
         throw new Error(`Unsupported property type: ${parsedProp.type}`)
     }
