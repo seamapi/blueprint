@@ -204,9 +204,22 @@ const createRoutes = (
   targetPath: string,
   context: Context,
 ): Route[] => {
-  return Object.entries(paths)
+  const routeMap = new Map<string, Route>()
+
+  Object.entries(paths)
     .filter(([path]) => isFakeData || path.startsWith(targetPath))
-    .map(([path, pathItem]) => createRoute(path, pathItem, context))
+    .forEach(([path, pathItem]) => {
+      const route = createRoute(path, pathItem, context)
+
+      const existingRoute = routeMap.get(route.path)
+      if (existingRoute != null) {
+        existingRoute.endpoints.push(...route.endpoints)
+      } else {
+        routeMap.set(route.path, route)
+      }
+    })
+
+  return Array.from(routeMap.values())
 }
 
 const createRoute = (
