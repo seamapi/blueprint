@@ -12,6 +12,24 @@ export interface Routes {
         name: string
         deprecated_prop?: string
         undocumented_prop?: string
+        nullable_property?: string
+      }
+    }
+  }
+  '/foos/list': {
+    route: '/foos/list'
+    method: 'GET' | 'POST'
+    queryParams: Record<string, unknown>
+    jsonBody: Record<string, unknown>
+    commonParams: Record<string, unknown>
+    formData: Record<string, unknown>
+    jsonResponse: {
+      foo: {
+        foo_id: string
+        name: string
+        deprecated_prop?: string
+        undocumented_prop?: string
+        nullable_property?: string
       }
     }
   }
