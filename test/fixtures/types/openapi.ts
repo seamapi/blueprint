@@ -27,6 +27,11 @@ export default {
             type: 'string',
             'x-undocumented': 'This prop is intentionally left undocumented.',
           },
+          nullable_property: {
+            description: 'This prop is nullable',
+            type: 'string',
+            nullable: true,
+          },
         },
         required: ['foo_id', 'name'],
       },
