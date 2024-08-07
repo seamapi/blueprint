@@ -58,14 +58,6 @@ const formatRubyArrayResponse = (
   return `[${formattedItems}]`
 }
 
-const formatRubyArgs = (jsonParams: NonNullJson): string =>
-  Object.entries(jsonParams as Record<string, Json>)
-    .map(
-      ([paramKey, paramValue]) =>
-        `${snakeCase(paramKey)}=${formatRubyValue(paramValue)}`,
-    )
-    .join('\n')
-
 const formatRubyResponse = (
   responseParams: NonNullJson,
   responseRubyClassName: string,
@@ -73,3 +65,11 @@ const formatRubyResponse = (
   const params = formatRubyArgs(responseParams)
   return `<Seam::${responseRubyClassName}:0x00000\n${params}>`
 }
+
+const formatRubyArgs = (jsonParams: NonNullJson): string =>
+  Object.entries(jsonParams as Record<string, Json>)
+    .map(
+      ([paramKey, paramValue]) =>
+        `${snakeCase(paramKey)}=${formatRubyValue(paramValue)}`,
+    )
+    .join('\n')
