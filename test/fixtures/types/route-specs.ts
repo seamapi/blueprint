@@ -14,7 +14,7 @@ export const routes = {
     auth: 'none',
     methods: ['GET', 'POST'],
     jsonResponse: z.object({
-      foo: z.array(schemas.foo),
+      foos: z.array(schemas.foo),
     }),
   },
 } as const

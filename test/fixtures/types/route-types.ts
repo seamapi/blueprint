@@ -24,7 +24,7 @@ export interface Routes {
     commonParams: Record<string, unknown>
     formData: Record<string, unknown>
     jsonResponse: {
-      foo: {
+      foos: {
         foo_id: string
         name: string
         deprecated_prop?: string
