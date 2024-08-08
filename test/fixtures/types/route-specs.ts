@@ -10,4 +10,11 @@ export const routes = {
       foo: schemas.foo,
     }),
   },
+  '/foos/list': {
+    auth: 'none',
+    methods: ['GET', 'POST'],
+    jsonResponse: z.object({
+      foos: z.array(schemas.foo),
+    }),
+  },
 } as const

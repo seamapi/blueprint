@@ -5,4 +5,5 @@ export const foo = z.object({
   name: z.string(),
   deprecated_prop: z.string().optional(),
   undocumented_prop: z.string().optional(),
+  nullable_property: z.string().optional().nullable(),
 })
