@@ -7,6 +7,7 @@ updates:
       interval: weekly
     commit-message:
       prefix: feat
+      prefix-development: test
       include: scope
     allow:
       - dependency-name: '@seamapi/types'
