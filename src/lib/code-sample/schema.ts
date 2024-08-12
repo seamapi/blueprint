@@ -1,6 +1,7 @@
 import { z } from 'zod'
 
 import type { Endpoint } from 'lib/blueprint.js'
+import { createBashRequest, createBashResponse } from 'lib/code-sample/bash.js'
 import { JsonSchema } from 'lib/json.js'
 
 import {
@@ -37,7 +38,7 @@ export type CodeSampleDefinition = z.output<typeof CodeSampleDefinitionSchema>
 
 const CodeSampleSchema = CodeSampleDefinitionSchema.extend({
   code: z.record(
-    z.enum(['javascript', 'python', 'php', 'ruby']),
+    z.enum(['javascript', 'python', 'php', 'ruby', 'bash']),
     z.object({
       title: z.string().min(1),
       request: z.string(),
@@ -78,6 +79,11 @@ export const createCodeSample = (
         title: 'PHP',
         request: createPhpRequest(codeSampleDefinition, context),
         response: createPhpResponse(codeSampleDefinition, context),
+      },
+      bash: {
+        title: 'Bash',
+        request: createBashRequest(codeSampleDefinition, context),
+        response: createBashResponse(codeSampleDefinition, context),
       },
     },
   }
