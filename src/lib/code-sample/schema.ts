@@ -39,6 +39,8 @@ export type CodeSampleDefinitionInput = z.input<
 
 export type CodeSampleDefinition = z.output<typeof CodeSampleDefinitionSchema>
 
+const syntax = z.enum(['javascript', 'json', 'python', 'php', 'ruby', 'bash'])
+
 const CodeSampleSchema = CodeSampleDefinitionSchema.extend({
   code: z.record(
     z.enum(['javascript', 'python', 'php', 'ruby', 'seam_cli']),
@@ -47,6 +49,7 @@ const CodeSampleSchema = CodeSampleDefinitionSchema.extend({
       request: z.string(),
       response: z.string(),
       request_syntax: syntax,
+      response_syntax: syntax,
     }),
   ),
 })
@@ -68,26 +71,36 @@ export const createCodeSample = (
         title: 'JavaScript',
         request: createJavascriptRequest(codeSampleDefinition, context),
         response: createJavascriptResponse(codeSampleDefinition, context),
+        request_syntax: 'javascript',
+        response_syntax: 'json',
       },
       python: {
         title: 'Python',
         request: createPythonRequest(codeSampleDefinition, context),
         response: createPythonResponse(codeSampleDefinition, context),
+        request_syntax: 'python',
+        response_syntax: 'python',
       },
       ruby: {
         title: 'Ruby',
         request: createRubyRequest(codeSampleDefinition, context),
         response: createRubyResponse(codeSampleDefinition, context),
+        request_syntax: 'ruby',
+        response_syntax: 'ruby',
       },
       php: {
         title: 'PHP',
         request: createPhpRequest(codeSampleDefinition, context),
         response: createPhpResponse(codeSampleDefinition, context),
+        request_syntax: 'php',
+        response_syntax: 'json',
       },
       seam_cli: {
         title: 'Seam CLI',
         request: createSeamCliRequest(codeSampleDefinition, context),
         response: createSeamCliResponse(codeSampleDefinition, context),
+        request_syntax: 'bash',
+        response_syntax: 'json',
       },
     },
   }
