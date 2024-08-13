@@ -72,7 +72,7 @@ export const createCodeSample = (
         request: createJavascriptRequest(codeSampleDefinition, context),
         response: createJavascriptResponse(codeSampleDefinition, context),
         request_syntax: 'javascript',
-        response_syntax: 'json',
+        response_syntax: 'javascript',
       },
       python: {
         title: 'Python',
