@@ -3,7 +3,7 @@ import { kebabCase } from 'change-case'
 import { createJsonResponse } from './create-json-response.js'
 import type { CodeSampleDefinition, Context } from './schema.js'
 
-export const createBashRequest = (
+export const createSeamCliRequest = (
   { request }: CodeSampleDefinition,
   _context: Context,
 ): string => {
@@ -15,4 +15,4 @@ export const createBashRequest = (
   return `seam${parts.map((p) => kebabCase(p)).join(' ')} ${requestParams}`
 }
 
-export const createBashResponse = createJsonResponse
+export const createSeamCliResponse = createJsonResponse
