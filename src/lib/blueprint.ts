@@ -361,7 +361,7 @@ const createRequestBody = (operation: OpenapiOperation): Parameter[] => {
 
       return {
         name,
-        type: parsedProperty.type,
+        jsonType: parsedProperty.type,
         format: property.format,
         description: parsedProperty.description,
         isRequired: requiredProperties.includes(name),
