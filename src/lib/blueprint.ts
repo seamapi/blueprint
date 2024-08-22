@@ -9,16 +9,11 @@ import type { CodeSampleDefinition } from './code-sample/schema.js'
 import type {
   Openapi,
   OpenapiOperation,
-  OpenapiParameter,
   OpenapiPathItem,
   OpenapiPaths,
   OpenapiSchema,
 } from './openapi.js'
-import {
-  OpenapiOperationSchema,
-  ParameterSchema,
-  PropertySchema,
-} from './openapi-schema.js'
+import { OpenapiOperationSchema, PropertySchema } from './openapi-schema.js'
 
 export interface Blueprint {
   title: string
@@ -49,7 +44,6 @@ export interface Endpoint {
   isUndocumented: boolean
   isDeprecated: boolean
   deprecationMessage: string
-  parameters: Parameter[]
   request: Request
   response: Response
   codeSamples: CodeSample[]
@@ -62,6 +56,8 @@ export interface Parameter {
   isDeprecated: boolean
   deprecationMessage: string
   description: string
+  jsonType: string
+  format: string
 }
 
 export interface Request {
@@ -293,7 +289,6 @@ const createEndpoint = (
     isUndocumented,
     isDeprecated,
     deprecationMessage,
-    parameters: createParameters(operation),
     response: createResponse(operation),
     request,
   }
@@ -305,28 +300,6 @@ const createEndpoint = (
       .map((codeSampleDefinition) =>
         createCodeSample(codeSampleDefinition, { endpoint }),
       ),
-  }
-}
-
-const createParameters = (operation: OpenapiOperation): Parameter[] => {
-  if ('parameters' in operation && Array.isArray(operation.parameters)) {
-    return operation.parameters
-      .filter((param) => typeof param === 'object' && param !== null)
-      .map(createParameter)
-  }
-  return []
-}
-
-const createParameter = (param: OpenapiParameter): Parameter => {
-  const parsedParam = ParameterSchema.parse(param)
-
-  return {
-    name: parsedParam.name,
-    isRequired: parsedParam.required,
-    isUndocumented: parsedParam['x-undocumented'].length > 0,
-    isDeprecated: parsedParam.deprecated,
-    deprecationMessage: parsedParam['x-deprecated'],
-    description: parsedParam.description,
   }
 }
 
@@ -383,15 +356,12 @@ const createRequestBody = (operation: OpenapiOperation): Parameter[] => {
   const requiredProperties = schema.required ?? []
 
   return Object.entries(schema.properties).map(
-    ([name, property]: [string, any]): Parameter & {
-      type: string
-      format: string
-    } => {
+    ([name, property]: [string, any]): Parameter => {
       const parsedProperty = PropertySchema.parse(property)
 
       return {
         name,
-        type: parsedProperty.type,
+        jsonType: parsedProperty.type,
         format: property.format,
         description: parsedProperty.description,
         isRequired: requiredProperties.includes(name),
