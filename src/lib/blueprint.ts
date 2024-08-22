@@ -56,7 +56,7 @@ export interface Parameter {
   isDeprecated: boolean
   deprecationMessage: string
   description: string
-  type: string
+  jsonType: string
   format: string
 }
 
