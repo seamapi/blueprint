@@ -7,6 +7,7 @@ export default {
     schemas: {
       foo: {
         type: 'object',
+        description: 'A foo resource.',
         properties: {
           foo_id: {
             description: 'Foo id',
