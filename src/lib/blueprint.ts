@@ -31,6 +31,7 @@ export interface Route {
 export interface Resource {
   resourceType: string
   properties: Property[]
+  description: string
 }
 
 export interface Namespace {
@@ -393,6 +394,7 @@ const createResources = (
           [schemaName]: {
             resourceType: schemaName,
             properties: createProperties(schema.properties),
+            description: schema.description ?? '',
           },
         }
       }
