@@ -88,7 +88,7 @@ interface BooleanParameter extends BaseParameter {
 interface ObjectParameter extends BaseParameter {
   format: 'object'
   jsonType: 'object'
-  properties: Parameter[]
+  parameters: Parameter[]
 }
 
 interface DatetimeParameter extends BaseParameter {
@@ -404,21 +404,63 @@ const createRequestBody = (operation: OpenapiOperation): Parameter[] => {
     return []
   }
 
-  const requiredProperties = schema.required ?? []
+  return createParameters(schema.properties, schema.required)
+}
 
-  return Object.entries(schema.properties).map(
+const createParameters = (
+  properties: Record<string, OpenapiSchema>,
+  requiredParameters: string[] = [],
+): Parameter[] => {
+  return Object.entries(properties).map(
     ([name, property]: [string, any]): Parameter => {
-      const parsedProperty = PropertySchema.parse(property)
+      const parsedProp = PropertySchema.parse(property)
 
-      return {
+      const baseParam: BaseParameter = {
         name,
-        jsonType: parsedProperty.type,
-        format: property.format,
-        description: parsedProperty.description,
-        isRequired: requiredProperties.includes(name),
-        isDeprecated: parsedProperty.deprecated,
-        isUndocumented: parsedProperty['x-undocumented'].length > 0,
-        deprecationMessage: parsedProperty['x-deprecated'],
+        description: parsedProp.description,
+        isRequired: requiredParameters.includes(name),
+        isDeprecated: parsedProp['x-deprecated'].length > 0,
+        deprecationMessage: parsedProp['x-deprecated'],
+        isUndocumented: parsedProp['x-undocumented'].length > 0,
+      }
+
+      switch (parsedProp.type) {
+        case 'string':
+          if (parsedProp.enum !== undefined) {
+            return {
+              ...baseParam,
+              format: 'enum',
+              jsonType: 'string',
+              values: parsedProp.enum.map((value: any) => ({
+                name: value,
+              })),
+            }
+          }
+          if (parsedProp.format === 'date-time') {
+            return { ...baseParam, format: 'datetime', jsonType: 'string' }
+          }
+          if (parsedProp.format === 'uuid') {
+            return { ...baseParam, format: 'id', jsonType: 'string' }
+          }
+          return { ...baseParam, format: 'string', jsonType: 'string' }
+        case 'boolean':
+          return { ...baseParam, format: 'boolean', jsonType: 'boolean' }
+        case 'array':
+          return { ...baseParam, format: 'list', jsonType: 'array' }
+        case 'object':
+          if (parsedProp.properties !== undefined) {
+            return {
+              ...baseParam,
+              format: 'object',
+              jsonType: 'object',
+              parameters: createParameters(
+                parsedProp.properties as Record<string, OpenapiSchema>,
+              ),
+            }
+          }
+          return { ...baseParam, format: 'record', jsonType: 'object' }
+        default:
+          throw new Error(`Unsupported property type: ${parsedProp.type}`)
       }
     },
   )
