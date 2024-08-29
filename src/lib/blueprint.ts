@@ -5,7 +5,10 @@ import {
   CodeSampleDefinitionSchema,
   createCodeSample,
 } from './code-sample/index.js'
-import type { CodeSampleDefinition } from './code-sample/schema.js'
+import type {
+  CodeSampleDefinition,
+  CodeSampleSyntax,
+} from './code-sample/schema.js'
 import type {
   Openapi,
   OpenapiOperation,
@@ -206,7 +209,7 @@ interface IdProperty extends BaseProperty {
 
 export type Method = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH'
 
-interface Context {
+interface Context extends Required<BlueprintOptions> {
   codeSampleDefinitions: CodeSampleDefinition[]
 }
 
@@ -220,7 +223,14 @@ export type TypesModuleInput = z.input<typeof TypesModuleSchema>
 
 export type TypesModule = z.output<typeof TypesModuleSchema>
 
-export const createBlueprint = (typesModule: TypesModuleInput): Blueprint => {
+export interface BlueprintOptions {
+  formatCode?: (content: string, syntax: CodeSampleSyntax) => Promise<string>
+}
+
+export const createBlueprint = async (
+  typesModule: TypesModuleInput,
+  { formatCode = async (content) => content }: BlueprintOptions = {},
+): Promise<Blueprint> => {
   const { codeSampleDefinitions } = TypesModuleSchema.parse(typesModule)
 
   // TODO: Move openapi to TypesModuleSchema
@@ -232,11 +242,12 @@ export const createBlueprint = (typesModule: TypesModuleInput): Blueprint => {
 
   const context = {
     codeSampleDefinitions,
+    formatCode,
   }
 
   return {
     title: openapi.info.title,
-    routes: createRoutes(openapi.paths, isFakeData, targetPath, context),
+    routes: await createRoutes(openapi.paths, isFakeData, targetPath, context),
     resources: createResources(
       openapi.components.schemas,
       isFakeData,
@@ -245,77 +256,82 @@ export const createBlueprint = (typesModule: TypesModuleInput): Blueprint => {
   }
 }
 
-const createRoutes = (
+const createRoutes = async (
   paths: OpenapiPaths,
   isFakeData: boolean,
   targetPath: string,
   context: Context,
-): Route[] => {
+): Promise<Route[]> => {
   const routeMap = new Map<string, Route>()
 
-  Object.entries(paths)
-    .filter(([path]) => isFakeData || path.startsWith(targetPath))
-    .forEach(([path, pathItem]) => {
-      const route = createRoute(path, pathItem, context)
+  const pathEntries = Object.entries(paths).filter(
+    ([path]) => isFakeData || path.startsWith(targetPath),
+  )
 
-      const existingRoute = routeMap.get(route.path)
-      if (existingRoute != null) {
-        existingRoute.endpoints.push(...route.endpoints)
-      } else {
-        routeMap.set(route.path, route)
-      }
-    })
+  for (const [path, pathItem] of pathEntries) {
+    const route = await createRoute(path, pathItem, context)
+
+    const existingRoute = routeMap.get(route.path)
+    if (existingRoute != null) {
+      existingRoute.endpoints.push(...route.endpoints)
+      continue
+    }
+
+    routeMap.set(route.path, route)
+  }
 
   return Array.from(routeMap.values())
 }
 
-const createRoute = (
+const createRoute = async (
   path: string,
   pathItem: OpenapiPathItem,
   context: Context,
-): Route => {
+): Promise<Route> => {
   const pathParts = path.split('/')
   const routePath = `/${pathParts.slice(1, -1).join('/')}`
 
   return {
     path: routePath,
     namespace: { path: `/${pathParts[1]}` },
-    endpoints: createEndpoints(path, pathItem, context),
+    endpoints: await createEndpoints(path, pathItem, context),
     subroutes: [],
   }
 }
 
-const createEndpoints = (
+const createEndpoints = async (
   path: string,
   pathItem: OpenapiPathItem,
   context: Context,
-): Endpoint[] => {
+): Promise<Endpoint[]> => {
   const validMethods: Method[] = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH']
 
-  return Object.entries(pathItem)
-    .filter(
-      ([method, operation]) =>
-        validMethods.includes(method.toUpperCase() as Method) &&
-        typeof operation === 'object' &&
-        operation !== null,
-    )
-    .map(([method, operation]) => {
-      const uppercaseMethod = method.toUpperCase() as Method
-      return createEndpoint(
-        [uppercaseMethod],
-        operation as OpenapiOperation,
-        path,
-        context,
+  return await Promise.all(
+    Object.entries(pathItem)
+      .filter(
+        ([method, operation]) =>
+          validMethods.includes(method.toUpperCase() as Method) &&
+          typeof operation === 'object' &&
+          operation !== null,
       )
-    })
+      .map(async ([method, operation]) => {
+        const uppercaseMethod = method.toUpperCase() as Method
+        return await createEndpoint(
+          [uppercaseMethod],
+          operation as OpenapiOperation,
+          path,
+          context,
+        )
+      }),
+  )
 }
 
-const createEndpoint = (
+const createEndpoint = async (
   methods: Method[],
   operation: OpenapiOperation,
   path: string,
   context: Context,
-): Endpoint => {
+): Promise<Endpoint> => {
   const pathParts = path.split('/')
   const endpointPath = `/${pathParts.slice(1).join('/')}`
 
@@ -346,11 +362,17 @@ const createEndpoint = (
 
   return {
     ...endpoint,
-    codeSamples: context.codeSampleDefinitions
-      .filter(({ request }) => request.path === endpointPath)
-      .map((codeSampleDefinition) =>
-        createCodeSample(codeSampleDefinition, { endpoint }),
-      ),
+    codeSamples: await Promise.all(
+      context.codeSampleDefinitions
+        .filter(({ request }) => request.path === endpointPath)
+        .map(
+          async (codeSampleDefinition) =>
+            await createCodeSample(codeSampleDefinition, {
+              endpoint,
+              formatCode: context.formatCode,
+            }),
+        ),
+    ),
   }
 }
 

@@ -1,5 +1,6 @@
 export {
   type Blueprint,
+  type BlueprintOptions,
   createBlueprint,
   type Endpoint,
   type Namespace,
@@ -17,4 +18,5 @@ export {
   type CodeSample,
   type CodeSampleDefinitionInput,
   CodeSampleDefinitionSchema,
+  type CodeSampleSyntax,
 } from './code-sample/index.js'
