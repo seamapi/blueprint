@@ -12,7 +12,7 @@ export const createPhpRequest = (
     .map(([key, value]) => `${key}:${JSON.stringify(value)}`)
     .join(',')
 
-  return `$seam${parts.map((p) => snakeCase(p)).join('->')}(${requestParams})`
+  return `<?php\n$seam${parts.map((p) => snakeCase(p)).join('->')}(${requestParams})`
 }
 
 export const createPhpResponse = createJsonResponse
