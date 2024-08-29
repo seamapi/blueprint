@@ -59,7 +59,7 @@ import { createBlueprint, TypesModuleSchema } from '@seamapi/blueprint'
 import * as types from '@seamapi/types/connect'
 
 const typesModule = TypesModuleSchema.parse(types)
-const blueprint = createBlueprint(typesModule)
+const blueprint = await createBlueprint(typesModule)
 console.log(JSON.stringify(blueprint)
 ```
 

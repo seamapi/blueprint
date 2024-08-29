@@ -220,7 +220,9 @@ export type TypesModuleInput = z.input<typeof TypesModuleSchema>
 
 export type TypesModule = z.output<typeof TypesModuleSchema>
 
-export const createBlueprint = (typesModule: TypesModuleInput): Blueprint => {
+export const createBlueprint = async (
+  typesModule: TypesModuleInput,
+): Promise<Blueprint> => {
   const { codeSampleDefinitions } = TypesModuleSchema.parse(typesModule)
 
   // TODO: Move openapi to TypesModuleSchema

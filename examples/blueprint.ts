@@ -20,5 +20,6 @@ export const builder: Builder = {
 
 export const handler: Handler<Options> = async ({ moduleName, logger }) => {
   const types = TypesModuleSchema.parse(await import(moduleName))
-  logger.info({ data: createBlueprint(types) }, 'blueprint')
+  const blueprint = await createBlueprint(types)
+  logger.info({ blueprint }, 'blueprint')
 }
