@@ -1,5 +1,6 @@
 export {
   type Blueprint,
+  type BlueprintOptions,
   createBlueprint,
   type Endpoint,
   type Namespace,

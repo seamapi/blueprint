@@ -41,6 +41,8 @@ export type CodeSampleDefinition = z.output<typeof CodeSampleDefinitionSchema>
 
 const syntax = z.enum(['javascript', 'json', 'python', 'php', 'ruby', 'bash'])
 
+export type Syntax = z.infer<typeof syntax>
+
 const CodeSampleSchema = CodeSampleDefinitionSchema.extend({
   code: z.record(
     z.enum(['javascript', 'python', 'php', 'ruby', 'seam_cli']),
@@ -58,12 +60,13 @@ export type CodeSample = z.output<typeof CodeSampleSchema>
 
 export interface Context {
   endpoint: Omit<Endpoint, 'codeSamples'>
+  formatCode: (content: string, syntax: Syntax) => Promise<string>
 }
 
-export const createCodeSample = (
+export const createCodeSample = async (
   codeSampleDefinition: CodeSampleDefinition,
   context: Context,
-): CodeSample => {
+): Promise<CodeSample> => {
   return {
     ...codeSampleDefinition,
     code: {
