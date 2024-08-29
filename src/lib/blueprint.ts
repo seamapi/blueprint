@@ -50,16 +50,66 @@ export interface Endpoint {
   codeSamples: CodeSample[]
 }
 
-export interface Parameter {
+interface BaseParameter {
   name: string
   isRequired: boolean
   isUndocumented: boolean
   isDeprecated: boolean
   deprecationMessage: string
   description: string
-  jsonType: string
-  format: string
 }
+
+interface StringParameter extends BaseParameter {
+  format: 'string'
+  jsonType: 'string'
+}
+
+interface EnumParameter extends BaseParameter {
+  format: 'enum'
+  jsonType: 'string'
+  values: EnumValue[]
+}
+
+interface RecordParameter extends BaseParameter {
+  format: 'record'
+  jsonType: 'object'
+}
+
+interface ListParameter extends BaseParameter {
+  format: 'list'
+  jsonType: 'array'
+}
+
+interface BooleanParameter extends BaseParameter {
+  format: 'boolean'
+  jsonType: 'boolean'
+}
+
+interface ObjectParameter extends BaseParameter {
+  format: 'object'
+  jsonType: 'object'
+  properties: Parameter[]
+}
+
+interface DatetimeParameter extends BaseParameter {
+  format: 'datetime'
+  jsonType: 'string'
+}
+
+interface IdParameter extends BaseParameter {
+  format: 'id'
+  jsonType: 'string'
+}
+
+export type Parameter =
+  | StringParameter
+  | EnumParameter
+  | RecordParameter
+  | ListParameter
+  | BooleanParameter
+  | ObjectParameter
+  | DatetimeParameter
+  | IdParameter
 
 export interface Request {
   methods: Method[]
