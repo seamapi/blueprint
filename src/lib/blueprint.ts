@@ -5,7 +5,10 @@ import {
   CodeSampleDefinitionSchema,
   createCodeSample,
 } from './code-sample/index.js'
-import type { CodeSampleDefinition } from './code-sample/schema.js'
+import type {
+  CodeSampleDefinition,
+  CodeSampleSyntax,
+} from './code-sample/schema.js'
 import type {
   Openapi,
   OpenapiOperation,
@@ -221,7 +224,7 @@ export type TypesModuleInput = z.input<typeof TypesModuleSchema>
 export type TypesModule = z.output<typeof TypesModuleSchema>
 
 export interface BlueprintOptions {
-  formatCode?: (content: string) => Promise<string>
+  formatCode?: (content: string, syntax: CodeSampleSyntax) => Promise<string>
 }
 
 export const createBlueprint = async (
@@ -362,11 +365,12 @@ const createEndpoint = async (
     codeSamples: await Promise.all(
       context.codeSampleDefinitions
         .filter(({ request }) => request.path === endpointPath)
-        .map(async (codeSampleDefinition) =>
-          await createCodeSample(codeSampleDefinition, {
-            endpoint,
-            formatCode: context.formatCode,
-          }),
+        .map(
+          async (codeSampleDefinition) =>
+            await createCodeSample(codeSampleDefinition, {
+              endpoint,
+              formatCode: context.formatCode,
+            }),
         ),
     ),
   }

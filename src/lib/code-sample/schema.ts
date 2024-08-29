@@ -7,6 +7,7 @@ import {
 } from 'lib/code-sample/seam-cli.js'
 import { JsonSchema } from 'lib/json.js'
 
+import { formatCodeRecords } from './format.js'
 import {
   createJavascriptRequest,
   createJavascriptResponse,
@@ -39,72 +40,85 @@ export type CodeSampleDefinitionInput = z.input<
 
 export type CodeSampleDefinition = z.output<typeof CodeSampleDefinitionSchema>
 
-const syntax = z.enum(['javascript', 'json', 'python', 'php', 'ruby', 'bash'])
+const CodeSampleSyntaxSchema = z.enum([
+  'javascript',
+  'json',
+  'python',
+  'php',
+  'ruby',
+  'bash',
+])
 
-export type Syntax = z.infer<typeof syntax>
+export type CodeSampleSyntax = z.infer<typeof CodeSampleSyntaxSchema>
+
+const CodeSchema = z.record(
+  z.enum(['javascript', 'python', 'php', 'ruby', 'seam_cli']),
+  z.object({
+    title: z.string().min(1),
+    request: z.string(),
+    response: z.string(),
+    request_syntax: CodeSampleSyntaxSchema,
+    response_syntax: CodeSampleSyntaxSchema,
+  }),
+)
+
+export type Code = z.infer<typeof CodeSchema>
 
 const CodeSampleSchema = CodeSampleDefinitionSchema.extend({
-  code: z.record(
-    z.enum(['javascript', 'python', 'php', 'ruby', 'seam_cli']),
-    z.object({
-      title: z.string().min(1),
-      request: z.string(),
-      response: z.string(),
-      request_syntax: syntax,
-      response_syntax: syntax,
-    }),
-  ),
+  code: CodeSchema,
 })
 
 export type CodeSample = z.output<typeof CodeSampleSchema>
 
 export interface Context {
   endpoint: Omit<Endpoint, 'codeSamples'>
-  formatCode: (content: string, syntax: Syntax) => Promise<string>
+  formatCode: (content: string, syntax: CodeSampleSyntax) => Promise<string>
 }
 
 export const createCodeSample = async (
   codeSampleDefinition: CodeSampleDefinition,
   context: Context,
 ): Promise<CodeSample> => {
+  const code: Code = {
+    javascript: {
+      title: 'JavaScript',
+      request: createJavascriptRequest(codeSampleDefinition, context),
+      response: createJavascriptResponse(codeSampleDefinition, context),
+      request_syntax: 'javascript',
+      response_syntax: 'javascript',
+    },
+    python: {
+      title: 'Python',
+      request: createPythonRequest(codeSampleDefinition, context),
+      response: createPythonResponse(codeSampleDefinition, context),
+      request_syntax: 'python',
+      response_syntax: 'python',
+    },
+    ruby: {
+      title: 'Ruby',
+      request: createRubyRequest(codeSampleDefinition, context),
+      response: createRubyResponse(codeSampleDefinition, context),
+      request_syntax: 'ruby',
+      response_syntax: 'ruby',
+    },
+    php: {
+      title: 'PHP',
+      request: createPhpRequest(codeSampleDefinition, context),
+      response: createPhpResponse(codeSampleDefinition, context),
+      request_syntax: 'php',
+      response_syntax: 'json',
+    },
+    seam_cli: {
+      title: 'Seam CLI',
+      request: createSeamCliRequest(codeSampleDefinition, context),
+      response: createSeamCliResponse(codeSampleDefinition, context),
+      request_syntax: 'bash',
+      response_syntax: 'json',
+    },
+  }
+
   return {
     ...codeSampleDefinition,
-    code: {
-      javascript: {
-        title: 'JavaScript',
-        request: createJavascriptRequest(codeSampleDefinition, context),
-        response: createJavascriptResponse(codeSampleDefinition, context),
-        request_syntax: 'javascript',
-        response_syntax: 'javascript',
-      },
-      python: {
-        title: 'Python',
-        request: createPythonRequest(codeSampleDefinition, context),
-        response: createPythonResponse(codeSampleDefinition, context),
-        request_syntax: 'python',
-        response_syntax: 'python',
-      },
-      ruby: {
-        title: 'Ruby',
-        request: createRubyRequest(codeSampleDefinition, context),
-        response: createRubyResponse(codeSampleDefinition, context),
-        request_syntax: 'ruby',
-        response_syntax: 'ruby',
-      },
-      php: {
-        title: 'PHP',
-        request: createPhpRequest(codeSampleDefinition, context),
-        response: createPhpResponse(codeSampleDefinition, context),
-        request_syntax: 'php',
-        response_syntax: 'json',
-      },
-      seam_cli: {
-        title: 'Seam CLI',
-        request: createSeamCliRequest(codeSampleDefinition, context),
-        response: createSeamCliResponse(codeSampleDefinition, context),
-        request_syntax: 'bash',
-        response_syntax: 'json',
-      },
-    },
+    code: await formatCodeRecords(code, context),
   }
 }
