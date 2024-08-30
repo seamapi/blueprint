@@ -26,6 +26,7 @@ export interface Blueprint {
 
 export interface Route {
   path: string
+  name: string
   namespace: Namespace | null
   endpoints: Endpoint[]
   subroutes: Route[]
@@ -44,6 +45,7 @@ export interface Namespace {
 export interface Endpoint {
   title: string
   path: string
+  name: string
   description: string
   isUndocumented: boolean
   isDeprecated: boolean
@@ -290,9 +292,14 @@ const createRoute = async (
 ): Promise<Route> => {
   const pathParts = path.split('/')
   const routePath = `/${pathParts.slice(1, -1).join('/')}`
+  const name = pathParts.at(-2)
+  if (name == null) {
+    throw new Error(`Could not resolve name for route at ${path}`)
+  }
 
   return {
     path: routePath,
+    name,
     namespace: { path: `/${pathParts[1]}` },
     endpoints: await createEndpoints(path, pathItem, context),
     subroutes: [],
@@ -335,6 +342,11 @@ const createEndpoint = async (
   const pathParts = path.split('/')
   const endpointPath = `/${pathParts.slice(1).join('/')}`
 
+  const name = pathParts.at(-1)
+  if (name == null) {
+    throw new Error(`Could not resolve name for endpoint at ${path}`)
+  }
+
   const parsedOperation = OpenapiOperationSchema.parse(operation)
 
   const title = parsedOperation['x-title']
@@ -349,8 +361,9 @@ const createEndpoint = async (
 
   const request = createRequest(methods, operation)
 
-  const endpoint = {
+  const endpoint: Omit<Endpoint, 'codeSamples'> = {
     title,
+    name,
     path: endpointPath,
     description,
     isUndocumented,
