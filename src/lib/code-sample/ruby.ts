@@ -61,7 +61,7 @@ const formatRubyResponse = (responseParams: NonNullJson): string => {
   return Object.entries(responseParams as Record<string, Json>)
     .map(
       ([paramKey, paramValue]) =>
-        `"${snakeCase(paramKey)}" => ${formatRubyValue(paramValue)}`,
+        `{"${snakeCase(paramKey)}" => ${formatRubyValue(paramValue)}}`,
     )
     .join('\n')
 }
