@@ -56,10 +56,9 @@ const formatRubyArrayResponse = (
 }
 
 const formatRubyResponse = (responseParams: NonNullJson): string => {
-  const values = Object.entries(responseParams as Record<string, Json>)
-    .map(
-      ([paramKey, paramValue]) =>
-        `"${snakeCase(paramKey)}" => ${formatRubyValue(paramValue)}`,
-    )
+  const values = Object.entries(responseParams as Record<string, Json>).map(
+    ([paramKey, paramValue]) =>
+      `"${snakeCase(paramKey)}" => ${formatRubyValue(paramValue)}`,
+  )
   return `{${values.join('\n')}}`
 }
