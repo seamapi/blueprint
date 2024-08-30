@@ -1,4 +1,4 @@
-import { pascalCase, snakeCase } from 'change-case'
+import { snakeCase } from 'change-case'
 
 import type { Json, NonNullJson } from 'lib/json.js'
 
@@ -34,16 +34,13 @@ export const createRubyResponse = (
     throw new Error(`Missing ${responseKey} for '${title}'`)
   }
 
-  const responseRubyClassName = pascalCase(responseKey)
-
   return Array.isArray(responseValue)
-    ? formatRubyArrayResponse(responseValue, responseRubyClassName, title)
-    : formatRubyResponse(responseValue, responseRubyClassName)
+    ? formatRubyArrayResponse(responseValue, title)
+    : formatRubyResponse(responseValue)
 }
 
 const formatRubyArrayResponse = (
   responseArray: Json[],
-  responseRubyClassName: string,
   title: string,
 ): string => {
   const formattedItems = responseArray
@@ -51,25 +48,17 @@ const formatRubyArrayResponse = (
       if (item == null) {
         throw new Error(`Null value in response array for '${title}'`)
       }
-      return formatRubyResponse(item, responseRubyClassName)
+      return formatRubyResponse(item)
     })
     .join(',\n')
 
   return `[${formattedItems}]`
 }
 
-const formatRubyResponse = (
-  responseParams: NonNullJson,
-  responseRubyClassName: string,
-): string => {
-  const params = formatRubyArgs(responseParams)
-  return `<Seam::${responseRubyClassName}:0x00000\n${params}>`
+const formatRubyResponse = (responseParams: NonNullJson): string => {
+  const values = Object.entries(responseParams as Record<string, Json>).map(
+    ([paramKey, paramValue]) =>
+      `"${snakeCase(paramKey)}" => ${formatRubyValue(paramValue)}`,
+  )
+  return `{${values.join(',')}}`
 }
-
-const formatRubyArgs = (jsonParams: NonNullJson): string =>
-  Object.entries(jsonParams as Record<string, Json>)
-    .map(
-      ([paramKey, paramValue]) =>
-        `${snakeCase(paramKey)}=${formatRubyValue(paramValue)}`,
-    )
-    .join('\n')
