@@ -37,13 +37,12 @@ export const createRubyResponse = (
   const responseRubyClassName = pascalCase(responseKey)
 
   return Array.isArray(responseValue)
-    ? formatRubyArrayResponse(responseValue, responseRubyClassName, title)
-    : formatRubyResponse(responseValue, responseRubyClassName)
+    ? formatRubyArrayResponse(responseValue, title)
+    : formatRubyResponse(responseValue)
 }
 
 const formatRubyArrayResponse = (
   responseArray: Json[],
-  responseRubyClassName: string,
   title: string,
 ): string => {
   const formattedItems = responseArray
@@ -51,7 +50,7 @@ const formatRubyArrayResponse = (
       if (item == null) {
         throw new Error(`Null value in response array for '${title}'`)
       }
-      return formatRubyResponse(item, responseRubyClassName)
+      return formatRubyResponse(item)
     })
     .join(',\n')
 
@@ -60,16 +59,11 @@ const formatRubyArrayResponse = (
 
 const formatRubyResponse = (
   responseParams: NonNullJson,
-  responseRubyClassName: string,
 ): string => {
-  const params = formatRubyArgs(responseParams)
-  return `${params}`
+  return   Object.entries(responseParams as Record<string, Json>)
+  .map(
+    ([paramKey, paramValue]) =>
+      `"${snakeCase(paramKey)}" => ${formatRubyValue(paramValue)}`,
+  )
+  .join('\n')
 }
-
-const formatRubyArgs = (jsonParams: NonNullJson): string =>
-  Object.entries(jsonParams as Record<string, Json>)
-    .map(
-      ([paramKey, paramValue]) =>
-        `${snakeCase(paramKey)}=${formatRubyValue(paramValue)}`,
-    )
-    .join('\n')
