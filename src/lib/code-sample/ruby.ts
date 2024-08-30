@@ -1,4 +1,4 @@
-import { pascalCase, snakeCase } from 'change-case'
+import { snakeCase } from 'change-case'
 
 import type { Json, NonNullJson } from 'lib/json.js'
 
@@ -33,8 +33,6 @@ export const createRubyResponse = (
   if (responseValue == null) {
     throw new Error(`Missing ${responseKey} for '${title}'`)
   }
-
-  const responseRubyClassName = pascalCase(responseKey)
 
   return Array.isArray(responseValue)
     ? formatRubyArrayResponse(responseValue, title)
