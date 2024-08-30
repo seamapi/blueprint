@@ -63,7 +63,7 @@ const formatRubyResponse = (
   responseRubyClassName: string,
 ): string => {
   const params = formatRubyArgs(responseParams)
-  return `<Seam::${responseRubyClassName}:0x00000\n${params}>`
+  return `${params}`
 }
 
 const formatRubyArgs = (jsonParams: NonNullJson): string =>
