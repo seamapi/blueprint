@@ -484,13 +484,13 @@ const createParameters = (
         case 'array':
           return { ...baseParam, format: 'list', jsonType: 'array' }
         case 'object':
-          if (parsedProp.properties !== undefined) {
+          if (property.properties !== undefined) {
             return {
               ...baseParam,
               format: 'object',
               jsonType: 'object',
               parameters: createParameters(
-                parsedProp.properties as Record<string, OpenapiSchema>,
+                property.properties as Record<string, OpenapiSchema>,
               ),
             }
           }
@@ -653,14 +653,12 @@ export const createProperties = (
       case 'array':
         return { ...baseProperty, format: 'list', jsonType: 'array' }
       case 'object':
-        if (parsedProp.properties !== undefined) {
+        if (prop.properties !== undefined) {
           return {
             ...baseProperty,
             format: 'object',
             jsonType: 'object',
-            properties: createProperties(
-              parsedProp.properties as Record<string, OpenapiSchema>,
-            ),
+            properties: createProperties(prop.properties),
           }
         }
         return { ...baseProperty, format: 'record', jsonType: 'object' }
