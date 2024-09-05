@@ -69,6 +69,11 @@ interface StringParameter extends BaseParameter {
   jsonType: 'string'
 }
 
+interface NumberParameter extends BaseParameter {
+  format: 'number'
+  jsonType: 'number'
+}
+
 interface EnumParameter extends BaseParameter {
   format: 'enum'
   jsonType: 'string'
@@ -108,6 +113,7 @@ interface IdParameter extends BaseParameter {
 
 export type Parameter =
   | StringParameter
+  | NumberParameter
   | EnumParameter
   | RecordParameter
   | ListParameter
@@ -155,6 +161,7 @@ interface BaseProperty {
 
 export type Property =
   | StringProperty
+  | NumberProperty
   | EnumProperty
   | RecordProperty
   | ListProperty
@@ -166,6 +173,11 @@ export type Property =
 interface StringProperty extends BaseProperty {
   format: 'string'
   jsonType: 'string'
+}
+
+interface NumberProperty extends BaseProperty {
+  format: 'number'
+  jsonType: 'number'
 }
 
 interface EnumProperty extends BaseProperty {
@@ -494,6 +506,12 @@ const createParameters = (
             }
           }
           return { ...baseParam, format: 'record', jsonType: 'object' }
+        case 'number':
+          return {
+            ...baseParam,
+            format: 'number',
+            jsonType: 'number',
+          }
         default:
           throw new Error(`Unsupported property type: ${parsedProp.type}`)
       }
@@ -655,6 +673,12 @@ export const createProperties = (
           }
         }
         return { ...baseProperty, format: 'record', jsonType: 'object' }
+      case 'number':
+        return {
+          ...baseProperty,
+          format: 'number',
+          jsonType: 'number',
+        }
       default:
         throw new Error(`Unsupported property type: ${parsedProp.type}`)
     }
