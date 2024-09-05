@@ -1,5 +1,7 @@
 import { snakeCase } from 'change-case'
+
 import type { Json, NonNullJson } from 'lib/json.js'
+
 import type { CodeSampleDefinition, Context } from './schema.js'
 
 export const createPhpRequest = (
