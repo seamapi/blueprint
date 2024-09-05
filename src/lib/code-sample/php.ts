@@ -66,14 +66,14 @@ const formatPhpValue = (value: Json): string => {
   if (typeof value === 'number') return value.toString()
   if (typeof value === 'string') return `"${value}"`
   if (Array.isArray(value)) {
-    const formattedItems = value.map(formatPhpValue).join(',\n')
-    return `[\n${formattedItems}\n]`
+    const formattedItems = value.map(formatPhpValue).join(', ')
+    return `[${formattedItems}]`
   }
   if (typeof value === 'object') {
     const formattedEntries = Object.entries(value)
       .map(([key, val]) => `"${snakeCase(key)}" => ${formatPhpValue(val)}`)
-      .join(',\n')
-    return `[\n${formattedEntries}\n]`
+      .join(', ')
+    return `[${formattedEntries}]`
   }
   throw new Error(`Unsupported type: ${typeof value}`)
 }
