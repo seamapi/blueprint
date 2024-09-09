@@ -478,66 +478,76 @@ const createParameters = (
       }
       return true
     })
-    .map(([name, property]: [string, any]): Parameter => {
-      const parsedProp = PropertySchema.parse(property, {
-        path: [...path.split('/'), name],
-      })
+    .map(
+      ([name, property]: [string, any]): Parameter =>
+        createParameter(name, property, path, requiredParameters),
+    )
+}
 
-      const baseParam: BaseParameter = {
-        name,
-        description: parsedProp.description,
-        isRequired: requiredParameters.includes(name),
-        isDeprecated: parsedProp['x-deprecated'].length > 0,
-        deprecationMessage: parsedProp['x-deprecated'],
-        isUndocumented: parsedProp['x-undocumented'].length > 0,
-      }
+const createParameter = (
+  name: string,
+  property: any,
+  path: string,
+  requiredParameters: string[],
+): Parameter => {
+  const parsedProp = PropertySchema.parse(property, {
+    path: [...path.split('/'), name],
+  })
 
-      switch (parsedProp.type) {
-        case 'string':
-          if (parsedProp.enum !== undefined) {
-            return {
-              ...baseParam,
-              format: 'enum',
-              jsonType: 'string',
-              values: parsedProp.enum.map((value: any) => ({
-                name: value,
-              })),
-            }
-          }
-          if (parsedProp.format === 'date-time') {
-            return { ...baseParam, format: 'datetime', jsonType: 'string' }
-          }
-          if (parsedProp.format === 'uuid') {
-            return { ...baseParam, format: 'id', jsonType: 'string' }
-          }
-          return { ...baseParam, format: 'string', jsonType: 'string' }
-        case 'boolean':
-          return { ...baseParam, format: 'boolean', jsonType: 'boolean' }
-        case 'array':
-          return { ...baseParam, format: 'list', jsonType: 'array' }
-        case 'object':
-          if (property.properties !== undefined) {
-            return {
-              ...baseParam,
-              format: 'object',
-              jsonType: 'object',
-              parameters: createParameters(
-                property.properties as Record<string, OpenapiSchema>,
-                path,
-              ),
-            }
-          }
-          return { ...baseParam, format: 'record', jsonType: 'object' }
-        case 'number':
-          return {
-            ...baseParam,
-            format: 'number',
-            jsonType: 'number',
-          }
-        default:
-          throw new Error(`Unsupported property type: ${parsedProp.type}`)
+  const baseParam: BaseParameter = {
+    name,
+    description: parsedProp.description,
+    isRequired: requiredParameters.includes(name),
+    isDeprecated: parsedProp['x-deprecated'].length > 0,
+    deprecationMessage: parsedProp['x-deprecated'],
+    isUndocumented: parsedProp['x-undocumented'].length > 0,
+  }
+
+  switch (parsedProp.type) {
+    case 'string':
+      if (parsedProp.enum !== undefined) {
+        return {
+          ...baseParam,
+          format: 'enum',
+          jsonType: 'string',
+          values: parsedProp.enum.map((value: any) => ({
+            name: value,
+          })),
+        }
       }
-    })
+      if (parsedProp.format === 'date-time') {
+        return { ...baseParam, format: 'datetime', jsonType: 'string' }
+      }
+      if (parsedProp.format === 'uuid') {
+        return { ...baseParam, format: 'id', jsonType: 'string' }
+      }
+      return { ...baseParam, format: 'string', jsonType: 'string' }
+    case 'boolean':
+      return { ...baseParam, format: 'boolean', jsonType: 'boolean' }
+    case 'array':
+      return { ...baseParam, format: 'list', jsonType: 'array' }
+    case 'object':
+      if (property.properties !== undefined) {
+        return {
+          ...baseParam,
+          format: 'object',
+          jsonType: 'object',
+          parameters: createParameters(
+            property.properties as Record<string, OpenapiSchema>,
+            path,
+          ),
+        }
+      }
+      return { ...baseParam, format: 'record', jsonType: 'object' }
+    case 'number':
+      return {
+        ...baseParam,
+        format: 'number',
+        jsonType: 'number',
+      }
+    default:
+      throw new Error(`Unsupported property type: ${parsedProp.type}`)
+  }
 }
 
 const createResources = (
