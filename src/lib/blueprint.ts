@@ -361,7 +361,9 @@ const createEndpoint = async (
     throw new Error(`Could not resolve name for endpoint at ${path}`)
   }
 
-  const parsedOperation = OpenapiOperationSchema.parse(operation)
+  const parsedOperation = OpenapiOperationSchema.parse(operation, {
+    path: pathParts,
+  })
 
   const title = parsedOperation['x-title']
 
@@ -373,7 +375,7 @@ const createEndpoint = async (
 
   const deprecationMessage = parsedOperation['x-deprecated']
 
-  const request = createRequest(methods, operation)
+  const request = createRequest(methods, operation, path)
 
   const endpoint: Omit<Endpoint, 'codeSamples'> = {
     title,
@@ -383,7 +385,7 @@ const createEndpoint = async (
     isUndocumented,
     isDeprecated,
     deprecationMessage,
-    response: createResponse(operation),
+    response: createResponse(operation, path),
     request,
   }
 
@@ -406,6 +408,7 @@ const createEndpoint = async (
 export const createRequest = (
   methods: Method[],
   operation: OpenapiOperation,
+  path: string,
 ): Request => {
   if (methods.length === 0) {
     // eslint-disable-next-line no-console
@@ -429,11 +432,14 @@ export const createRequest = (
     methods,
     semanticMethod,
     preferredMethod,
-    parameters: createRequestBody(operation),
+    parameters: createRequestBody(operation, path),
   }
 }
 
-const createRequestBody = (operation: OpenapiOperation): Parameter[] => {
+const createRequestBody = (
+  operation: OpenapiOperation,
+  path: string,
+): Parameter[] => {
   // This should be done by the createParameters but for some reason it's not
   // TODO: remove this in favour of using createParameters
   if (!('requestBody' in operation) || operation.requestBody === undefined) {
@@ -453,16 +459,19 @@ const createRequestBody = (operation: OpenapiOperation): Parameter[] => {
     return []
   }
 
-  return createParameters(schema.properties, schema.required)
+  return createParameters(schema.properties, path, schema.required)
 }
 
 const createParameters = (
   properties: Record<string, OpenapiSchema>,
+  path: string,
   requiredParameters: string[] = [],
 ): Parameter[] => {
   return Object.entries(properties).map(
     ([name, property]: [string, any]): Parameter => {
-      const parsedProp = PropertySchema.parse(property)
+      const parsedProp = PropertySchema.parse(property, {
+        path: [...path.split('/'), name],
+      })
 
       const baseParam: BaseParameter = {
         name,
@@ -504,6 +513,7 @@ const createParameters = (
               jsonType: 'object',
               parameters: createParameters(
                 property.properties as Record<string, OpenapiSchema>,
+                path,
               ),
             }
           }
@@ -540,7 +550,7 @@ const createResources = (
           ...acc,
           [schemaName]: {
             resourceType: schemaName,
-            properties: createProperties(schema.properties),
+            properties: createProperties(schema.properties, schemaName),
             description: schema.description ?? '',
           },
         }
@@ -549,14 +559,19 @@ const createResources = (
     }, {})
 }
 
-const createResponse = (operation: OpenapiOperation): Response => {
+const createResponse = (
+  operation: OpenapiOperation,
+  path: string,
+): Response => {
   if (!('responses' in operation) || operation.responses == null) {
     throw new Error(
       `Missing responses in operation for ${operation.operationId}`,
     )
   }
 
-  const parsedOperation = OpenapiOperationSchema.parse(operation)
+  const parsedOperation = OpenapiOperationSchema.parse(operation, {
+    path: [...path.split('/')],
+  })
   const { responses } = operation
 
   const okResponse = responses['200']
@@ -632,9 +647,12 @@ const createResponse = (operation: OpenapiOperation): Response => {
 
 export const createProperties = (
   properties: Record<string, OpenapiSchema>,
+  resourceType: string,
 ): Property[] => {
   return Object.entries(properties).map(([name, prop]): Property => {
-    const parsedProp = PropertySchema.parse(prop)
+    const parsedProp = PropertySchema.parse(prop, {
+      path: [resourceType, name],
+    })
 
     const baseProperty = {
       name,
@@ -671,7 +689,7 @@ export const createProperties = (
             ...baseProperty,
             format: 'object',
             jsonType: 'object',
-            properties: createProperties(prop.properties),
+            properties: createProperties(prop.properties, resourceType),
           }
         }
         return { ...baseProperty, format: 'record', jsonType: 'object' }
