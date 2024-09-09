@@ -361,7 +361,9 @@ const createEndpoint = async (
     throw new Error(`Could not resolve name for endpoint at ${path}`)
   }
 
-  const parsedOperation = OpenapiOperationSchema.parse(operation)
+  const parsedOperation = OpenapiOperationSchema.parse(operation, {
+    path: pathParts,
+  })
 
   const title = parsedOperation['x-title']
 
@@ -373,7 +375,7 @@ const createEndpoint = async (
 
   const deprecationMessage = parsedOperation['x-deprecated']
 
-  const request = createRequest(methods, operation)
+  const request = createRequest(methods, operation, path)
 
   const endpoint: Omit<Endpoint, 'codeSamples'> = {
     title,
@@ -383,7 +385,7 @@ const createEndpoint = async (
     isUndocumented,
     isDeprecated,
     deprecationMessage,
-    response: createResponse(operation),
+    response: createResponse(operation, path),
     request,
   }
 
@@ -406,6 +408,7 @@ const createEndpoint = async (
 export const createRequest = (
   methods: Method[],
   operation: OpenapiOperation,
+  path: string,
 ): Request => {
   if (methods.length === 0) {
     // eslint-disable-next-line no-console
@@ -429,11 +432,14 @@ export const createRequest = (
     methods,
     semanticMethod,
     preferredMethod,
-    parameters: createRequestBody(operation),
+    parameters: createRequestBody(operation, path),
   }
 }
 
-const createRequestBody = (operation: OpenapiOperation): Parameter[] => {
+const createRequestBody = (
+  operation: OpenapiOperation,
+  path: string,
+): Parameter[] => {
   // This should be done by the createParameters but for some reason it's not
   // TODO: remove this in favour of using createParameters
   if (!('requestBody' in operation) || operation.requestBody === undefined) {
@@ -453,72 +459,95 @@ const createRequestBody = (operation: OpenapiOperation): Parameter[] => {
     return []
   }
 
-  return createParameters(schema.properties, schema.required)
+  return createParameters(schema.properties, path, schema.required)
 }
 
 const createParameters = (
   properties: Record<string, OpenapiSchema>,
+  path: string,
   requiredParameters: string[] = [],
 ): Parameter[] => {
-  return Object.entries(properties).map(
-    ([name, property]: [string, any]): Parameter => {
-      const parsedProp = PropertySchema.parse(property)
-
-      const baseParam: BaseParameter = {
-        name,
-        description: parsedProp.description,
-        isRequired: requiredParameters.includes(name),
-        isDeprecated: parsedProp['x-deprecated'].length > 0,
-        deprecationMessage: parsedProp['x-deprecated'],
-        isUndocumented: parsedProp['x-undocumented'].length > 0,
+  return Object.entries(properties)
+    .filter(([name, property]) => {
+      if (property.type == null) {
+        // eslint-disable-next-line no-console
+        console.warn(
+          `The ${name} property for ${path} will not be documented since it does not define a type.`,
+        )
+        return false
       }
+      return true
+    })
+    .map(
+      ([name, property]: [string, any]): Parameter =>
+        createParameter(name, property, path, requiredParameters),
+    )
+}
 
-      switch (parsedProp.type) {
-        case 'string':
-          if (parsedProp.enum !== undefined) {
-            return {
-              ...baseParam,
-              format: 'enum',
-              jsonType: 'string',
-              values: parsedProp.enum.map((value: any) => ({
-                name: value,
-              })),
-            }
-          }
-          if (parsedProp.format === 'date-time') {
-            return { ...baseParam, format: 'datetime', jsonType: 'string' }
-          }
-          if (parsedProp.format === 'uuid') {
-            return { ...baseParam, format: 'id', jsonType: 'string' }
-          }
-          return { ...baseParam, format: 'string', jsonType: 'string' }
-        case 'boolean':
-          return { ...baseParam, format: 'boolean', jsonType: 'boolean' }
-        case 'array':
-          return { ...baseParam, format: 'list', jsonType: 'array' }
-        case 'object':
-          if (property.properties !== undefined) {
-            return {
-              ...baseParam,
-              format: 'object',
-              jsonType: 'object',
-              parameters: createParameters(
-                property.properties as Record<string, OpenapiSchema>,
-              ),
-            }
-          }
-          return { ...baseParam, format: 'record', jsonType: 'object' }
-        case 'number':
-          return {
-            ...baseParam,
-            format: 'number',
-            jsonType: 'number',
-          }
-        default:
-          throw new Error(`Unsupported property type: ${parsedProp.type}`)
+const createParameter = (
+  name: string,
+  property: any,
+  path: string,
+  requiredParameters: string[],
+): Parameter => {
+  const parsedProp = PropertySchema.parse(property, {
+    path: [...path.split('/'), name],
+  })
+
+  const baseParam: BaseParameter = {
+    name,
+    description: parsedProp.description,
+    isRequired: requiredParameters.includes(name),
+    isDeprecated: parsedProp['x-deprecated'].length > 0,
+    deprecationMessage: parsedProp['x-deprecated'],
+    isUndocumented: parsedProp['x-undocumented'].length > 0,
+  }
+
+  switch (parsedProp.type) {
+    case 'string':
+      if (parsedProp.enum !== undefined) {
+        return {
+          ...baseParam,
+          format: 'enum',
+          jsonType: 'string',
+          values: parsedProp.enum.map((value: any) => ({
+            name: value,
+          })),
+        }
       }
-    },
-  )
+      if (parsedProp.format === 'date-time') {
+        return { ...baseParam, format: 'datetime', jsonType: 'string' }
+      }
+      if (parsedProp.format === 'uuid') {
+        return { ...baseParam, format: 'id', jsonType: 'string' }
+      }
+      return { ...baseParam, format: 'string', jsonType: 'string' }
+    case 'boolean':
+      return { ...baseParam, format: 'boolean', jsonType: 'boolean' }
+    case 'array':
+      return { ...baseParam, format: 'list', jsonType: 'array' }
+    case 'object':
+      if (property.properties !== undefined) {
+        return {
+          ...baseParam,
+          format: 'object',
+          jsonType: 'object',
+          parameters: createParameters(
+            property.properties as Record<string, OpenapiSchema>,
+            path,
+          ),
+        }
+      }
+      return { ...baseParam, format: 'record', jsonType: 'object' }
+    case 'number':
+      return {
+        ...baseParam,
+        format: 'number',
+        jsonType: 'number',
+      }
+    default:
+      throw new Error(`Unsupported property type: ${parsedProp.type}`)
+  }
 }
 
 const createResources = (
@@ -540,7 +569,7 @@ const createResources = (
           ...acc,
           [schemaName]: {
             resourceType: schemaName,
-            properties: createProperties(schema.properties),
+            properties: createProperties(schema.properties, [schemaName]),
             description: schema.description ?? '',
           },
         }
@@ -549,14 +578,19 @@ const createResources = (
     }, {})
 }
 
-const createResponse = (operation: OpenapiOperation): Response => {
+const createResponse = (
+  operation: OpenapiOperation,
+  path: string,
+): Response => {
   if (!('responses' in operation) || operation.responses == null) {
     throw new Error(
       `Missing responses in operation for ${operation.operationId}`,
     )
   }
 
-  const parsedOperation = OpenapiOperationSchema.parse(operation)
+  const parsedOperation = OpenapiOperationSchema.parse(operation, {
+    path: [...path.split('/')],
+  })
   const { responses } = operation
 
   const okResponse = responses['200']
@@ -632,53 +666,73 @@ const createResponse = (operation: OpenapiOperation): Response => {
 
 export const createProperties = (
   properties: Record<string, OpenapiSchema>,
+  parentPaths: string[],
 ): Property[] => {
-  return Object.entries(properties).map(([name, prop]): Property => {
-    const parsedProp = PropertySchema.parse(prop)
+  return Object.entries(properties)
+    .filter(([name, property]) => {
+      if (property.type == null) {
+        // eslint-disable-next-line no-console
+        console.warn(
+          `The ${name} property for ${parentPaths.join('.')} will not be documented since it does not define a type.`,
+        )
+        return false
+      }
+      return true
+    })
+    .map(([name, prop]) => createProperty(name, prop, [...parentPaths]))
+}
 
-    const baseProperty = {
-      name,
-      description: parsedProp.description,
-      isDeprecated: parsedProp['x-deprecated'].length > 0,
-      deprecationMessage: parsedProp['x-deprecated'],
-      isUndocumented: parsedProp['x-undocumented'].length > 0,
-    }
-
-    switch (parsedProp.type) {
-      case 'string':
-        if (parsedProp.enum !== undefined) {
-          return {
-            ...baseProperty,
-            format: 'enum',
-            jsonType: 'string',
-            values: parsedProp.enum.map((value: any) => ({ name: value })),
-          }
-        }
-        if (parsedProp.format === 'date-time') {
-          return { ...baseProperty, format: 'datetime', jsonType: 'string' }
-        }
-        if (parsedProp.format === 'uuid') {
-          return { ...baseProperty, format: 'id', jsonType: 'string' }
-        }
-        return { ...baseProperty, format: 'string', jsonType: 'string' }
-      case 'boolean':
-        return { ...baseProperty, format: 'boolean', jsonType: 'boolean' }
-      case 'array':
-        return { ...baseProperty, format: 'list', jsonType: 'array' }
-      case 'object':
-        if (prop.properties !== undefined) {
-          return {
-            ...baseProperty,
-            format: 'object',
-            jsonType: 'object',
-            properties: createProperties(prop.properties),
-          }
-        }
-        return { ...baseProperty, format: 'record', jsonType: 'object' }
-      default:
-        throw new Error(`Unsupported property type: ${parsedProp.type}`)
-    }
+const createProperty = (
+  name: string,
+  prop: OpenapiSchema,
+  parentPaths: string[],
+): Property => {
+  const parsedProp = PropertySchema.parse(prop, {
+    path: [...parentPaths, name],
   })
+
+  const baseProperty = {
+    name,
+    description: parsedProp.description,
+    isDeprecated: parsedProp['x-deprecated'].length > 0,
+    deprecationMessage: parsedProp['x-deprecated'],
+    isUndocumented: parsedProp['x-undocumented'].length > 0,
+  }
+
+  switch (parsedProp.type) {
+    case 'string':
+      if (parsedProp.enum !== undefined) {
+        return {
+          ...baseProperty,
+          format: 'enum',
+          jsonType: 'string',
+          values: parsedProp.enum.map((value: any) => ({ name: value })),
+        }
+      }
+      if (parsedProp.format === 'date-time') {
+        return { ...baseProperty, format: 'datetime', jsonType: 'string' }
+      }
+      if (parsedProp.format === 'uuid') {
+        return { ...baseProperty, format: 'id', jsonType: 'string' }
+      }
+      return { ...baseProperty, format: 'string', jsonType: 'string' }
+    case 'boolean':
+      return { ...baseProperty, format: 'boolean', jsonType: 'boolean' }
+    case 'array':
+      return { ...baseProperty, format: 'list', jsonType: 'array' }
+    case 'object':
+      if (prop.properties !== undefined) {
+        return {
+          ...baseProperty,
+          format: 'object',
+          jsonType: 'object',
+          properties: createProperties(prop.properties, [...parentPaths, name]),
+        }
+      }
+      return { ...baseProperty, format: 'record', jsonType: 'object' }
+    default:
+      throw new Error(`Unsupported property type: ${parsedProp.type}`)
+  }
 }
 
 export const getSemanticMethod = (methods: Method[]): Method => {
