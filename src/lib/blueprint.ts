@@ -559,7 +559,7 @@ const createResources = (
           ...acc,
           [schemaName]: {
             resourceType: schemaName,
-            properties: createProperties(schema.properties, schemaName),
+            properties: createProperties(schema.properties, [schemaName]),
             description: schema.description ?? '',
           },
         }
@@ -656,67 +656,73 @@ const createResponse = (
 
 export const createProperties = (
   properties: Record<string, OpenapiSchema>,
-  resourceType: string,
+  parentPaths: string[],
 ): Property[] => {
   return Object.entries(properties)
     .filter(([name, property]) => {
       if (property.type == null) {
         // eslint-disable-next-line no-console
         console.warn(
-          `The ${name} property for ${resourceType} will not be documented since it does not define a type.`,
+          `The ${name} property for ${parentPaths.join('.')} will not be documented since it does not define a type.`,
         )
         return false
       }
       return true
     })
-    .map(([name, prop]): Property => {
-      const parsedProp = PropertySchema.parse(prop, {
-        path: [resourceType, name],
-      })
+    .map(([name, prop]) => createProperty(name, prop, [...parentPaths]))
+}
 
-      const baseProperty = {
-        name,
-        description: parsedProp.description,
-        isDeprecated: parsedProp['x-deprecated'].length > 0,
-        deprecationMessage: parsedProp['x-deprecated'],
-        isUndocumented: parsedProp['x-undocumented'].length > 0,
-      }
+const createProperty = (
+  name: string,
+  prop: OpenapiSchema,
+  parentPaths: string[],
+): Property => {
+  const parsedProp = PropertySchema.parse(prop, {
+    path: [...parentPaths, name],
+  })
 
-      switch (parsedProp.type) {
-        case 'string':
-          if (parsedProp.enum !== undefined) {
-            return {
-              ...baseProperty,
-              format: 'enum',
-              jsonType: 'string',
-              values: parsedProp.enum.map((value: any) => ({ name: value })),
-            }
-          }
-          if (parsedProp.format === 'date-time') {
-            return { ...baseProperty, format: 'datetime', jsonType: 'string' }
-          }
-          if (parsedProp.format === 'uuid') {
-            return { ...baseProperty, format: 'id', jsonType: 'string' }
-          }
-          return { ...baseProperty, format: 'string', jsonType: 'string' }
-        case 'boolean':
-          return { ...baseProperty, format: 'boolean', jsonType: 'boolean' }
-        case 'array':
-          return { ...baseProperty, format: 'list', jsonType: 'array' }
-        case 'object':
-          if (prop.properties !== undefined) {
-            return {
-              ...baseProperty,
-              format: 'object',
-              jsonType: 'object',
-              properties: createProperties(prop.properties, resourceType),
-            }
-          }
-          return { ...baseProperty, format: 'record', jsonType: 'object' }
-        default:
-          throw new Error(`Unsupported property type: ${parsedProp.type}`)
+  const baseProperty = {
+    name,
+    description: parsedProp.description,
+    isDeprecated: parsedProp['x-deprecated'].length > 0,
+    deprecationMessage: parsedProp['x-deprecated'],
+    isUndocumented: parsedProp['x-undocumented'].length > 0,
+  }
+
+  switch (parsedProp.type) {
+    case 'string':
+      if (parsedProp.enum !== undefined) {
+        return {
+          ...baseProperty,
+          format: 'enum',
+          jsonType: 'string',
+          values: parsedProp.enum.map((value: any) => ({ name: value })),
+        }
       }
-    })
+      if (parsedProp.format === 'date-time') {
+        return { ...baseProperty, format: 'datetime', jsonType: 'string' }
+      }
+      if (parsedProp.format === 'uuid') {
+        return { ...baseProperty, format: 'id', jsonType: 'string' }
+      }
+      return { ...baseProperty, format: 'string', jsonType: 'string' }
+    case 'boolean':
+      return { ...baseProperty, format: 'boolean', jsonType: 'boolean' }
+    case 'array':
+      return { ...baseProperty, format: 'list', jsonType: 'array' }
+    case 'object':
+      if (prop.properties !== undefined) {
+        return {
+          ...baseProperty,
+          format: 'object',
+          jsonType: 'object',
+          properties: createProperties(prop.properties, [...parentPaths, name]),
+        }
+      }
+      return { ...baseProperty, format: 'record', jsonType: 'object' }
+    default:
+      throw new Error(`Unsupported property type: ${parsedProp.type}`)
+  }
 }
 
 export const getSemanticMethod = (methods: Method[]): Method => {
