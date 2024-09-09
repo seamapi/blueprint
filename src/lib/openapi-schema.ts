@@ -71,7 +71,7 @@ export const PropertySchema: z.ZodSchema<any> = z.object({
   deprecated: z.boolean().default(false),
   'x-undocumented': z.string().default(''),
   'x-deprecated': z.string().default(''),
-  enum: z.array(z.string()).optional(),
+  enum: z.array(z.string().or(z.boolean())).optional(),
   $ref: z.string().optional(),
   format: z.string().optional(),
 })
