@@ -69,6 +69,11 @@ interface StringParameter extends BaseParameter {
   jsonType: 'string'
 }
 
+interface NumberParameter extends BaseParameter {
+  format: 'number'
+  jsonType: 'number'
+}
+
 interface EnumParameter extends BaseParameter {
   format: 'enum'
   jsonType: 'string'
@@ -108,6 +113,7 @@ interface IdParameter extends BaseParameter {
 
 export type Parameter =
   | StringParameter
+  | NumberParameter
   | EnumParameter
   | RecordParameter
   | ListParameter
@@ -239,8 +245,16 @@ export const createBlueprint = async (
   const openapi = typesModule.openapi as Openapi
 
   const isFakeData = openapi.info.title === 'Foo'
-  const targetPath = '/acs/systems/'
-  const targetSchema = 'acs_system'
+  const targetPath = '/acs'
+  const targetSchemas = [
+    'acs_access_group',
+    'acs_credential',
+    'acs_credential_pool',
+    'acs_credential_provisioning_automation',
+    'acs_entrance',
+    'acs_system',
+    'acs_user',
+  ]
 
   const context = {
     codeSampleDefinitions,
@@ -253,7 +267,7 @@ export const createBlueprint = async (
     resources: createResources(
       openapi.components.schemas,
       isFakeData,
-      targetSchema,
+      targetSchemas,
     ),
   }
 }
@@ -494,6 +508,12 @@ const createParameters = (
             }
           }
           return { ...baseParam, format: 'record', jsonType: 'object' }
+        case 'number':
+          return {
+            ...baseParam,
+            format: 'number',
+            jsonType: 'number',
+          }
         default:
           throw new Error(`Unsupported property type: ${parsedProp.type}`)
       }
@@ -504,10 +524,10 @@ const createParameters = (
 const createResources = (
   schemas: Openapi['components']['schemas'],
   isFakeData: boolean,
-  targetSchema: string,
+  targetSchemas: string[],
 ): Record<string, Resource> => {
   return Object.entries(schemas)
-    .filter(([schemaName]) => isFakeData || schemaName === targetSchema)
+    .filter(([schemaName]) => isFakeData || targetSchemas.includes(schemaName))
     .reduce<Record<string, Resource>>((acc, [schemaName, schema]) => {
       if (
         typeof schema === 'object' &&
