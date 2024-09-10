@@ -311,7 +311,7 @@ const getNamespace = (path: string, paths: OpenapiPaths): string | null => {
 
   for (const [index, part] of pathParts.entries()) {
     // Namespaces must be consecutive. If there was a path with an endpoint
-    // previously, then this part is not in the namesapce.
+    // previously, then this part is not in the namespace.
     if (namespace.length !== index) {
       continue
     }
