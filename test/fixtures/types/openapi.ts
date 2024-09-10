@@ -157,34 +157,5 @@ export default {
         'x-title': 'List foos',
       },
     },
-    '/bars/baz/quexes/get': {
-      get: {
-        operationId: 'QuexesGetGet',
-        responses: {
-          200: {
-            content: {
-              'application/json': {
-                schema: {
-                  properties: {
-                    ok: { type: 'boolean' },
-                    foo: { $ref: '#/components/schemas/bars' },
-                  },
-                  required: ['quex', 'ok'],
-                  type: 'object',
-                },
-              },
-            },
-            description: 'Get a quex by ID.',
-          },
-          400: { description: 'Bad Request' },
-          401: { description: 'Unauthorized' },
-        },
-        security: [],
-        summary: '/bars/baz/quexes/get',
-        tags: ['/bars/baz/quexes'],
-        'x-response-key': 'quex',
-        'x-title': 'Get a quex',
-      },
-    },
   },
 }
