@@ -285,7 +285,8 @@ const createRoutes = async (
   )
 
   for (const [path, pathItem] of pathEntries) {
-    const route = await createRoute(path, pathItem, context)
+    const namespace = getNamespace(path, paths)
+    const route = await createRoute(namespace, path, pathItem, context)
 
     const existingRoute = routeMap.get(route.path)
     if (existingRoute != null) {
@@ -299,7 +300,37 @@ const createRoutes = async (
   return Array.from(routeMap.values())
 }
 
+const getNamespace = (path: string, paths: OpenapiPaths): string | null => {
+  const namespace: string[] = []
+
+  const pathParts = path.split('/').filter((path) => Boolean(path))
+
+  const pathKeys = Object.keys(paths)
+  // console.log('keys: ', pathKeys)
+
+  for (const [index, part] of pathParts.entries()) {
+    if (namespace.length !== index) {
+      continue
+    }
+
+    const children = pathKeys.filter((key) =>
+      new RegExp(`^/${[...namespace, part].join('/')}/\\w+$`).test(key),
+    )
+
+    if (children.length === 0) {
+      namespace.push(part)
+    }
+  }
+
+  if (namespace.length > 0) {
+    return `/${namespace.join('/')}`
+  }
+
+  return null
+}
+
 const createRoute = async (
+  namespace: string | null,
   path: string,
   pathItem: OpenapiPathItem,
   context: Context,
@@ -314,7 +345,7 @@ const createRoute = async (
   return {
     path: routePath,
     name,
-    namespace: { path: `/${pathParts[1]}` },
+    namespace: namespace != null ? { path: namespace } : null,
     endpoints: await createEndpoints(path, pathItem, context),
     subroutes: [],
   }
