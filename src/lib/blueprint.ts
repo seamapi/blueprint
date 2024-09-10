@@ -301,32 +301,37 @@ const createRoutes = async (
 }
 
 const getNamespace = (path: string, paths: OpenapiPaths): string | null => {
+  // Hold namespace in array to allow nested namespaces
+  // e.g. namespace for `/foo/bar/baz/get` = `/foo/bar`
   const namespace: string[] = []
 
   const pathParts = path.split('/').filter((path) => Boolean(path))
 
   const pathKeys = Object.keys(paths)
-  // console.log('keys: ', pathKeys)
 
   for (const [index, part] of pathParts.entries()) {
+    // Namespaces must be consecutive. If there was a path with an endpoint
+    // previously, then this part is not in the namesapce.
     if (namespace.length !== index) {
       continue
     }
 
-    const children = pathKeys.filter((key) =>
+    // An endpoint is a route that ends without further paths. i.e., ends in
+    // a letter (not slash).
+    const endpoints = pathKeys.filter((key) =>
       new RegExp(`^/${[...namespace, part].join('/')}/\\w+$`).test(key),
     )
 
-    if (children.length === 0) {
+    if (endpoints.length === 0) {
       namespace.push(part)
     }
   }
 
-  if (namespace.length > 0) {
-    return `/${namespace.join('/')}`
+  if (namespace.length === 0) {
+    return null
   }
 
-  return null
+  return `/${namespace.join('/')}`
 }
 
 const createRoute = async (
