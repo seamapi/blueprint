@@ -318,9 +318,7 @@ const getNamespace = (path: string, paths: OpenapiPaths): string | null => {
 
     // An endpoint is a route that ends without further paths. i.e., ends in
     // a letter (not slash).
-    const endpoints = pathKeys.filter((key) =>
-      new RegExp(`^/${[...namespace, part].join('/')}/\\w+$`).test(key),
-    )
+    const endpoints = pathKeys.filter((key) => !key.endsWith('/'))
 
     if (endpoints.length === 0) {
       namespace.push(part)
