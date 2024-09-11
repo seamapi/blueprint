@@ -7,3 +7,8 @@ export const foo = z.object({
   undocumented_prop: z.string().optional(),
   nullable_property: z.string().optional().nullable(),
 })
+
+export const plane = z.object({
+  plane_id: z.string().uuid(),
+  name: z.string(),
+})

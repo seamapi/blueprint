@@ -36,6 +36,22 @@ export default {
         },
         required: ['foo_id', 'name'],
       },
+      plane: {
+        type: 'object',
+        description: 'A plane resource.',
+        properties: {
+          plane_id: {
+            description: 'plane id',
+            format: 'uuid',
+            type: 'string',
+          },
+          name: {
+            description: 'Planej name',
+            type: 'string',
+          },
+        },
+        required: ['plane_id', 'name'],
+      },
     },
   },
   paths: {
@@ -155,6 +171,38 @@ export default {
         tags: ['/foos'],
         'x-response-key': 'foos',
         'x-title': 'List foos',
+      },
+    },
+    '/transport/air/planes/list': {
+      get: {
+        operationId: 'planesListGet',
+        responses: {
+          200: {
+            content: {
+              'application/json': {
+                schema: {
+                  properties: {
+                    ok: { type: 'boolean' },
+                    planes: {
+                      items: { $ref: '#/components/schemas/plane' },
+                      type: 'array',
+                    },
+                  },
+                  required: ['planes', 'ok'],
+                  type: 'object',
+                },
+              },
+            },
+            description: 'List all planes.',
+          },
+          400: { description: 'Bad Request' },
+          401: { description: 'Unauthorized' },
+        },
+        security: [],
+        summary: '/transport/air/planes/list',
+        tags: ['/transport/air/planes'],
+        'x-response-key': 'planes',
+        'x-title': 'List planes',
       },
     },
   },
