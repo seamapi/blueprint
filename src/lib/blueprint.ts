@@ -245,7 +245,7 @@ export const createBlueprint = async (
   const openapi = typesModule.openapi as Openapi
 
   const isFakeData = openapi.info.title === 'Foo'
-  const targetPath = '/acs'
+  const targetPaths = ['/acs', '/events']
   const targetSchemas = [
     'acs_access_group',
     'acs_credential',
@@ -254,6 +254,7 @@ export const createBlueprint = async (
     'acs_entrance',
     'acs_system',
     'acs_user',
+    'event',
   ]
 
   const context = {
@@ -263,7 +264,7 @@ export const createBlueprint = async (
 
   return {
     title: openapi.info.title,
-    routes: await createRoutes(openapi.paths, isFakeData, targetPath, context),
+    routes: await createRoutes(openapi.paths, isFakeData, targetPaths, context),
     resources: createResources(
       openapi.components.schemas,
       isFakeData,
@@ -275,27 +276,29 @@ export const createBlueprint = async (
 const createRoutes = async (
   paths: OpenapiPaths,
   isFakeData: boolean,
-  targetPath: string,
+  targetPaths: string[],
   context: Context,
 ): Promise<Route[]> => {
   const routeMap = new Map<string, Route>()
 
-  const pathEntries = Object.entries(paths).filter(
-    ([path]) => isFakeData || path.startsWith(targetPath),
-  )
+  for (const targetPath of targetPaths) {
+    const pathEntries = Object.entries(paths).filter(
+      ([path]) => isFakeData || path.startsWith(targetPath),
+    )
 
-  for (const [path, pathItem] of pathEntries) {
-    const namespace = getNamespace(path, paths)
+    for (const [path, pathItem] of pathEntries) {
+      const namespace = getNamespace(path, paths)
 
-    const route = await createRoute(namespace, path, pathItem, context)
+      const route = await createRoute(namespace, path, pathItem, context)
 
-    const existingRoute = routeMap.get(route.path)
-    if (existingRoute != null) {
-      existingRoute.endpoints.push(...route.endpoints)
-      continue
+      const existingRoute = routeMap.get(route.path)
+      if (existingRoute != null) {
+        existingRoute.endpoints.push(...route.endpoints)
+        continue
+      }
+
+      routeMap.set(route.path, route)
     }
-
-    routeMap.set(route.path, route)
   }
 
   return Array.from(routeMap.values())
