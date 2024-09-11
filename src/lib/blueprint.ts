@@ -254,7 +254,7 @@ export const createBlueprint = async (
     'acs_entrance',
     'acs_system',
     'acs_user',
-    'event'
+    'event',
   ]
 
   const context = {
@@ -286,10 +286,10 @@ const createRoutes = async (
       ([path]) => isFakeData || path.startsWith(targetPath),
     )
 
-  for (const [path, pathItem] of pathEntries) {
-    const namespace = getNamespace(path, paths)
+    for (const [path, pathItem] of pathEntries) {
+      const namespace = getNamespace(path, paths)
 
-    const route = await createRoute(namespace, path, pathItem, context)
+      const route = await createRoute(namespace, path, pathItem, context)
 
       const existingRoute = routeMap.get(route.path)
       if (existingRoute != null) {
