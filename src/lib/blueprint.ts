@@ -286,6 +286,7 @@ const createRoutes = async (
 
   for (const [path, pathItem] of pathEntries) {
     const namespace = getNamespace(path, paths)
+
     const route = await createRoute(namespace, path, pathItem, context)
 
     const existingRoute = routeMap.get(route.path)
@@ -318,7 +319,9 @@ const getNamespace = (path: string, paths: OpenapiPaths): string | null => {
 
     // An endpoint is a route that ends without further paths. i.e., ends in
     // a letter (not slash).
-    const endpoints = pathKeys.filter((key) => !key.endsWith('/'))
+    const endpoints = pathKeys.filter((key) => {
+      return new RegExp(`^/${[...namespace, part].join('/')}/\\w+$`).test(key)
+    })
 
     if (endpoints.length === 0) {
       namespace.push(part)

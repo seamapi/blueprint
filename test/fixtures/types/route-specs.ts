@@ -16,5 +16,12 @@ export const routes = {
     jsonResponse: z.object({
       foos: z.array(schemas.foo),
     }),
+    '/transport/air/planes/list': {
+      auth: 'none',
+      methods: ['GET'],
+      jsonResponse: z.object({
+        planes: z.array(schemas.plane),
+      }),
+    },
   },
 } as const
