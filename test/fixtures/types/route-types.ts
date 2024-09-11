@@ -33,6 +33,20 @@ export interface Routes {
       }
     }
   }
+  '/transport/air/planes/list': {
+    route: '/transport/air/planes/list'
+    method: 'GET'
+    queryParams: Record<string, unknown>
+    jsonBody: Record<string, unknown>
+    commonParams: Record<string, unknown>
+    formData: Record<string, unknown>
+    jsonResponse: {
+      planes: {
+        plane_id: string
+        name: string
+      }
+    }
+  }
 }
 
 export type RouteResponse<Path extends keyof Routes> =
