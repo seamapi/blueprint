@@ -47,4 +47,22 @@ export default [
       },
     },
   },
+  {
+    title: 'List planes',
+    description: 'This is the wya to get all plans',
+    request: {
+      path: '/transport/air/planes/list',
+      parameters: {},
+    },
+    response: {
+      body: {
+        planes: [
+          {
+            plane_id: '9d3163f9-9185-40d3-a0ce-a03d3c7ce402',
+            name: 'Woosh',
+          },
+        ],
+      },
+    },
+  },
 ]

@@ -10,3 +10,8 @@ export const foo = z.object({
   object_prop: z.record(z.string(), z.any()).optional(),
   array_prop: z.array(z.string()).optional(),
 })
+
+export const plane = z.object({
+  plane_id: z.string().uuid(),
+  name: z.string(),
+})
