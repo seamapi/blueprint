@@ -309,21 +309,7 @@ const createRoutes = async (
     }
   }
 
-  const routes = Array.from(routeMap.values())
-
-  for (const route of routes) {
-    const isRouteDeprecated = route.endpoints.every(
-      (endpoint) => endpoint.isDeprecated,
-    )
-    const isRouteUndocumented = route.endpoints.every(
-      (endpoint) => endpoint.isUndocumented,
-    )
-
-    route.isDeprecated = isRouteDeprecated
-    route.isUndocumented = isRouteUndocumented
-  }
-
-  return routes
+  return Array.from(routeMap.values()).map(updateRouteStatus)
 }
 
 const getNamespace = (path: string, paths: OpenapiPaths): string | null => {
@@ -388,6 +374,21 @@ const createRoute = async (
     subroutes: [],
     isUndocumented: false,
     isDeprecated: false,
+  }
+}
+
+const updateRouteStatus = (route: Route): Route => {
+  const isRouteDeprecated = route.endpoints.every(
+    (endpoint) => endpoint.isDeprecated,
+  )
+  const isRouteUndocumented = route.endpoints.every(
+    (endpoint) => endpoint.isUndocumented,
+  )
+
+  return {
+    ...route,
+    isDeprecated: isRouteDeprecated,
+    isUndocumented: isRouteUndocumented,
   }
 }
 
