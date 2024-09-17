@@ -311,9 +311,10 @@ const createRoutes = async (
     }
   }
 
-  const routes = Array.from(routeMap.values()).map(updateRouteStatus)
+  let routes = Array.from(routeMap.values())
 
-  updateNamespaceStatus(routes)
+  routes = updateRoutesStatus(routes)
+  routes = updateNamespaceStatus(routes)
 
   return routes
 }
@@ -385,19 +386,21 @@ const createRoute = async (
   }
 }
 
-const updateRouteStatus = (route: Route): Route => {
-  const isRouteDeprecated = route.endpoints.every(
-    (endpoint) => endpoint.isDeprecated,
-  )
-  const isRouteUndocumented = route.endpoints.every(
-    (endpoint) => endpoint.isUndocumented,
-  )
+const updateRoutesStatus = (routes: Route[]): Route[] => {
+  return routes.map((route) => {
+    const isRouteDeprecated = route.endpoints.every(
+      (endpoint) => endpoint.isDeprecated,
+    )
+    const isRouteUndocumented = route.endpoints.every(
+      (endpoint) => endpoint.isUndocumented,
+    )
 
-  return {
-    ...route,
-    isDeprecated: isRouteDeprecated,
-    isUndocumented: isRouteUndocumented,
-  }
+    return {
+      ...route,
+      isDeprecated: isRouteDeprecated,
+      isUndocumented: isRouteUndocumented,
+    }
+  })
 }
 
 const updateNamespaceStatus = (routes: Route[]): Route[] => {
