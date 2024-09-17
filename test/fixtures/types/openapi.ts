@@ -28,10 +28,23 @@ export default {
             type: 'string',
             'x-undocumented': 'This prop is intentionally left undocumented.',
           },
-          nullable_property: {
+          nullable_prop: {
             description: 'This prop is nullable',
             type: 'string',
             nullable: true,
+          },
+          number_prop: {
+            description: 'This prop is a number',
+            type: 'number',
+            format: 'float',
+          },
+          object_prop: {
+            type: 'object',
+            properties: { foo: { type: 'string' } },
+          },
+          array_prop: {
+            type: 'array',
+            items: { type: 'string' },
           },
         },
         required: ['foo_id', 'name'],

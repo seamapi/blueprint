@@ -161,6 +161,7 @@ interface BaseProperty {
 
 export type Property =
   | StringProperty
+  | NumberProperty
   | EnumProperty
   | RecordProperty
   | ListProperty
@@ -172,6 +173,11 @@ export type Property =
 interface StringProperty extends BaseProperty {
   format: 'string'
   jsonType: 'string'
+}
+
+interface NumberProperty extends BaseProperty {
+  format: 'number'
+  jsonType: 'number'
 }
 
 interface EnumProperty extends BaseProperty {
@@ -770,6 +776,12 @@ const createProperty = (
         }
       }
       return { ...baseProperty, format: 'record', jsonType: 'object' }
+    case 'number':
+      return {
+        ...baseProperty,
+        format: 'number',
+        jsonType: 'number',
+      }
     default:
       throw new Error(`Unsupported property type: ${parsedProp.type}`)
   }

@@ -106,7 +106,7 @@ export const createCodeSample = async (
       request: createPhpRequest(codeSampleDefinition, context),
       response: createPhpResponse(codeSampleDefinition, context),
       request_syntax: 'php',
-      response_syntax: 'json',
+      response_syntax: 'php',
     },
     seam_cli: {
       title: 'Seam CLI',

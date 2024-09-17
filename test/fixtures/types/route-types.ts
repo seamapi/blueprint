@@ -12,7 +12,10 @@ export interface Routes {
         name: string
         deprecated_prop?: string
         undocumented_prop?: string
-        nullable_property?: string
+        nullable_prop?: string
+        number_prop?: number
+        object_prop?: Record<string, string>
+        array_prop?: string[]
       }
     }
   }
@@ -29,7 +32,10 @@ export interface Routes {
         name: string
         deprecated_prop?: string
         undocumented_prop?: string
-        nullable_property?: string
+        nullable_prop?: string
+        number_prop?: number
+        object_prop?: Record<string, string>
+        array_prop?: string[]
       }
     }
   }
