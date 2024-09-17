@@ -42,6 +42,8 @@ export interface Resource {
 
 export interface Namespace {
   path: string
+  isDeprecated: boolean
+  isUndocumented: boolean
 }
 
 export interface Endpoint {
@@ -309,7 +311,11 @@ const createRoutes = async (
     }
   }
 
-  return Array.from(routeMap.values()).map(updateRouteStatus)
+  const routes = Array.from(routeMap.values()).map(updateRouteStatus)
+
+  updateNamespaceStatus(routes)
+
+  return routes
 }
 
 const getNamespace = (path: string, paths: OpenapiPaths): string | null => {
@@ -368,6 +374,8 @@ const createRoute = async (
       namespace != null
         ? {
             path: namespace,
+            isDeprecated: false,
+            isUndocumented: false,
           }
         : null,
     endpoints,
@@ -390,6 +398,45 @@ const updateRouteStatus = (route: Route): Route => {
     isDeprecated: isRouteDeprecated,
     isUndocumented: isRouteUndocumented,
   }
+}
+
+const updateNamespaceStatus = (routes: Route[]): Route[] => {
+  // Group routes by namespace
+  const namespaceGroups = routes.reduce<Record<string, Route[]>>(
+    (acc, route) => {
+      if (!route.namespace?.path) return acc
+
+      const namespacePath = route.namespace.path
+
+      if (!acc[namespacePath]) {
+        acc[namespacePath] = []
+      }
+
+      acc[namespacePath].push(route)
+
+      return acc
+    },
+    {},
+  )
+
+  // Update namespace status based on routes
+  Object.values(namespaceGroups).forEach((routesInNamespace) => {
+    const isNamespaceDeprecated = routesInNamespace.every(
+      (route) => route.isDeprecated,
+    )
+    const isNamespaceUndocumented = routesInNamespace.every(
+      (route) => route.isUndocumented,
+    )
+
+    routesInNamespace.forEach((route) => {
+      if (route.namespace) {
+        route.namespace.isDeprecated = isNamespaceDeprecated
+        route.namespace.isUndocumented = isNamespaceUndocumented
+      }
+    })
+  })
+
+  return routes
 }
 
 const createEndpoints = async (
