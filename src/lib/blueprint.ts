@@ -423,7 +423,7 @@ const updateNamespaceStatus = (routes: Route[]): Route[] => {
   )
 
   // Update namespace status based on routes
-  Object.values(namespaceGroups).forEach((routesInNamespace) => {
+  for (const routesInNamespace of Object.values(namespaceGroups)) {
     const isNamespaceDeprecated = routesInNamespace.every(
       (route) => route.isDeprecated,
     )
@@ -431,13 +431,13 @@ const updateNamespaceStatus = (routes: Route[]): Route[] => {
       (route) => route.isUndocumented,
     )
 
-    routesInNamespace.forEach((route) => {
+    for (const route of routesInNamespace) {
       if (route.namespace) {
         route.namespace.isDeprecated = isNamespaceDeprecated
         route.namespace.isUndocumented = isNamespaceUndocumented
       }
-    })
-  })
+    }
+  }
 
   return routes
 }
