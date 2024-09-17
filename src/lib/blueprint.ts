@@ -407,11 +407,11 @@ const updateNamespaceStatus = (routes: Route[]): Route[] => {
   // Group routes by namespace
   const namespaceGroups = routes.reduce<Record<string, Route[]>>(
     (acc, route) => {
-      if (!route.namespace?.path) return acc
+      if (route.namespace?.path == null) return acc
 
       const namespacePath = route.namespace.path
 
-      if (!acc[namespacePath]) {
+      if (acc[namespacePath] == null) {
         acc[namespacePath] = []
       }
 
@@ -432,7 +432,7 @@ const updateNamespaceStatus = (routes: Route[]): Route[] => {
     )
 
     for (const route of routesInNamespace) {
-      if (route.namespace) {
+      if (route.namespace != null) {
         route.namespace.isDeprecated = isNamespaceDeprecated
         route.namespace.isUndocumented = isNamespaceUndocumented
       }
