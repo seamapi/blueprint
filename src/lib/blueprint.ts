@@ -30,6 +30,8 @@ export interface Route {
   namespace: Namespace | null
   endpoints: Endpoint[]
   subroutes: Route[]
+  isUndocumented: boolean
+  isDeprecated: boolean
 }
 
 export interface Resource {
@@ -307,7 +309,21 @@ const createRoutes = async (
     }
   }
 
-  return Array.from(routeMap.values())
+  const routes = Array.from(routeMap.values())
+
+  for (const route of routes) {
+    const isRouteDeprecated = route.endpoints.every(
+      (endpoint) => endpoint.isDeprecated,
+    )
+    const isRouteUndocumented = route.endpoints.every(
+      (endpoint) => endpoint.isUndocumented,
+    )
+
+    route.isDeprecated = isRouteDeprecated
+    route.isUndocumented = isRouteUndocumented
+  }
+
+  return routes
 }
 
 const getNamespace = (path: string, paths: OpenapiPaths): string | null => {
@@ -357,12 +373,21 @@ const createRoute = async (
     throw new Error(`Could not resolve name for route at ${path}`)
   }
 
+  const endpoints = await createEndpoints(path, pathItem, context)
+
   return {
     path: routePath,
     name,
-    namespace: namespace != null ? { path: namespace } : null,
-    endpoints: await createEndpoints(path, pathItem, context),
+    namespace:
+      namespace != null
+        ? {
+            path: namespace,
+          }
+        : null,
+    endpoints,
     subroutes: [],
+    isUndocumented: false,
+    isDeprecated: false,
   }
 }
 
