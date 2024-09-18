@@ -311,12 +311,11 @@ const createRoutes = async (
     }
   }
 
-  const routes = Array.from(routeMap.values())
+  let routes = Array.from(routeMap.values())
 
-  return routes
-    .map(addIsDeprecatedToRoute)
-    .map(addIsUndocumentedToRoute)
-    .map(addNamespaceStatusToRoute(routes))
+  routes = routes.map(addIsDeprecatedToRoute).map(addIsUndocumentedToRoute)
+
+  return routes.map(addNamespaceStatusToRoute(routes))
 }
 
 const getNamespace = (path: string, paths: OpenapiPaths): string | null => {
