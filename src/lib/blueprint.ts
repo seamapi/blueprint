@@ -311,12 +311,12 @@ const createRoutes = async (
     }
   }
 
-  let routes = Array.from(routeMap.values())
-
-  routes = updateRoutesStatus(routes)
-  routes = updateNamespaceStatus(routes)
+  const routes = Array.from(routeMap.values())
 
   return routes
+    .map(addIsDeprecatedToRoute)
+    .map(addIsUndocumentedToRoute)
+    .map(addNamespaceStatusToRoute(routes))
 }
 
 const getNamespace = (path: string, paths: OpenapiPaths): string | null => {
@@ -386,61 +386,36 @@ const createRoute = async (
   }
 }
 
-const updateRoutesStatus = (routes: Route[]): Route[] => {
-  return routes.map((route) => {
-    const isRouteDeprecated = route.endpoints.every(
-      (endpoint) => endpoint.isDeprecated,
+const addIsDeprecatedToRoute = (route: Route): Route => ({
+  ...route,
+  isDeprecated: route.endpoints.every((endpoint) => endpoint.isDeprecated),
+})
+
+const addIsUndocumentedToRoute = (route: Route): Route => ({
+  ...route,
+  isUndocumented: route.endpoints.every((endpoint) => endpoint.isUndocumented),
+})
+
+const addNamespaceStatusToRoute =
+  (routes: Route[]) =>
+  (route: Route): Route => {
+    if (route.namespace == null) return route
+
+    const namespaceRoutes = routes.filter(
+      (r) => r.namespace?.path === route.namespace?.path,
     )
-    const isRouteUndocumented = route.endpoints.every(
-      (endpoint) => endpoint.isUndocumented,
-    )
+    const isDeprecated = namespaceRoutes.every((r) => r.isDeprecated)
+    const isUndocumented = namespaceRoutes.every((r) => r.isUndocumented)
 
     return {
       ...route,
-      isDeprecated: isRouteDeprecated,
-      isUndocumented: isRouteUndocumented,
-    }
-  })
-}
-
-const updateNamespaceStatus = (routes: Route[]): Route[] => {
-  // Group routes by namespace
-  const namespaceGroups = routes.reduce<Record<string, Route[]>>(
-    (acc, route) => {
-      if (route.namespace?.path == null) return acc
-
-      const namespacePath = route.namespace.path
-
-      if (acc[namespacePath] == null) {
-        acc[namespacePath] = []
-      }
-
-      acc[namespacePath].push(route)
-
-      return acc
-    },
-    {},
-  )
-
-  // Update namespace status based on routes
-  for (const routesInNamespace of Object.values(namespaceGroups)) {
-    const isNamespaceDeprecated = routesInNamespace.every(
-      (route) => route.isDeprecated,
-    )
-    const isNamespaceUndocumented = routesInNamespace.every(
-      (route) => route.isUndocumented,
-    )
-
-    for (const route of routesInNamespace) {
-      if (route.namespace != null) {
-        route.namespace.isDeprecated = isNamespaceDeprecated
-        route.namespace.isUndocumented = isNamespaceUndocumented
-      }
+      namespace: {
+        ...route.namespace,
+        isDeprecated,
+        isUndocumented,
+      },
     }
   }
-
-  return routes
-}
 
 const createEndpoints = async (
   path: string,
