@@ -404,15 +404,17 @@ const addNamespaceStatusToRoute =
     const namespaceRoutes = routes.filter(
       (r) => r.namespace?.path === route.namespace?.path,
     )
-    const isDeprecated = namespaceRoutes.every((r) => r.isDeprecated)
-    const isUndocumented = namespaceRoutes.every((r) => r.isUndocumented)
+    const isNamespaceDeprecated = namespaceRoutes.every((r) => r.isDeprecated)
+    const isNamespaceUndocumented = namespaceRoutes.every(
+      (r) => r.isUndocumented,
+    )
 
     return {
       ...route,
       namespace: {
         ...route.namespace,
-        isDeprecated,
-        isUndocumented,
+        isDeprecated: isNamespaceDeprecated,
+        isUndocumented: isNamespaceUndocumented,
       },
     }
   }
