@@ -53,6 +53,15 @@ export interface Routes {
       }
     }
   }
+  '/deprecated/undocumented/endpoint': {
+    route: '/deprecated/undocumented/endpoint'
+    method: 'GET'
+    queryParams: Record<string, unknown>
+    jsonBody: Record<string, unknown>
+    commonParams: Record<string, unknown>
+    formData: Record<string, unknown>
+    jsonResponse: {}
+  }
 }
 
 export type RouteResponse<Path extends keyof Routes> =
