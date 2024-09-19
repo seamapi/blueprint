@@ -255,7 +255,7 @@ export const createBlueprint = async (
   const openapi = typesModule.openapi as Openapi
 
   const isFakeData = openapi.info.title === 'Foo'
-  const targetPaths = ['/acs', '/events']
+  const targetPaths = ['/acs', '/events', '/thermostats']
   const targetSchemas = [
     'acs_access_group',
     'acs_credential',
@@ -265,6 +265,8 @@ export const createBlueprint = async (
     'acs_system',
     'acs_user',
     'event',
+    'climate_preset',
+    'thermostat_schedule',
   ]
 
   const context = {
@@ -637,6 +639,7 @@ const createParameter = (
       }
       return { ...baseParam, format: 'record', jsonType: 'object' }
     case 'number':
+    case 'integer':
       return {
         ...baseParam,
         format: 'number',
@@ -828,6 +831,7 @@ const createProperty = (
       }
       return { ...baseProperty, format: 'record', jsonType: 'object' }
     case 'number':
+    case 'integer':
       return {
         ...baseProperty,
         format: 'number',
