@@ -23,5 +23,10 @@ export const routes = {
         planes: z.array(schemas.plane),
       }),
     },
+    '/deprecated/undocumented/endpoint': {
+      auth: 'none',
+      methods: ['GET'],
+      jsonResponse: z.object({}),
+    },
   },
 } as const

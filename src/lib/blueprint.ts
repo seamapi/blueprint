@@ -30,6 +30,8 @@ export interface Route {
   namespace: Namespace | null
   endpoints: Endpoint[]
   subroutes: Route[]
+  isUndocumented: boolean
+  isDeprecated: boolean
 }
 
 export interface Resource {
@@ -40,6 +42,8 @@ export interface Resource {
 
 export interface Namespace {
   path: string
+  isDeprecated: boolean
+  isUndocumented: boolean
 }
 
 export interface Endpoint {
@@ -307,7 +311,12 @@ const createRoutes = async (
     }
   }
 
-  return Array.from(routeMap.values())
+  const routes = Array.from(routeMap.values())
+
+  return routes
+    .map(addIsDeprecatedToRoute)
+    .map(addIsUndocumentedToRoute)
+    .map(addNamespaceStatusToRoute)
 }
 
 const getNamespace = (path: string, paths: OpenapiPaths): string | null => {
@@ -360,9 +369,51 @@ const createRoute = async (
   return {
     path: routePath,
     name,
-    namespace: namespace != null ? { path: namespace } : null,
+    namespace:
+      namespace != null
+        ? {
+            path: namespace,
+            isDeprecated: false,
+            isUndocumented: false,
+          }
+        : null,
     endpoints: await createEndpoints(path, pathItem, context),
     subroutes: [],
+    isUndocumented: false,
+    isDeprecated: false,
+  }
+}
+
+const addIsDeprecatedToRoute = (route: Route): Route => ({
+  ...route,
+  isDeprecated: route.endpoints.every((endpoint) => endpoint.isDeprecated),
+})
+
+const addIsUndocumentedToRoute = (route: Route): Route => ({
+  ...route,
+  isUndocumented: route.endpoints.every((endpoint) => endpoint.isUndocumented),
+})
+
+const addNamespaceStatusToRoute = (
+  route: Route,
+  _idx: number,
+  routes: Route[],
+): Route => {
+  if (route.namespace == null) return route
+
+  const namespaceRoutes = routes.filter(
+    (r) => r.namespace?.path === route.namespace?.path,
+  )
+  const isNamespaceDeprecated = namespaceRoutes.every((r) => r.isDeprecated)
+  const isNamespaceUndocumented = namespaceRoutes.every((r) => r.isUndocumented)
+
+  return {
+    ...route,
+    namespace: {
+      ...route.namespace,
+      isDeprecated: isNamespaceDeprecated,
+      isUndocumented: isNamespaceUndocumented,
+    },
   }
 }
 

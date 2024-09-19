@@ -65,4 +65,15 @@ export default [
       },
     },
   },
+  {
+    title: 'Deprecated and undocumented endpoint',
+    description: 'This is a deprecated and undocumented endpoint',
+    request: {
+      path: '/deprecated/undocumented/endpoint',
+      parameters: {},
+    },
+    response: {
+      body: {},
+    },
+  },
 ]

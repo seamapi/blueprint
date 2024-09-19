@@ -218,5 +218,32 @@ export default {
         'x-title': 'List planes',
       },
     },
+    '/deprecated/undocumented/endpoint': {
+      get: {
+        operationId: 'deprecatedUndocumentedEndpointGet',
+        deprecated: true,
+        responses: {
+          200: {
+            content: {
+              'application/json': {
+                schema: {
+                  properties: {
+                    ok: { type: 'boolean' },
+                  },
+                  required: ['ok'],
+                  type: 'object',
+                },
+              },
+            },
+            description: 'Deprecated and undocumented endpoint',
+          },
+        },
+        security: [],
+        summary: '/deprecated/undocumented/endpoint',
+        tags: ['/deprecated/undocumented'],
+        'x-undocumented': 'true',
+        'x-title': 'Deprecated and undocumented endpoint',
+      },
+    },
   },
 }
