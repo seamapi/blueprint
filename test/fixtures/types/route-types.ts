@@ -60,7 +60,7 @@ export interface Routes {
     jsonBody: Record<string, unknown>
     commonParams: Record<string, unknown>
     formData: Record<string, unknown>
-    jsonResponse: {}
+    jsonResponse: Record<string, never>
   }
 }
 
