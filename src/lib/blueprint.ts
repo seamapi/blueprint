@@ -366,8 +366,6 @@ const createRoute = async (
     throw new Error(`Could not resolve name for route at ${path}`)
   }
 
-  const endpoints = await createEndpoints(path, pathItem, context)
-
   return {
     path: routePath,
     name,
@@ -379,7 +377,7 @@ const createRoute = async (
             isUndocumented: false,
           }
         : null,
-    endpoints,
+    endpoints: await createEndpoints(path, pathItem, context),
     subroutes: [],
     isUndocumented: false,
     isDeprecated: false,
