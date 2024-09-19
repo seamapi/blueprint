@@ -588,6 +588,7 @@ const createParameter = (
       }
       return { ...baseParam, format: 'record', jsonType: 'object' }
     case 'number':
+    case 'integer':
       return {
         ...baseParam,
         format: 'number',
@@ -779,6 +780,7 @@ const createProperty = (
       }
       return { ...baseProperty, format: 'record', jsonType: 'object' }
     case 'number':
+    case 'integer':
       return {
         ...baseProperty,
         format: 'number',
