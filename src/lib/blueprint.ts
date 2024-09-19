@@ -251,7 +251,7 @@ export const createBlueprint = async (
   const openapi = typesModule.openapi as Openapi
 
   const isFakeData = openapi.info.title === 'Foo'
-  const targetPaths = ['/acs', '/events']
+  const targetPaths = ['/acs', '/events', '/thermostats']
   const targetSchemas = [
     'acs_access_group',
     'acs_credential',
@@ -261,6 +261,8 @@ export const createBlueprint = async (
     'acs_system',
     'acs_user',
     'event',
+    'climate_preset',
+    'thermostat_schedule',
   ]
 
   const context = {
