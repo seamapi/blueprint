@@ -311,11 +311,12 @@ const createRoutes = async (
     }
   }
 
-  let routes = Array.from(routeMap.values())
+  const routes = Array.from(routeMap.values())
 
-  routes = routes.map(addIsDeprecatedToRoute).map(addIsUndocumentedToRoute)
-
-  return routes.map(addNamespaceStatusToRoute(routes))
+  return routes
+    .map(addIsDeprecatedToRoute)
+    .map(addIsUndocumentedToRoute)
+    .map(addNamespaceStatusToRoute)
 }
 
 const getNamespace = (path: string, paths: OpenapiPaths): string | null => {
@@ -395,28 +396,28 @@ const addIsUndocumentedToRoute = (route: Route): Route => ({
   isUndocumented: route.endpoints.every((endpoint) => endpoint.isUndocumented),
 })
 
-const addNamespaceStatusToRoute =
-  (routes: Route[]) =>
-  (route: Route): Route => {
-    if (route.namespace == null) return route
+const addNamespaceStatusToRoute = (
+  route: Route,
+  _idx: number,
+  routes: Route[],
+): Route => {
+  if (route.namespace == null) return route
 
-    const namespaceRoutes = routes.filter(
-      (r) => r.namespace?.path === route.namespace?.path,
-    )
-    const isNamespaceDeprecated = namespaceRoutes.every((r) => r.isDeprecated)
-    const isNamespaceUndocumented = namespaceRoutes.every(
-      (r) => r.isUndocumented,
-    )
+  const namespaceRoutes = routes.filter(
+    (r) => r.namespace?.path === route.namespace?.path,
+  )
+  const isNamespaceDeprecated = namespaceRoutes.every((r) => r.isDeprecated)
+  const isNamespaceUndocumented = namespaceRoutes.every((r) => r.isUndocumented)
 
-    return {
-      ...route,
-      namespace: {
-        ...route.namespace,
-        isDeprecated: isNamespaceDeprecated,
-        isUndocumented: isNamespaceUndocumented,
-      },
-    }
+  return {
+    ...route,
+    namespace: {
+      ...route.namespace,
+      isDeprecated: isNamespaceDeprecated,
+      isUndocumented: isNamespaceUndocumented,
+    },
   }
+}
 
 const createEndpoints = async (
   path: string,
