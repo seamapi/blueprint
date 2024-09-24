@@ -27,7 +27,7 @@ export const CodeSampleDefinitionSchema = z.object({
         /^[a-z_/]+$/,
         'Can only contain the lowercase letters a-z, underscores, and forward slashes.',
       ),
-    parameters: z.record(z.string().min(1), JsonSchema),
+    parameters: z.record(z.string().min(1), JsonSchema).nullable(),
   }),
   response: z.object({
     body: z.record(z.string().min(1), JsonSchema).nullable(),
