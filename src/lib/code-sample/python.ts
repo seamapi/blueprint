@@ -13,7 +13,7 @@ export const createPythonRequest = (
   _context: Context,
 ): string => {
   const parts = request.path.split('/')
-  const params = formatPythonArgs(request.parameters ?? [])
+  const params = formatPythonArgs(request.parameters ?? {})
 
   return `seam${parts.map((p) => snakeCase(p)).join('.')}(${params})`
 }

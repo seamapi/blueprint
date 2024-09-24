@@ -8,7 +8,7 @@ export const createJavascriptRequest = (
   _context: Context,
 ): string => {
   const parts = request.path.split('/')
-  const isWithoutParams = Object.keys(request.parameters ?? []).length === 0
+  const isWithoutParams = Object.keys(request.parameters ?? {}).length === 0
   const formattedParams = isWithoutParams
     ? ''
     : JSON.stringify(request.parameters)

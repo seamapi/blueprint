@@ -9,7 +9,7 @@ export const createRubyRequest = (
   _context: Context,
 ): string => {
   const parts = request.path.split('/')
-  const params = Object.entries(request.parameters ?? [])
+  const params = Object.entries(request.parameters ?? {})
     .map(([key, value]) => `${snakeCase(key)}: ${formatRubyValue(value)}`)
     .join(', ')
 
