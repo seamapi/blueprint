@@ -8,6 +8,7 @@ import {
 import { JsonSchema } from 'lib/json.js'
 
 import { formatCodeRecords } from './format.js'
+import { createGoRequest, createGoResponse } from './go.js'
 import {
   createJavascriptRequest,
   createJavascriptResponse,
@@ -15,7 +16,6 @@ import {
 import { createPhpRequest, createPhpResponse } from './php.js'
 import { createPythonRequest, createPythonResponse } from './python.js'
 import { createRubyRequest, createRubyResponse } from './ruby.js'
-import { createGoRequest, createGoResponse } from './go.js'
 
 export const CodeSampleDefinitionSchema = z.object({
   title: z.string().trim().min(1),
