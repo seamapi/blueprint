@@ -12,7 +12,7 @@ export const createGoRequest = (
   const params = formatGoArgs(request.parameters ?? {})
   const isReqWithParams = Object.keys(request.parameters).length !== 0
 
-  return `client.${parts.map((p) => pascalCase(p)).join('.')}(context.Background()${isReqWithParams ? `, api.${pascalCase(parts.join('_'))}Request(${params})` : ''})`
+  return `client${parts.map((p) => pascalCase(p)).join('.')}(context.Background()${isReqWithParams ? `, api.${pascalCase(parts.join('_'))}Request(${params})` : ''})`
 }
 
 const formatGoArgs = (jsonParams: NonNullJson): string =>
@@ -94,11 +94,8 @@ const formatGoResponse = (
 
 const formatGoResponseValue = (value: Json): any => {
   if (value == null) return 'nil'
-  if (
-    typeof value === 'string' ||
-    typeof value === 'boolean' ||
-    typeof value === 'number'
-  ) {
+  if (typeof value === 'string') return `"${value}"`
+  if (typeof value === 'boolean' || typeof value === 'number') {
     return value
   }
   if (Array.isArray(value)) {
