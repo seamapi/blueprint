@@ -8,7 +8,7 @@ export const createSeamCliRequest = (
   _context: Context,
 ): string => {
   const parts = request.path.split('/')
-  const requestParams = Object.entries(request.parameters)
+  const requestParams = Object.entries(request.parameters ?? [])
     .map(([key, value]) => `--${key} ${JSON.stringify(value)}`)
     .join(' ')
 
