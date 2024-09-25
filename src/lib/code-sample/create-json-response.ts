@@ -5,7 +5,9 @@ export const createJsonResponse = (
   context: Context,
 ): string => {
   const { endpoint } = context
-  if (endpoint.response.responseType === 'void') return 'void'
+  if (endpoint.response.responseType === 'void') {
+    return JSON.stringify({})
+  }
   const { responseKey } = endpoint.response
   const data = response?.body?.[responseKey]
   if (data == null) {
