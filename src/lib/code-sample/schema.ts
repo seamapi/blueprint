@@ -85,7 +85,7 @@ export const createCodeSample = async (
       request: createJavascriptRequest(codeSampleDefinition, context),
       response: createJavascriptResponse(codeSampleDefinition, context),
       request_syntax: 'javascript',
-      response_syntax: 'javascript',
+      response_syntax: 'json',
     },
     python: {
       title: 'Python',
