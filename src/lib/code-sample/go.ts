@@ -133,21 +133,6 @@ const formatGoArray = (value: Json[], key: string): string => {
   return `[${value.length}]${arrayType}{${formattedItems.join(', ')}}`
 }
 
-const formatGoObject = (value: Record<string, Json>, key: string): string => {
-  if (Object.keys(value).length === 0) {
-    return 'struct{}{}'
-  }
-
-  const formattedEntries = Object.entries(value)
-    .map(
-      ([objKey, val]) =>
-        `${pascalCase(objKey)}: ${formatGoValue({ value: val, key: objKey })}`,
-    )
-    .join(', ')
-
-  return `api.${pascalCase(key)}{${formattedEntries}}`
-}
-
 const isPrimitiveValue = (value: Json): boolean =>
   value != null && typeof value !== 'object'
 
@@ -162,6 +147,21 @@ const getPrimitiveTypeName = (value: Json): string => {
     default:
       throw new Error(`Unsupported type: ${typeof value}`)
   }
+}
+
+const formatGoObject = (value: Record<string, Json>, key: string): string => {
+  if (Object.keys(value).length === 0) {
+    return 'struct{}{}'
+  }
+
+  const formattedEntries = Object.entries(value)
+    .map(
+      ([objKey, val]) =>
+        `${pascalCase(objKey)}: ${formatGoValue({ value: val, key: objKey })}`,
+    )
+    .join(', ')
+
+  return `api.${pascalCase(key)}{${formattedEntries}}`
 }
 
 export const createGoResponse = createJsonResponse
