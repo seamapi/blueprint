@@ -1,9 +1,29 @@
 import { pascalCase } from 'change-case'
 
 import type { Json, NonNullJson } from 'lib/json.js'
-
 import type { CodeSampleDefinition, Context } from './schema.js'
 import { createJsonResponse } from './create-json-response.js'
+
+interface GoPackageConfig {
+  readonly pathsWithCustomPackageName: ReadonlyArray<string>
+  readonly defaultPackageName: string
+}
+
+const GO_PACKAGE_CONFIG: GoPackageConfig = {
+  pathsWithCustomPackageName: [
+    '/acs',
+    '/access_codes/simulate',
+    '/access_codes/unmanaged',
+    '/devices/simulate',
+    '/devices/unmanaged',
+    '/noise_sensors/noise_thresholds',
+    '/noise_sensors/simulate',
+    '/phones/simulate',
+    '/user_identities/enrollment_automations',
+    // TODO: thermostats
+  ],
+  defaultPackageName: 'api',
+}
 
 export const createGoRequest = (
   { request }: CodeSampleDefinition,
@@ -19,51 +39,39 @@ export const createGoRequest = (
   return `client${parts.map((p) => pascalCase(p)).join('.')}(${goSdkRequestArgs})`
 }
 
-const pathsWithCustomGoPackageName = [
-  '/acs',
-  '/access_codes/simulate',
-  '/access_codes/unmanaged',
-  '/devices/simulate',
-  '/devices/unmanaged',
-  '/noise_sensors/noise_thresholds',
-  '/noise_sensors/simulate',
-  '/phones/simulate',
-  '/user_identities/enrollment_automations',
-  // TODO: thermostats
-]
-
-const DEFAULT_GO_PACKAGE_NAME = 'api'
-
 const getGoPackageName = (path: string): string => {
-  if (!pathsWithCustomGoPackageName.some((p) => path.startsWith(p))) {
-    return DEFAULT_GO_PACKAGE_NAME
+  if (
+    !GO_PACKAGE_CONFIG.pathsWithCustomPackageName.some((p) =>
+      path.startsWith(p),
+    )
+  ) {
+    return GO_PACKAGE_CONFIG.defaultPackageName
   }
 
   const parts = path.split('/').filter(Boolean)
   const firstPart = parts[1]
 
   if (!firstPart) {
-    throw new Error('Invalid path: missing first part')
+    throw new Error(`Invalid path: missing first part in "${path}"`)
   }
 
-  return `${DEFAULT_GO_PACKAGE_NAME}.${firstPart.replace(/_/g, '')}`
+  return `${GO_PACKAGE_CONFIG.defaultPackageName}.${firstPart.replace(/_/g, '')}`
 }
 
 const getRequestStructName = (path: string): string => {
   const requestStructNameSuffix = 'Request'
 
-  if (pathsWithCustomGoPackageName.some((p) => path.startsWith(p))) {
-    return (
-      `${pascalCase(removeUntilSecondSlash(path))}` + requestStructNameSuffix
-    )
+  if (
+    GO_PACKAGE_CONFIG.pathsWithCustomPackageName.some((p) => path.startsWith(p))
+  ) {
+    return `${pascalCase(removeUntilSecondSlash(path))}${requestStructNameSuffix}`
   }
 
-  return `${pascalCase(path)}` + requestStructNameSuffix
+  return `${pascalCase(path)}${requestStructNameSuffix}`
 }
 
-function removeUntilSecondSlash(str: string): string {
-  return str.replace(/^\/[^/]*/, '')
-}
+const removeUntilSecondSlash = (str: string): string =>
+  str.replace(/^\/[^/]*/, '')
 
 const formatGoArgs = (jsonParams: NonNullJson): string =>
   Object.entries(jsonParams)
@@ -74,21 +82,27 @@ const formatGoArgs = (jsonParams: NonNullJson): string =>
     .join(', ')
 
 const formatGoValue = (value: Json): string => {
-  if (value == null) return 'nil'
-  if (typeof value === 'string') return `api.String("${value}")`
-  if (typeof value === 'boolean') return `api.Bool(${value ? 'true' : 'false'})`
-  if (typeof value === 'number') return `api.Float64(${value})`
-  if (Array.isArray(value)) {
-    const formattedItems = value.map(formatGoValue)
-    return `[]{${formattedItems.join(', ')}}`
+  switch (typeof value) {
+    case 'string':
+      return `api.String("${value}")`
+    case 'boolean':
+      return `api.Bool(${value})`
+    case 'number':
+      return `api.Float64(${value})`
+    case 'object':
+      if (value == null) return 'nil'
+
+      if (Array.isArray(value)) {
+        const formattedItems = value.map(formatGoValue)
+        return `[]{${formattedItems.join(', ')}}`
+      }
+      const formattedEntries = Object.entries(value)
+        .map(([key, val]) => `${pascalCase(key)}: ${formatGoValue(val)}`)
+        .join(', ')
+      return `interface{}{${formattedEntries}}`
+    default:
+      throw new Error(`Unsupported type: ${typeof value}`)
   }
-  if (typeof value === 'object') {
-    const formattedEntries = Object.entries(value)
-      .map(([key, val]) => `${pascalCase(key)}: ${formatGoValue(val)}`)
-      .join(', ')
-    return `interface{}{${formattedEntries}}`
-  }
-  throw new Error(`Unsupported type: ${typeof value}`)
 }
 
 export const createGoResponse = createJsonResponse
