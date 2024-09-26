@@ -5,26 +5,7 @@ import type { Json, NonNullJson } from 'lib/json.js'
 import { createJsonResponse } from './create-json-response.js'
 import type { CodeSampleDefinition, Context } from './schema.js'
 
-interface GoPackageConfig {
-  readonly pathsWithCustomPackageName: readonly string[]
-  readonly defaultPackageName: string
-}
-
-const GO_PACKAGE_CONFIG: GoPackageConfig = {
-  pathsWithCustomPackageName: [
-    '/acs',
-    '/access_codes/simulate',
-    '/access_codes/unmanaged',
-    '/devices/simulate',
-    '/devices/unmanaged',
-    '/noise_sensors/noise_thresholds',
-    '/noise_sensors/simulate',
-    '/phones/simulate',
-    '/user_identities/enrollment_automations',
-    // TODO: thermostats
-  ],
-  defaultPackageName: 'api',
-}
+const DEFAULT_GO_PACKAGE_NAME = 'api'
 
 export const createGoRequest = (
   { request }: CodeSampleDefinition,
@@ -39,7 +20,7 @@ export const createGoRequest = (
   const goSdkImports = generateImports({
     goPackageName,
     goPackageBasePath,
-    shouldIncludeDefaultImport: isReqWithParams,
+    isReqWithParams,
   })
 
   const requestStructName = getRequestStructName(request.path)
@@ -55,48 +36,44 @@ export const createGoRequest = (
 }
 
 const getGoPackageName = (path: string): string => {
-  if (
-    !GO_PACKAGE_CONFIG.pathsWithCustomPackageName.some((p) =>
-      path.startsWith(p),
-    )
-  ) {
-    return GO_PACKAGE_CONFIG.defaultPackageName
+  if (!isPathNested(path)) {
+    return DEFAULT_GO_PACKAGE_NAME
   }
 
-  const parts = path.split('/').filter(Boolean)
-  const firstPart = parts[1]
+  const firstPathPart = path.split('/').slice(1)[1]
 
-  if (firstPart == null) {
+  if (firstPathPart == null) {
     throw new Error(`Invalid path: missing second part in "${path}"`)
   }
 
-  return `${firstPart.replace(/_/g, '')}`
+  return `${firstPathPart.replace(/_/g, '')}`
 }
+
+const isPathNested = (path: string): boolean =>
+  path.split('/').slice(1).length > 2
 
 const generateImports = ({
   goPackageName,
   goPackageBasePath,
-  shouldIncludeDefaultImport,
+  isReqWithParams,
 }: {
   goPackageName: string
   goPackageBasePath: string
-  shouldIncludeDefaultImport: boolean
+  isReqWithParams: boolean
 }): string => {
-  const goPackageDefaultImport = `import ${GO_PACKAGE_CONFIG.defaultPackageName} "${goPackageBasePath}"`
+  const goPackageDefaultImport = `import ${DEFAULT_GO_PACKAGE_NAME} "${goPackageBasePath}"`
   const shouldImportNestedPackage =
-    goPackageName !== GO_PACKAGE_CONFIG.defaultPackageName
+    goPackageName !== DEFAULT_GO_PACKAGE_NAME && isReqWithParams
   const goPackageNestedPackageImport = `import ${goPackageName} "${goPackageBasePath}/${goPackageName}"`
 
-  return `${shouldIncludeDefaultImport ? goPackageDefaultImport : ''}
+  return `${isReqWithParams ? goPackageDefaultImport : ''}
   ${shouldImportNestedPackage ? goPackageNestedPackageImport : ''}`.trim()
 }
 
 const getRequestStructName = (path: string): string => {
   const requestStructNameSuffix = 'Request'
 
-  if (
-    GO_PACKAGE_CONFIG.pathsWithCustomPackageName.some((p) => path.startsWith(p))
-  ) {
+  if (isPathNested(path)) {
     return `${pascalCase(removeUntilSecondSlash(path))}${requestStructNameSuffix}`
   }
 
