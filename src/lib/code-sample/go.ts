@@ -6,6 +6,7 @@ import { createJsonResponse } from './create-json-response.js'
 import type { CodeSampleDefinition, Context } from './schema.js'
 
 const DEFAULT_GO_PACKAGE_NAME = 'api'
+const GO_PACKAGE_BASE_PATH = 'github.com/seamapi/go'
 
 export const createGoRequest = (
   { request }: CodeSampleDefinition,
@@ -15,11 +16,9 @@ export const createGoRequest = (
   const isReqWithParams = Object.keys(request.parameters).length !== 0
 
   const goPackageName = getGoPackageName(request.path)
-  const goPackageBasePath = 'github.com/seamapi/go'
 
   const goSdkImports = generateImports({
     goPackageName,
-    goPackageBasePath,
     isReqWithParams,
   })
 
@@ -54,20 +53,20 @@ const isPathNested = (path: string): boolean =>
 
 const generateImports = ({
   goPackageName,
-  goPackageBasePath,
   isReqWithParams,
 }: {
   goPackageName: string
-  goPackageBasePath: string
   isReqWithParams: boolean
 }): string => {
-  const goPackageDefaultImport = `import ${DEFAULT_GO_PACKAGE_NAME} "${goPackageBasePath}"`
-  const shouldImportNestedPackage =
-    goPackageName !== DEFAULT_GO_PACKAGE_NAME && isReqWithParams
-  const goPackageNestedPackageImport = `import ${goPackageName} "${goPackageBasePath}/${goPackageName}"`
+  const goPackageDefaultImport = `import ${DEFAULT_GO_PACKAGE_NAME} "${GO_PACKAGE_BASE_PATH}"`
+  const nestedPackageImport = `import ${goPackageName} "${GO_PACKAGE_BASE_PATH}/${goPackageName}"`
 
-  return `${isReqWithParams ? goPackageDefaultImport : ''}
-  ${shouldImportNestedPackage ? goPackageNestedPackageImport : ''}`.trim()
+  const shouldAddDefaultImport = isReqWithParams
+  const shouldAddNestedPackageImport =
+    goPackageName !== DEFAULT_GO_PACKAGE_NAME && isReqWithParams
+
+  return `${shouldAddDefaultImport ? goPackageDefaultImport : ''}
+  ${shouldAddNestedPackageImport ? nestedPackageImport : ''}`.trim()
 }
 
 const getRequestStructName = (path: string): string => {
