@@ -122,7 +122,7 @@ export const createCodeSample = async (
       request: createGoRequest(codeSampleDefinition, context),
       response: createGoResponse(codeSampleDefinition, context),
       request_syntax: 'go',
-      response_syntax: 'go',
+      response_syntax: 'json',
     },
   }
 
