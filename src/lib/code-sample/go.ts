@@ -31,23 +31,25 @@ export const createGoRequest = (
   _context: Context,
 ): string => {
   const parts = request.path.split('/')
-  const params = formatGoArgs(request.parameters ?? {})
   const isReqWithParams = Object.keys(request.parameters).length !== 0
 
   const goPackageName = getGoPackageName(request.path)
   const goPackageBasePath = 'github.com/seamapi/go'
 
-  const goPackageDefaultImport = `import ${GO_PACKAGE_CONFIG.defaultPackageName} "${goPackageBasePath}"`
-  const shouldImportNestedPackage =
-    goPackageName !== GO_PACKAGE_CONFIG.defaultPackageName
-  const goPackageNestedPackageImport = `import ${goPackageName} "${goPackageBasePath}/${goPackageName}"`
+  const goSdkImports = generateImports({
+    goPackageName,
+    goPackageBasePath,
+    shouldIncludeDefaultImport:
+      isReqWithParams || goPackageName === GO_PACKAGE_CONFIG.defaultPackageName,
+  })
 
   const requestStructName = getRequestStructName(request.path)
 
-  const goSdkRequestArgs = `context.Background()${isReqWithParams ? `, ${goPackageName}.${requestStructName}(${params})` : ''}`
+  const formattedParams = formatGoArgs(request.parameters)
 
-  return `${isReqWithParams ? goPackageDefaultImport : ''}
-  ${shouldImportNestedPackage ? goPackageNestedPackageImport : ''}
+  const goSdkRequestArgs = `context.Background()${isReqWithParams ? `, ${goPackageName}.${requestStructName}(${formattedParams})` : ''}`
+
+  return `${goSdkImports}
 
   client${parts.map((p) => pascalCase(p)).join('.')}(${goSdkRequestArgs})
   `
@@ -66,10 +68,28 @@ const getGoPackageName = (path: string): string => {
   const firstPart = parts[1]
 
   if (firstPart == null) {
-    throw new Error(`Invalid path: missing first part in "${path}"`)
+    throw new Error(`Invalid path: missing second part in "${path}"`)
   }
 
   return `${firstPart.replace(/_/g, '')}`
+}
+
+const generateImports = ({
+  goPackageName,
+  goPackageBasePath,
+  shouldIncludeDefaultImport,
+}: {
+  goPackageName: string
+  goPackageBasePath: string
+  shouldIncludeDefaultImport: boolean
+}): string => {
+  const goPackageDefaultImport = `import ${GO_PACKAGE_CONFIG.defaultPackageName} "${goPackageBasePath}"`
+  const shouldImportNestedPackage =
+    goPackageName !== GO_PACKAGE_CONFIG.defaultPackageName
+  const goPackageNestedPackageImport = `import ${goPackageName} "${goPackageBasePath}/${goPackageName}"`
+
+  return `${shouldIncludeDefaultImport ? goPackageDefaultImport : ''}
+  ${shouldImportNestedPackage ? goPackageNestedPackageImport : ''}`.trim()
 }
 
 const getRequestStructName = (path: string): string => {
