@@ -1,11 +1,12 @@
 import { pascalCase } from 'change-case'
 
 import type { Json, NonNullJson } from 'lib/json.js'
-import type { CodeSampleDefinition, Context } from './schema.js'
+
 import { createJsonResponse } from './create-json-response.js'
+import type { CodeSampleDefinition, Context } from './schema.js'
 
 interface GoPackageConfig {
-  readonly pathsWithCustomPackageName: ReadonlyArray<string>
+  readonly pathsWithCustomPackageName: readonly string[]
   readonly defaultPackageName: string
 }
 
