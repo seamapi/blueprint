@@ -121,13 +121,18 @@ const formatGoValue = ({
   }
 
   if (typeof value === 'object') {
+    if (Object.keys(value).length === 0) {
+      return 'struct{}{}'
+    }
+
     const formattedEntries = Object.entries(value)
       .map(
         ([key, val]) =>
           `${pascalCase(key)}: ${formatGoValue({ value: val, key })}`,
       )
       .join(', ')
-    return `struct{}{${formattedEntries}}`
+
+    return `api.${pascalCase(key)}{${formattedEntries}}`
   }
 
   throw new Error(`Unsupported type: ${typeof value}`)
