@@ -43,7 +43,7 @@ const getGoPackageName = (path: string): string => {
     throw new Error(`Invalid path: missing second part in "${path}"`)
   }
 
-  return `${firstPathPart.replace(/_/g, '')}`
+  return firstPathPart.replace(/_/g, '')
 }
 
 const isPathNested = (path: string): boolean =>
@@ -56,25 +56,27 @@ const generateImports = ({
   goPackageName: string
   isReqWithParams: boolean
 }): string => {
-  const defaultPackageImport = `import ${DEFAULT_GO_PACKAGE_NAME} "${GO_PACKAGE_BASE_PATH}"`
-  const nestedPackageImport = `import ${goPackageName} "${GO_PACKAGE_BASE_PATH}/${goPackageName}"`
+  const imports: string[] = []
 
-  const shouldAddDefaultPackageImport = isReqWithParams
-  const shouldAddNestedPackageImport =
-    goPackageName !== DEFAULT_GO_PACKAGE_NAME && isReqWithParams
+  if (isReqWithParams) {
+    const defaultPackageImport = `import ${DEFAULT_GO_PACKAGE_NAME} "${GO_PACKAGE_BASE_PATH}"`
+    imports.push(defaultPackageImport)
+  }
 
-  return `${shouldAddDefaultPackageImport ? defaultPackageImport : ''}
-  ${shouldAddNestedPackageImport ? nestedPackageImport : ''}`.trim()
+  if (goPackageName !== DEFAULT_GO_PACKAGE_NAME && isReqWithParams) {
+    const nestedPackageImport = `import ${goPackageName} "${GO_PACKAGE_BASE_PATH}/${goPackageName}"`
+    imports.push(nestedPackageImport)
+  }
+
+  return imports.join('\n')
 }
 
 const getRequestStructName = (path: string): string => {
   const requestStructNameSuffix = 'Request'
 
-  if (isPathNested(path)) {
-    return `${pascalCase(removeUntilSecondSlash(path))}${requestStructNameSuffix}`
-  }
-
-  return `${pascalCase(path)}${requestStructNameSuffix}`
+  return isPathNested(path)
+    ? `${pascalCase(removeUntilSecondSlash(path))}${requestStructNameSuffix}`
+    : `${pascalCase(path)}${requestStructNameSuffix}`
 }
 
 const removeUntilSecondSlash = (str: string): string =>
@@ -101,41 +103,47 @@ const formatGoValue = ({
   if (typeof value === 'number') return `api.Float64(${value})`
 
   if (Array.isArray(value)) {
-    if (value.length === 0) {
-      // in Go there's no way define an empty array without specifying the type
-      // and code samples definitions don't include the type annotations
-      return 'nil'
-    }
-
-    const formattedItems = value.map((v) => formatGoValue({ value: v, key }))
-    const item = value[0]
-    if (item == null) {
-      throw new Error(`Null value in response array for '${key}'`)
-    }
-
-    const arrayType = isPrimitiveValue(item)
-      ? getPrimitiveTypeName(item)
-      : `api.${pascalCase(key)}`
-
-    return `[${value.length}]${arrayType}{${formattedItems.join(', ')}}`
+    return formatGoArray(value, key)
   }
 
   if (typeof value === 'object') {
-    if (Object.keys(value).length === 0) {
-      return 'struct{}{}'
-    }
-
-    const formattedEntries = Object.entries(value)
-      .map(
-        ([key, val]) =>
-          `${pascalCase(key)}: ${formatGoValue({ value: val, key })}`,
-      )
-      .join(', ')
-
-    return `api.${pascalCase(key)}{${formattedEntries}}`
+    return formatGoObject(value, key)
   }
 
   throw new Error(`Unsupported type: ${typeof value}`)
+}
+
+const formatGoArray = (value: Json[], key: string): string => {
+  if (value.length === 0) {
+    return 'nil'
+  }
+
+  const formattedItems = value.map((v) => formatGoValue({ value: v, key }))
+  const item = value[0]
+  if (item == null) {
+    throw new Error(`Null value in response array for '${key}'`)
+  }
+
+  const arrayType = isPrimitiveValue(item)
+    ? getPrimitiveTypeName(item)
+    : `api.${pascalCase(key)}`
+
+  return `[${value.length}]${arrayType}{${formattedItems.join(', ')}}`
+}
+
+const formatGoObject = (value: Record<string, Json>, key: string): string => {
+  if (Object.keys(value).length === 0) {
+    return 'struct{}{}'
+  }
+
+  const formattedEntries = Object.entries(value)
+    .map(
+      ([objKey, val]) =>
+        `${pascalCase(objKey)}: ${formatGoValue({ value: val, key: objKey })}`,
+    )
+    .join(', ')
+
+  return `api.${pascalCase(key)}{${formattedEntries}}`
 }
 
 const isPrimitiveValue = (value: Json): boolean =>
@@ -149,7 +157,6 @@ const getPrimitiveTypeName = (value: Json): string => {
       return 'float64'
     case 'boolean':
       return 'bool'
-
     default:
       throw new Error(`Unsupported type: ${typeof value}`)
   }
