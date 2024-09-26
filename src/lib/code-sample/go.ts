@@ -39,8 +39,7 @@ export const createGoRequest = (
   const goSdkImports = generateImports({
     goPackageName,
     goPackageBasePath,
-    shouldIncludeDefaultImport:
-      isReqWithParams || goPackageName === GO_PACKAGE_CONFIG.defaultPackageName,
+    shouldIncludeDefaultImport: isReqWithParams,
   })
 
   const requestStructName = getRequestStructName(request.path)
@@ -52,7 +51,7 @@ export const createGoRequest = (
   return `${goSdkImports}
 
   client${parts.map((p) => pascalCase(p)).join('.')}(${goSdkRequestArgs})
-  `
+  `.trim()
 }
 
 const getGoPackageName = (path: string): string => {
