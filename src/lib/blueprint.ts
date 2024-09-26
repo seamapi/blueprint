@@ -521,7 +521,7 @@ export const createRequest = (
 
   if (!methods.includes('POST')) {
     // eslint-disable-next-line no-console
-    console.warn('POST method is missing')
+    console.warn(`POST method is missing for ${path}`)
   }
 
   const semanticMethod = getSemanticMethod(methods)
