@@ -52,7 +52,7 @@ const getGoPackageName = (path: string): string => {
   const parts = path.split('/').filter(Boolean)
   const firstPart = parts[1]
 
-  if (!firstPart) {
+  if (firstPart == null) {
     throw new Error(`Invalid path: missing first part in "${path}"`)
   }
 
@@ -75,7 +75,7 @@ const removeUntilSecondSlash = (str: string): string =>
   str.replace(/^\/[^/]*/, '')
 
 const formatGoArgs = (jsonParams: NonNullJson): string =>
-  Object.entries(jsonParams)
+  Object.entries(jsonParams as Record<string, Json>)
     .map(([paramKey, paramValue]) => {
       const formattedValue = formatGoValue(paramValue)
       return `${pascalCase(paramKey)}: ${formattedValue}`
@@ -83,27 +83,24 @@ const formatGoArgs = (jsonParams: NonNullJson): string =>
     .join(', ')
 
 const formatGoValue = (value: Json): string => {
-  switch (typeof value) {
-    case 'string':
-      return `api.String("${value}")`
-    case 'boolean':
-      return `api.Bool(${value})`
-    case 'number':
-      return `api.Float64(${value})`
-    case 'object':
-      if (value == null) return 'nil'
+  if (value == null) return 'nil'
+  if (typeof value === 'string') return `api.String("${value}")`
+  if (typeof value === 'boolean') return `api.Bool(${value})`
+  if (typeof value === 'number') return `api.Float64(${value})`
 
-      if (Array.isArray(value)) {
-        const formattedItems = value.map(formatGoValue)
-        return `[]{${formattedItems.join(', ')}}`
-      }
-      const formattedEntries = Object.entries(value)
-        .map(([key, val]) => `${pascalCase(key)}: ${formatGoValue(val)}`)
-        .join(', ')
-      return `interface{}{${formattedEntries}}`
-    default:
-      throw new Error(`Unsupported type: ${typeof value}`)
+  if (Array.isArray(value)) {
+    const formattedItems = value.map(formatGoValue)
+    return `[]{${formattedItems.join(', ')}}`
   }
+
+  if (typeof value === 'object') {
+    const formattedEntries = Object.entries(value)
+      .map(([key, val]) => `${pascalCase(key)}: ${formatGoValue(val)}`)
+      .join(', ')
+    return `interface{}{${formattedEntries}}`
+  }
+
+  throw new Error(`Unsupported type: ${typeof value}`)
 }
 
 export const createGoResponse = createJsonResponse
