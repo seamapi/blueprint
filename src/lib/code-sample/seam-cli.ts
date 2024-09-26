@@ -1,6 +1,6 @@
 import { kebabCase } from 'change-case'
 
-import { createJsonResponse } from './create-json-response.js'
+import { createJsonResponse } from './json.js'
 import type { CodeSampleDefinition, Context } from './schema.js'
 
 export const createSeamCliRequest = (

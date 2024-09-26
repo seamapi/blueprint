@@ -79,13 +79,16 @@ export const createCodeSample = async (
   codeSampleDefinition: CodeSampleDefinition,
   context: Context,
 ): Promise<CodeSample> => {
+  const isVoidResponse = context.endpoint.response.responseType === 'void'
   const code: Code = {
     javascript: {
       title: 'JavaScript',
       request: createJavascriptRequest(codeSampleDefinition, context),
-      response: createJavascriptResponse(codeSampleDefinition, context),
+      response: isVoidResponse
+        ? '// void'
+        : createJavascriptResponse(codeSampleDefinition, context),
       request_syntax: 'javascript',
-      response_syntax: 'json',
+      response_syntax: isVoidResponse ? 'javascript' : 'json',
     },
     python: {
       title: 'Python',
