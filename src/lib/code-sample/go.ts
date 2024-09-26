@@ -33,11 +33,24 @@ export const createGoRequest = (
   const parts = request.path.split('/')
   const params = formatGoArgs(request.parameters ?? {})
   const isReqWithParams = Object.keys(request.parameters).length !== 0
+
   const goPackageName = getGoPackageName(request.path)
+  const goPackageBasePath = 'github.com/seamapi/go'
+
+  const goPackageDefaultImport = `import ${GO_PACKAGE_CONFIG.defaultPackageName} "${goPackageBasePath}"`
+  const shouldImportNestedPackage =
+    goPackageName !== GO_PACKAGE_CONFIG.defaultPackageName
+  const goPackageNestedPackageImport = `import ${goPackageName} "${goPackageBasePath}/${goPackageName}"`
+
   const requestStructName = getRequestStructName(request.path)
+
   const goSdkRequestArgs = `context.Background()${isReqWithParams ? `, ${goPackageName}.${requestStructName}(${params})` : ''}`
 
-  return `client${parts.map((p) => pascalCase(p)).join('.')}(${goSdkRequestArgs})`
+  return `${isReqWithParams ? goPackageDefaultImport : ''}
+  ${shouldImportNestedPackage ? goPackageNestedPackageImport : ''}
+
+  client${parts.map((p) => pascalCase(p)).join('.')}(${goSdkRequestArgs})
+  `
 }
 
 const getGoPackageName = (path: string): string => {
@@ -56,7 +69,7 @@ const getGoPackageName = (path: string): string => {
     throw new Error(`Invalid path: missing first part in "${path}"`)
   }
 
-  return `${GO_PACKAGE_CONFIG.defaultPackageName}.${firstPart.replace(/_/g, '')}`
+  return `${firstPart.replace(/_/g, '')}`
 }
 
 const getRequestStructName = (path: string): string => {
