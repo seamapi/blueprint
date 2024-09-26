@@ -33,9 +33,9 @@ export const createGoRequest = (
   const parts = request.path.split('/')
   const params = formatGoArgs(request.parameters ?? {})
   const isReqWithParams = Object.keys(request.parameters).length !== 0
-  const packageName = getGoPackageName(request.path)
+  const goPackageName = getGoPackageName(request.path)
   const requestStructName = getRequestStructName(request.path)
-  const goSdkRequestArgs = `context.Background()${isReqWithParams ? `, ${packageName}.${requestStructName}(${params})` : ''}`
+  const goSdkRequestArgs = `context.Background()${isReqWithParams ? `, ${goPackageName}.${requestStructName}(${params})` : ''}`
 
   return `client${parts.map((p) => pascalCase(p)).join('.')}(${goSdkRequestArgs})`
 }
