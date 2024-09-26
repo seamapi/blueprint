@@ -58,14 +58,14 @@ const generateImports = ({
   goPackageName: string
   isReqWithParams: boolean
 }): string => {
-  const goPackageDefaultImport = `import ${DEFAULT_GO_PACKAGE_NAME} "${GO_PACKAGE_BASE_PATH}"`
+  const defaultPackageImport = `import ${DEFAULT_GO_PACKAGE_NAME} "${GO_PACKAGE_BASE_PATH}"`
   const nestedPackageImport = `import ${goPackageName} "${GO_PACKAGE_BASE_PATH}/${goPackageName}"`
 
-  const shouldAddDefaultImport = isReqWithParams
+  const shouldAddDefaultPackageImport = isReqWithParams
   const shouldAddNestedPackageImport =
     goPackageName !== DEFAULT_GO_PACKAGE_NAME && isReqWithParams
 
-  return `${shouldAddDefaultImport ? goPackageDefaultImport : ''}
+  return `${shouldAddDefaultPackageImport ? defaultPackageImport : ''}
   ${shouldAddNestedPackageImport ? nestedPackageImport : ''}`.trim()
 }
 
