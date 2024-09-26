@@ -115,6 +115,8 @@ const formatGoValue = ({
 
 const formatGoArray = (value: Json[], key: string): string => {
   if (value.length === 0) {
+    // in Go there's no way define an empty array without specifying type
+    // and code samples definitions don't include the type annotations
     return 'nil'
   }
 
