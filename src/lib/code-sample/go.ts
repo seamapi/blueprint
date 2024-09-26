@@ -12,9 +12,7 @@ export const createGoRequest = (
   { request }: CodeSampleDefinition,
   _context: Context,
 ): string => {
-  const parts = request.path.split('/')
   const isReqWithParams = Object.keys(request.parameters).length !== 0
-
   const goPackageName = getGoPackageName(request.path)
 
   const goSdkImports = generateImports({
@@ -23,14 +21,14 @@ export const createGoRequest = (
   })
 
   const requestStructName = getRequestStructName(request.path)
-
   const formattedParams = formatGoArgs(request.parameters)
-
   const goSdkRequestArgs = `context.Background()${isReqWithParams ? `, ${goPackageName}.${requestStructName}(${formattedParams})` : ''}`
+
+  const pathParts = request.path.split('/')
 
   return `${goSdkImports}
 
-  client${parts.map((p) => pascalCase(p)).join('.')}(${goSdkRequestArgs})
+  client${pathParts.map((p) => pascalCase(p)).join('.')}(${goSdkRequestArgs})
   `.trim()
 }
 
@@ -85,30 +83,68 @@ const removeUntilSecondSlash = (str: string): string =>
 const formatGoArgs = (jsonParams: NonNullJson): string =>
   Object.entries(jsonParams as Record<string, Json>)
     .map(([paramKey, paramValue]) => {
-      const formattedValue = formatGoValue(paramValue)
+      const formattedValue = formatGoValue({ value: paramValue, key: paramKey })
       return `${pascalCase(paramKey)}: ${formattedValue}`
     })
     .join(', ')
 
-const formatGoValue = (value: Json): string => {
+const formatGoValue = ({
+  value,
+  key,
+}: {
+  value: Json
+  key: string
+}): string => {
   if (value == null) return 'nil'
   if (typeof value === 'string') return `api.String("${value}")`
   if (typeof value === 'boolean') return `api.Bool(${value})`
   if (typeof value === 'number') return `api.Float64(${value})`
 
   if (Array.isArray(value)) {
-    const formattedItems = value.map(formatGoValue)
-    return `[]{${formattedItems.join(', ')}}`
+    if (value.length === 0) {
+      // in Go there's no way define an empty array without specifying the type
+      // and code samples definitions don't include the type annotations
+      return 'nil'
+    }
+
+    const formattedItems = value.map((v) => formatGoValue({ value: v, key }))
+    const item = value[0]
+    const arrayType = item
+      ? isPrimitiveValue(item)
+        ? getPrimitiveTypeName(item)
+        : `api.${pascalCase(key)}`
+      : ''
+    return `[${value.length}]${arrayType}{${formattedItems.join(', ')}}`
   }
 
   if (typeof value === 'object') {
     const formattedEntries = Object.entries(value)
-      .map(([key, val]) => `${pascalCase(key)}: ${formatGoValue(val)}`)
+      .map(
+        ([key, val]) =>
+          `${pascalCase(key)}: ${formatGoValue({ value: val, key })}`,
+      )
       .join(', ')
-    return `interface{}{${formattedEntries}}`
+    return `struct{}{${formattedEntries}}`
   }
 
   throw new Error(`Unsupported type: ${typeof value}`)
+}
+
+const isPrimitiveValue = (value: Json): boolean =>
+  value != null && typeof value !== 'object'
+
+const getPrimitiveTypeName = (value: Json): string => {
+  switch (typeof value) {
+    case 'string':
+      return 'string'
+    case 'number':
+      return 'float64'
+    case 'boolean':
+      return 'bool'
+
+    default:
+      throw new Error(`Unsupported type: ${typeof value}`)
+  }
 }
 
 export const createGoResponse = createJsonResponse

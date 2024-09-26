@@ -253,7 +253,6 @@ export const createBlueprint = async (
 
   // TODO: Move openapi to TypesModuleSchema
   const openapi = typesModule.openapi as Openapi
-  console.log('🚀 ~ openapi:', Object.keys(openapi.paths))
 
   const isFakeData = openapi.info.title === 'Foo'
   const targetPaths = ['/acs', '/events', '/thermostats']
