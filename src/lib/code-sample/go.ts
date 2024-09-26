@@ -109,11 +109,14 @@ const formatGoValue = ({
 
     const formattedItems = value.map((v) => formatGoValue({ value: v, key }))
     const item = value[0]
-    const arrayType = item
-      ? isPrimitiveValue(item)
-        ? getPrimitiveTypeName(item)
-        : `api.${pascalCase(key)}`
-      : ''
+    if (item == null) {
+      throw new Error(`Null value in response array for '${key}'`)
+    }
+
+    const arrayType = isPrimitiveValue(item)
+      ? getPrimitiveTypeName(item)
+      : `api.${pascalCase(key)}`
+
     return `[${value.length}]${arrayType}{${formattedItems.join(', ')}}`
   }
 
