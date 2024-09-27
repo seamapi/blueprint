@@ -28,7 +28,7 @@ export const CodeSampleDefinitionSchema = z.object({
         /^[a-z_/]+$/,
         'Can only contain the lowercase letters a-z, underscores, and forward slashes.',
       ),
-    parameters: z.record(z.string().min(1), JsonSchema),
+    parameters: z.record(z.string().min(1), JsonSchema).optional().default({}),
   }),
   response: z.object({
     body: z.record(z.string().min(1), JsonSchema).nullable(),
@@ -81,13 +81,16 @@ export const createCodeSample = async (
   codeSampleDefinition: CodeSampleDefinition,
   context: Context,
 ): Promise<CodeSample> => {
+  const isVoidResponse = context.endpoint.response.responseType === 'void'
   const code: Code = {
     javascript: {
       title: 'JavaScript',
       request: createJavascriptRequest(codeSampleDefinition, context),
-      response: createJavascriptResponse(codeSampleDefinition, context),
+      response: isVoidResponse
+        ? '// void'
+        : createJavascriptResponse(codeSampleDefinition, context),
       request_syntax: 'javascript',
-      response_syntax: 'javascript',
+      response_syntax: isVoidResponse ? 'javascript' : 'json',
     },
     python: {
       title: 'Python',
