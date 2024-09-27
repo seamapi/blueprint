@@ -743,6 +743,12 @@ const createResponse = (
   ) {
     const properties = schema.properties
 
+    if (!(responseKey in properties)) {
+      throw new Error(
+        `Response key '${responseKey}' not found in response schema`,
+      )
+    }
+
     const refKey = responseKey
 
     if (refKey != null && properties[refKey] != null) {
