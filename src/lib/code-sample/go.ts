@@ -34,7 +34,7 @@ export const createGoRequest = (
 
 const getGoPackageName = (path: string): string => {
   if (!isPathNested(path)) {
-    return DEFAULT_GO_PACKAGE_NAME
+    return defaultGoPackageName
   }
 
   const firstPathPart = path.split('/').slice(1)[1]
@@ -59,12 +59,12 @@ const generateImports = ({
   const imports: string[] = []
 
   if (isReqWithParams) {
-    const defaultPackageImport = `import ${DEFAULT_GO_PACKAGE_NAME} "${GO_PACKAGE_BASE_PATH}"`
+    const defaultPackageImport = `import ${defaultGoPackageName} "${goPackageBasePath}"`
     imports.push(defaultPackageImport)
   }
 
-  if (goPackageName !== DEFAULT_GO_PACKAGE_NAME && isReqWithParams) {
-    const nestedPackageImport = `import ${goPackageName} "${GO_PACKAGE_BASE_PATH}/${goPackageName}"`
+  if (goPackageName !== defaultGoPackageName && isReqWithParams) {
+    const nestedPackageImport = `import ${goPackageName} "${goPackageBasePath}/${goPackageName}"`
     imports.push(nestedPackageImport)
   }
 
