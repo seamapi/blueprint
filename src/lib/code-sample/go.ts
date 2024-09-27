@@ -5,8 +5,8 @@ import type { Json, NonNullJson } from 'lib/json.js'
 import { createJsonResponse } from './create-json-response.js'
 import type { CodeSampleDefinition, Context } from './schema.js'
 
-const DEFAULT_GO_PACKAGE_NAME = 'api'
-const GO_PACKAGE_BASE_PATH = 'github.com/seamapi/go'
+const defaultGoPackageName = 'api'
+const goPackageBasePath = 'github.com/seamapi/go'
 
 export const createGoRequest = (
   { request }: CodeSampleDefinition,
