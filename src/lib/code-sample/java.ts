@@ -1,35 +1,50 @@
 import { camelCase, pascalCase } from 'change-case'
-
 import type { Json, NonNullJson } from 'lib/json.js'
-
 import { createJsonResponse } from './json.js'
 import type { CodeSampleDefinition, Context } from './schema.js'
+
+interface JavaRequestBuilderOptions {
+  path: string
+  parameters: NonNullJson
+}
 
 export const createJavaRequest = (
   { request }: CodeSampleDefinition,
   _context: Context,
 ): string => {
   const pathParts = request.path.split('/').slice(1)
-  const formattedParams = formatJavaArgs(request.parameters)
-  const requestBuilderName = getRequestBuilderName(request.path)
-  const isReqWithParams = Object.keys(request.parameters).length !== 0
-  const clientArgs = isReqWithParams
-    ? `${requestBuilderName}.builder()${formattedParams}.build()`
-    : ''
+  const requestBuilderOptions: JavaRequestBuilderOptions = {
+    path: request.path,
+    parameters: request.parameters,
+  }
+  const clientArgs = createJavaRequestBuilder(requestBuilderOptions)
 
   return `seam.${pathParts.map((p) => camelCase(p)).join('().')}(${clientArgs});`
 }
 
+const createJavaRequestBuilder = ({
+  path,
+  parameters,
+}: JavaRequestBuilderOptions): string => {
+  const requestBuilderName = getRequestBuilderName(path)
+  const isReqWithParams = Object.keys(parameters).length !== 0
+
+  if (!isReqWithParams) return ''
+
+  const formattedParams = formatJavaArgs(parameters)
+  return `${requestBuilderName}.builder()${formattedParams}.build()`
+}
+
 const getRequestBuilderName = (path: string): string => {
   const requestBuilderNameSuffix = 'Request'
+  const pathParts = path.split('/').slice(1)
 
-  return isPathNested(path)
-    ? `${pascalCase(path.split('/').slice(2).join('_'))}${requestBuilderNameSuffix}`
+  return isPathNested(pathParts)
+    ? `${pascalCase(pathParts.slice(1).join('_'))}${requestBuilderNameSuffix}`
     : `${pascalCase(path)}${requestBuilderNameSuffix}`
 }
 
-const isPathNested = (path: string): boolean =>
-  path.split('/').slice(1).length > 2
+const isPathNested = (pathParts: string[]): boolean => pathParts.length > 2
 
 const formatJavaArgs = (jsonParams: NonNullJson): string =>
   Object.entries(jsonParams as Record<string, Json>)
