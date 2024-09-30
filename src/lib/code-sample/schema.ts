@@ -8,6 +8,7 @@ import {
 import { JsonSchema } from 'lib/json.js'
 
 import { formatCodeRecords } from './format.js'
+import { createGoRequest, createGoResponse } from './go.js'
 import {
   createJavascriptRequest,
   createJavascriptResponse,
@@ -47,12 +48,13 @@ const CodeSampleSyntaxSchema = z.enum([
   'php',
   'ruby',
   'bash',
+  'go',
 ])
 
 export type CodeSampleSyntax = z.infer<typeof CodeSampleSyntaxSchema>
 
 const CodeSchema = z.record(
-  z.enum(['javascript', 'python', 'php', 'ruby', 'seam_cli']),
+  z.enum(['javascript', 'python', 'php', 'ruby', 'seam_cli', 'go']),
   z.object({
     title: z.string().min(1),
     request: z.string(),
@@ -116,6 +118,13 @@ export const createCodeSample = async (
       request: createSeamCliRequest(codeSampleDefinition, context),
       response: createSeamCliResponse(codeSampleDefinition, context),
       request_syntax: 'bash',
+      response_syntax: 'json',
+    },
+    go: {
+      title: 'Go',
+      request: createGoRequest(codeSampleDefinition, context),
+      response: createGoResponse(codeSampleDefinition, context),
+      request_syntax: 'go',
       response_syntax: 'json',
     },
   }
