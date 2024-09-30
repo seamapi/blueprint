@@ -745,7 +745,7 @@ const createResponse = (
 
     if (!(responseKey in properties)) {
       throw new Error(
-        `Response key '${responseKey}' not found in response schema`,
+        `Response key '${responseKey}' not found in response schema for ${path}`,
       )
     }
 
