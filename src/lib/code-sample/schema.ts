@@ -133,7 +133,7 @@ export const createCodeSample = async (
       title: 'Java',
       request: createJavaRequest(codeSampleDefinition, context),
       response: createJavaResponse(codeSampleDefinition, context),
-      request_syntax: 'go',
+      request_syntax: 'java',
       response_syntax: 'json',
     },
   }
