@@ -1,5 +1,7 @@
 import { camelCase, pascalCase } from 'change-case'
+
 import type { Json, NonNullJson } from 'lib/json.js'
+
 import { createJsonResponse } from './json.js'
 import type { CodeSampleDefinition, Context } from './schema.js'
 
