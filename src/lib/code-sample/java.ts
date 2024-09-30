@@ -20,7 +20,7 @@ export const createJavaRequest = (
   return `seam.${pathParts.map((p) => camelCase(p)).join('().')}(${clientArgs});`
 }
 
-const getRequestBuilderName = (path: string) => {
+const getRequestBuilderName = (path: string): string => {
   const requestBuilderNameSuffix = 'Request'
 
   return isPathNested(path)
@@ -32,7 +32,7 @@ const isPathNested = (path: string): boolean =>
   path.split('/').slice(1).length > 2
 
 const formatJavaArgs = (jsonParams: NonNullJson): string =>
-  Object.entries(jsonParams)
+  Object.entries(jsonParams as Record<string, Json>)
     .map(([paramKey, paramValue]) => {
       const formattedValue = formatJavaValue(paramValue)
       return `.${camelCase(paramKey)}(${formattedValue})`
