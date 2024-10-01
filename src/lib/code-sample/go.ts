@@ -86,7 +86,7 @@ const getRequestStructName = (path: string): string => {
 const removeUntilSecondSlash = (str: string): string =>
   str.replace(/^\/[^/]*/, '')
 
-type GoContext = Context & {
+interface GoContext extends Context {
   goPackageName: string
   requestStructName: string
 }
@@ -149,10 +149,10 @@ const formatGoArray = (
   return `[${value.length}]${arrayType}{${formattedItems.join(', ')}}`
 }
 
-const isPrimitiveValue = (value: Json): boolean =>
-  value != null && typeof value !== 'object'
+const isPrimitiveValue = (value: Json): value is string | number | boolean =>
+  typeof value !== 'object' && value !== null
 
-const getPrimitiveTypeName = (value: Json): string => {
+const getPrimitiveTypeName = (value: string | number | boolean): string => {
   switch (typeof value) {
     case 'string':
       return 'string'
@@ -160,8 +160,6 @@ const getPrimitiveTypeName = (value: Json): string => {
       return 'float64'
     case 'boolean':
       return 'bool'
-    default:
-      throw new Error(`Unsupported type: ${typeof value}`)
   }
 }
 
