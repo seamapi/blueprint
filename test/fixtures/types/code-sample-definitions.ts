@@ -17,6 +17,9 @@ export default [
           number_prop: 10,
           object_prop: {
             foo: 'bar',
+            nested_object_prop: {
+              foo: 'bar',
+            },
           },
           array_prop: ['foo', 'bar'],
         },
