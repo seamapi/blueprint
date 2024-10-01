@@ -28,7 +28,11 @@ export default [
     description: 'This is the way to list foos',
     request: {
       path: '/foos/list',
-      parameters: {},
+      parameters: {
+        object_prop: {
+          foo: 'bar',
+        },
+      },
     },
     response: {
       body: {
