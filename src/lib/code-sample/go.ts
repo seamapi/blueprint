@@ -210,26 +210,18 @@ export const createGoResponse = (
 
   return Array.isArray(responseValue)
     ? formatGoArrayResponse(
-        {
-          responseArray: responseValue,
-          responseResourceGoStructName,
-          title,
-        },
+        responseValue,
+        responseResourceGoStructName,
+        title,
         context,
       )
     : formatGoResponse(responseValue, responseResourceGoStructName, context)
 }
 
 const formatGoArrayResponse = (
-  {
-    responseArray,
-    responseResourceGoStructName,
-    title,
-  }: {
-    responseArray: Json[]
-    responseResourceGoStructName: string
-    title: string
-  },
+  responseArray: Json[],
+  responseResourceGoStructName: string,
+  title: string,
   context: Context,
 ): string => {
   const formattedItems = responseArray
@@ -316,35 +308,23 @@ const formatGoResponseArrayValue = (
 
   if (isPrimitiveValue(item)) {
     const arrayType = getPrimitiveTypeName(item)
-    const formattedItems = value
-      .map((v) =>
-        formatGoResponseParamValue(
-          {
-            key,
-            value: v,
-            propertyChain: updatedPropertyChain,
-          },
-          context,
-        ),
-      )
-      .join(', ')
-    return `[]${arrayType}{${formattedItems}}`
+    const formattedItems = value.map((v) =>
+      formatGoResponseParamValue(
+        { key, value: v, propertyChain: updatedPropertyChain },
+        context,
+      ),
+    )
+    return `[]${arrayType}{${formattedItems.join(', ')}}`
   } else {
-    const formattedItems = value
-      .map((v) =>
-        formatGoResponseParamValue(
-          {
-            key,
-            value: v,
-            propertyChain: updatedPropertyChain,
-          },
-          context,
-        ),
-      )
-      .join(', ')
+    const formattedItems = value.map((v) =>
+      formatGoResponseParamValue(
+        { key, value: v, propertyChain: updatedPropertyChain },
+        context,
+      ),
+    )
     const structName = getStructName(updatedPropertyChain, context)
 
-    return `[]${structName}{${formattedItems}}`
+    return `[]${structName}{${formattedItems.join(', ')}}`
   }
 }
 
@@ -364,17 +344,17 @@ const formatGoResponseObjectValue = (
   const structName = getStructName(updatedPropertyChain, context)
 
   const formattedEntries = Object.entries(value)
-    .map(
-      ([objKey, val]) =>
-        `${pascalCase(objKey)}: ${formatGoResponseParamValue(
-          {
-            key: objKey,
-            value: val,
-            propertyChain: updatedPropertyChain,
-          },
-          context,
-        )}`,
-    )
+    .map(([objKey, val]) => {
+      const formattedValue = formatGoResponseParamValue(
+        {
+          key: objKey,
+          value: val,
+          propertyChain: updatedPropertyChain,
+        },
+        context,
+      )
+      return `${pascalCase(objKey)}: ${formattedValue}`
+    })
     .join(', ')
 
   return `${defaultGoPackageName}.${structName}{${formattedEntries}}`
@@ -383,10 +363,10 @@ const formatGoResponseObjectValue = (
 const getStructName = (propertyChain: string[], context: Context): string => {
   const { endpoint } = context
 
-  let resourceType
-  if (endpoint.response.responseType !== 'void') {
-    resourceType = endpoint.response.resourceType
-  }
+  const resourceType =
+    endpoint.response.responseType !== 'void'
+      ? endpoint.response.resourceType
+      : undefined
 
   const fullPropertyChain = [resourceType, ...propertyChain]
   return pascalCase(fullPropertyChain.filter(Boolean).join('_'))
