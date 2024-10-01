@@ -10,7 +10,7 @@ const goPackageBasePath = 'github.com/seamapi/go'
 
 export const createGoRequest = (
   { request }: CodeSampleDefinition,
-  _context: Context,
+  context: Context,
 ): string => {
   const isReqWithParams = Object.keys(request.parameters).length !== 0
   const goPackageName = getGoPackageName(request.path)
@@ -21,7 +21,11 @@ export const createGoRequest = (
   })
 
   const requestStructName = getRequestStructName(request.path)
-  const formattedArgs = formatGoArgs(request.parameters)
+  const formattedArgs = formatGoArgs(request.parameters, {
+    ...context,
+    goPackageName,
+    requestStructName,
+  })
   const goSdkRequestArgs = `context.Background()${isReqWithParams ? `, ${goPackageName}.${requestStructName}(${formattedArgs})` : ''}`
 
   const pathParts = request.path.split('/')
@@ -82,53 +86,65 @@ const getRequestStructName = (path: string): string => {
 const removeUntilSecondSlash = (str: string): string =>
   str.replace(/^\/[^/]*/, '')
 
-const formatGoArgs = (jsonParams: NonNullJson): string =>
+type GoContext = Context & {
+  goPackageName: string
+  requestStructName: string
+}
+
+const formatGoArgs = (jsonParams: NonNullJson, context: GoContext): string =>
   Object.entries(jsonParams as Record<string, Json>)
     .map(([paramKey, paramValue]) => {
-      const formattedValue = formatGoValue({ value: paramValue, key: paramKey })
+      const formattedValue = formatGoValue(paramKey, paramValue, context)
       return `${pascalCase(paramKey)}: ${formattedValue}`
     })
     .join(', ')
 
-const formatGoValue = ({
-  value,
-  key,
-}: {
-  value: Json
-  key: string
-}): string => {
+const formatGoValue = (
+  key: string,
+  value: Json,
+  context: GoContext,
+): string => {
   if (value == null) return 'nil'
-  if (typeof value === 'string') return `api.String("${value}")`
-  if (typeof value === 'boolean') return `api.Bool(${value})`
-  if (typeof value === 'number') return `api.Float64(${value})`
+  if (typeof value === 'string')
+    return `${defaultGoPackageName}.String("${value}")`
+  if (typeof value === 'boolean')
+    return `${defaultGoPackageName}.Bool(${value})`
+  if (typeof value === 'number')
+    return `${defaultGoPackageName}.Float64(${value})`
 
   if (Array.isArray(value)) {
-    return formatGoArray(value, key)
+    return formatGoArray(key, value, context)
   }
 
   if (typeof value === 'object') {
-    return formatGoObject(value, key)
+    return formatGoObject(key, value, context)
   }
 
   throw new Error(`Unsupported type: ${typeof value}`)
 }
 
-const formatGoArray = (value: Json[], key: string): string => {
+const formatGoArray = (
+  key: string,
+  value: Json[],
+  context: GoContext,
+): string => {
   if (value.length === 0) {
     // in Go there's no way define an empty array without specifying type
     // and code samples definitions don't include the type annotations
     return 'nil'
   }
 
-  const formattedItems = value.map((v) => formatGoValue({ value: v, key }))
+  const formattedItems = value.map((v) => formatGoValue(key, v, context))
   const item = value[0]
   if (item == null) {
     throw new Error(`Null value in response array for '${key}'`)
   }
 
+  const { goPackageName, requestStructName } = context
+
   const arrayType = isPrimitiveValue(item)
     ? getPrimitiveTypeName(item)
-    : `api.${pascalCase(key)}`
+    : `${goPackageName}.${pascalCase(`${requestStructName} ${key}`)}Item`
 
   return `[${value.length}]${arrayType}{${formattedItems.join(', ')}}`
 }
@@ -149,7 +165,11 @@ const getPrimitiveTypeName = (value: Json): string => {
   }
 }
 
-const formatGoObject = (value: Record<string, Json>, key: string): string => {
+const formatGoObject = (
+  key: string,
+  value: Record<string, Json>,
+  context: GoContext,
+): string => {
   if (Object.keys(value).length === 0) {
     return 'struct{}{}'
   }
@@ -157,11 +177,13 @@ const formatGoObject = (value: Record<string, Json>, key: string): string => {
   const formattedEntries = Object.entries(value)
     .map(
       ([objKey, val]) =>
-        `${pascalCase(objKey)}: ${formatGoValue({ value: val, key: objKey })}`,
+        `${pascalCase(objKey)}: ${formatGoValue(objKey, val, context)}`,
     )
     .join(', ')
 
-  return `api.${pascalCase(key)}{${formattedEntries}}`
+  const { goPackageName, requestStructName } = context
+
+  return `${goPackageName}.${pascalCase(`${requestStructName} ${key}`)}{${formattedEntries}}`
 }
 
 export const createGoResponse = createJsonResponse
