@@ -209,27 +209,21 @@ export const createGoResponse = (
   const responseResourceGoStructName = pascalCase(resourceType)
 
   return Array.isArray(responseValue)
-    ? formatGoArrayResponse(
-        responseValue,
-        responseResourceGoStructName,
-        title,
-        context,
-      )
-    : formatGoResponse(responseValue, responseResourceGoStructName, context)
+    ? formatGoArrayResponse(responseValue, responseResourceGoStructName, title)
+    : formatGoResponse(responseValue, responseResourceGoStructName)
 }
 
 const formatGoArrayResponse = (
   responseArray: Json[],
   responseResourceGoStructName: string,
   title: string,
-  context: Context,
 ): string => {
   const formattedItems = responseArray
     .map((v) => {
       if (v == null) {
         throw new Error(`Null value in response array for '${title}'`)
       }
-      return formatGoResponse(v, responseResourceGoStructName, context)
+      return formatGoResponse(v, responseResourceGoStructName)
     })
     .join(', ')
 
@@ -239,15 +233,17 @@ const formatGoArrayResponse = (
 const formatGoResponse = (
   responseParams: NonNullJson,
   responseResourceGoStructName: string,
-  context: Context,
 ): string => {
-  const params = formatGoResponseParams(responseParams, context)
+  const params = formatGoResponseParams(
+    responseParams,
+    responseResourceGoStructName,
+  )
   return `${defaultGoPackageName}.${responseResourceGoStructName}{${params}}`
 }
 
 const formatGoResponseParams = (
   jsonParams: NonNullJson,
-  context: Context,
+  responseResourceGoStructName: string,
 ): string =>
   Object.entries(jsonParams as Record<string, Json>)
     .map(([paramKey, paramValue]) => {
@@ -257,7 +253,7 @@ const formatGoResponseParams = (
           value: paramValue,
           propertyChain: [],
         },
-        context,
+        responseResourceGoStructName,
       )
       return `${pascalCase(paramKey)}: ${formattedValue}`
     })
@@ -269,7 +265,7 @@ const formatGoResponseParamValue = (
     value,
     propertyChain,
   }: { key: string; value: Json; propertyChain: string[] },
-  context: Context,
+  responseResourceGoStructName: string,
 ): string => {
   if (value === null) return 'nil'
   if (typeof value === 'boolean') return value.toString()
@@ -277,11 +273,17 @@ const formatGoResponseParamValue = (
   if (typeof value === 'string') return `"${value}"`
 
   if (Array.isArray(value)) {
-    return formatGoResponseArrayValue({ key, value, propertyChain }, context)
+    return formatGoResponseArrayValue(
+      { key, value, propertyChain },
+      responseResourceGoStructName,
+    )
   }
 
   if (typeof value === 'object') {
-    return formatGoResponseObjectValue({ key, value, propertyChain }, context)
+    return formatGoResponseObjectValue(
+      { key, value, propertyChain },
+      responseResourceGoStructName,
+    )
   }
 
   throw new Error(`Unsupported type: ${typeof value}`)
@@ -293,7 +295,7 @@ const formatGoResponseArrayValue = (
     value,
     propertyChain,
   }: { key: string; value: Json[]; propertyChain: string[] },
-  context: Context,
+  responseResourceGoStructName: string,
 ): string => {
   if (value.length === 0) {
     return 'nil'
@@ -311,7 +313,7 @@ const formatGoResponseArrayValue = (
     const formattedItems = value.map((v) =>
       formatGoResponseParamValue(
         { key, value: v, propertyChain: updatedPropertyChain },
-        context,
+        responseResourceGoStructName,
       ),
     )
     return `[]${arrayType}{${formattedItems.join(', ')}}`
@@ -319,10 +321,13 @@ const formatGoResponseArrayValue = (
     const formattedItems = value.map((v) =>
       formatGoResponseParamValue(
         { key, value: v, propertyChain: updatedPropertyChain },
-        context,
+        responseResourceGoStructName,
       ),
     )
-    const structName = getStructName(updatedPropertyChain, context)
+    const structName = getStructName(
+      updatedPropertyChain,
+      responseResourceGoStructName,
+    )
 
     return `[]${structName}{${formattedItems.join(', ')}}`
   }
@@ -334,14 +339,17 @@ const formatGoResponseObjectValue = (
     value,
     propertyChain,
   }: { key: string; value: Record<string, Json>; propertyChain: string[] },
-  context: Context,
+  responseResourceGoStructName: string,
 ): string => {
   if (Object.keys(value).length === 0) {
     return 'struct{}{}'
   }
 
   const updatedPropertyChain = [...propertyChain, key]
-  const structName = getStructName(updatedPropertyChain, context)
+  const structName = getStructName(
+    updatedPropertyChain,
+    responseResourceGoStructName,
+  )
 
   const formattedEntries = Object.entries(value)
     .map(([objKey, val]) => {
@@ -351,7 +359,7 @@ const formatGoResponseObjectValue = (
           value: val,
           propertyChain: updatedPropertyChain,
         },
-        context,
+        responseResourceGoStructName,
       )
       return `${pascalCase(objKey)}: ${formattedValue}`
     })
@@ -360,14 +368,10 @@ const formatGoResponseObjectValue = (
   return `${defaultGoPackageName}.${structName}{${formattedEntries}}`
 }
 
-const getStructName = (propertyChain: string[], context: Context): string => {
-  const { endpoint } = context
-
-  const resourceType =
-    endpoint.response.responseType !== 'void'
-      ? endpoint.response.resourceType
-      : undefined
-
-  const fullPropertyChain = [resourceType, ...propertyChain]
-  return pascalCase(fullPropertyChain.filter(Boolean).join('_'))
+const getStructName = (
+  propertyChain: string[],
+  responseResourceGoStructName: string,
+): string => {
+  const fullPropertyChain = [responseResourceGoStructName, ...propertyChain]
+  return pascalCase(fullPropertyChain.join('_'))
 }
