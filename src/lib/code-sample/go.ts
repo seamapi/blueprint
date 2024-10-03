@@ -301,29 +301,25 @@ const formatGoResponseArrayValue = (
     return 'nil'
   }
 
-  const item = value[0]
-  if (item == null) {
+  const rawItem = value[0]
+  if (rawItem == null) {
     throw new Error(`Null value in response array for '${key}'`)
   }
 
   const updatedPropertyChain = [...propertyChain, key]
 
-  if (isPrimitiveValue(item)) {
-    const arrayType = getPrimitiveTypeName(item)
-    const formattedItems = value.map((v) =>
-      formatGoResponseParamValue(
-        { key, value: v, propertyChain: updatedPropertyChain },
-        responseResourceGoStructName,
-      ),
-    )
+  const formattedItems = value.map((v) =>
+    formatGoResponseParamValue(
+      { key, value: v, propertyChain: updatedPropertyChain },
+      responseResourceGoStructName,
+    ),
+  )
+
+  if (isPrimitiveValue(rawItem)) {
+    const arrayType = getPrimitiveTypeName(rawItem)
+
     return `[]${arrayType}{${formattedItems.join(', ')}}`
   } else {
-    const formattedItems = value.map((v) =>
-      formatGoResponseParamValue(
-        { key, value: v, propertyChain: updatedPropertyChain },
-        responseResourceGoStructName,
-      ),
-    )
     const structName = getStructName(
       updatedPropertyChain,
       responseResourceGoStructName,
