@@ -9,6 +9,7 @@ import { JsonSchema } from 'lib/json.js'
 
 import { formatCodeRecords } from './format.js'
 import { createGoRequest, createGoResponse } from './go.js'
+import { createJavaRequest, createJavaResponse } from './java.js'
 import {
   createJavascriptRequest,
   createJavascriptResponse,
@@ -49,12 +50,13 @@ const CodeSampleSyntaxSchema = z.enum([
   'ruby',
   'bash',
   'go',
+  'java',
 ])
 
 export type CodeSampleSyntax = z.infer<typeof CodeSampleSyntaxSchema>
 
 const CodeSchema = z.record(
-  z.enum(['javascript', 'python', 'php', 'ruby', 'seam_cli', 'go']),
+  z.enum(['javascript', 'python', 'php', 'ruby', 'seam_cli', 'go', 'java']),
   z.object({
     title: z.string().min(1),
     request: z.string(),
@@ -125,6 +127,13 @@ export const createCodeSample = async (
       request: createGoRequest(codeSampleDefinition, context),
       response: createGoResponse(codeSampleDefinition, context),
       request_syntax: 'go',
+      response_syntax: 'json',
+    },
+    java: {
+      title: 'Java',
+      request: createJavaRequest(codeSampleDefinition, context),
+      response: createJavaResponse(codeSampleDefinition, context),
+      request_syntax: 'java',
       response_syntax: 'json',
     },
   }
