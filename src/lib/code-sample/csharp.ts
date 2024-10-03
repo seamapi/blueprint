@@ -12,7 +12,7 @@ export const createCsharpRequest = (
   const parts = request.path.split('/').slice(1)
   const requestArgs = formatCsharpArgs(request.parameters)
 
-  return `$seam.${parts.map((p) => pascalCase(p)).join('.')}(${requestArgs})`
+  return `seam.${parts.map((p) => pascalCase(p)).join('.')}(${requestArgs})`
 }
 
 const formatCsharpArgs = (jsonParams: NonNullJson): string =>
