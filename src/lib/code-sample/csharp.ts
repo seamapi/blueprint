@@ -52,7 +52,7 @@ const formatCsharpArray = (key: string, value: Json[]): string => {
     ? getPrimitiveTypeName(item)
     : 'object'
 
-  return `new ${arrayType}[] {${formattedItems.join(', ')}}`
+  return `new ${arrayType}[] { ${formattedItems.join(', ')}} `
 }
 
 const isPrimitiveValue = (value: Json): boolean =>
@@ -83,7 +83,7 @@ const formatCsharpObject = (value: Record<string, Json>): string => {
     )
     .join(', ')
 
-  return `new {${formattedEntries}}`
+  return `new { ${formattedEntries} }`
 }
 
 export const createCsharpResponse = (
