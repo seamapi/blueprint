@@ -7,6 +7,7 @@ import {
 } from 'lib/code-sample/seam-cli.js'
 import { JsonSchema } from 'lib/json.js'
 
+import { createCsharpRequest, createCsharpResponse } from './csharp.js'
 import { formatCodeRecords } from './format.js'
 import { createGoRequest, createGoResponse } from './go.js'
 import {
@@ -16,7 +17,6 @@ import {
 import { createPhpRequest, createPhpResponse } from './php.js'
 import { createPythonRequest, createPythonResponse } from './python.js'
 import { createRubyRequest, createRubyResponse } from './ruby.js'
-import { createCsharpRequest, createCsharpResponse } from './csharp.js'
 
 export const CodeSampleDefinitionSchema = z.object({
   title: z.string().trim().min(1),
