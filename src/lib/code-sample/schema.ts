@@ -16,6 +16,7 @@ import {
 import { createPhpRequest, createPhpResponse } from './php.js'
 import { createPythonRequest, createPythonResponse } from './python.js'
 import { createRubyRequest, createRubyResponse } from './ruby.js'
+import { createCsharpRequest, createCsharpResponse } from './csharp.js'
 
 export const CodeSampleDefinitionSchema = z.object({
   title: z.string().trim().min(1),
@@ -49,12 +50,13 @@ const CodeSampleSyntaxSchema = z.enum([
   'ruby',
   'bash',
   'go',
+  'csharp',
 ])
 
 export type CodeSampleSyntax = z.infer<typeof CodeSampleSyntaxSchema>
 
 const CodeSchema = z.record(
-  z.enum(['javascript', 'python', 'php', 'ruby', 'seam_cli', 'go']),
+  z.enum(['javascript', 'python', 'php', 'ruby', 'seam_cli', 'go', 'csharp']),
   z.object({
     title: z.string().min(1),
     request: z.string(),
@@ -126,6 +128,13 @@ export const createCodeSample = async (
       response: createGoResponse(codeSampleDefinition, context),
       request_syntax: 'go',
       response_syntax: 'json',
+    },
+    csharp: {
+      title: 'C#',
+      request: createCsharpRequest(codeSampleDefinition, context),
+      response: createCsharpResponse(codeSampleDefinition, context),
+      request_syntax: 'csharp',
+      response_syntax: 'csharp',
     },
   }
 
