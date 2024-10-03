@@ -2,7 +2,6 @@ import { pascalCase } from 'change-case'
 
 import type { Json, NonNullJson } from 'lib/json.js'
 
-import { createJsonResponse } from './json.js'
 import type { CodeSampleDefinition, Context } from './schema.js'
 
 const defaultGoPackageName = 'api'
@@ -10,7 +9,7 @@ const goPackageBasePath = 'github.com/seamapi/go'
 
 export const createGoRequest = (
   { request }: CodeSampleDefinition,
-  context: Context,
+  _context: Context,
 ): string => {
   const isReqWithParams = Object.keys(request.parameters).length !== 0
   const goPackageName = getGoPackageName(request.path)
@@ -21,8 +20,7 @@ export const createGoRequest = (
   })
 
   const requestStructName = getRequestStructName(request.path)
-  const formattedArgs = formatGoArgs(request.parameters, {
-    ...context,
+  const formattedArgs = formatGoRequestArgs(request.parameters, {
     goPackageName,
     requestStructName,
   })
@@ -86,20 +84,27 @@ const getRequestStructName = (path: string): string => {
 const removeUntilSecondSlash = (str: string): string =>
   str.replace(/^\/[^/]*/, '')
 
-interface GoContext extends Context {
+interface GoContext {
   goPackageName: string
   requestStructName: string
 }
 
-const formatGoArgs = (jsonParams: NonNullJson, context: GoContext): string =>
+const formatGoRequestArgs = (
+  jsonParams: NonNullJson,
+  context: GoContext,
+): string =>
   Object.entries(jsonParams as Record<string, Json>)
     .map(([paramKey, paramValue]) => {
-      const formattedValue = formatGoValue(paramKey, paramValue, context)
+      const formattedValue = formatGoRequestArgValue(
+        paramKey,
+        paramValue,
+        context,
+      )
       return `${pascalCase(paramKey)}: ${formattedValue}`
     })
     .join(', ')
 
-const formatGoValue = (
+const formatGoRequestArgValue = (
   key: string,
   value: Json,
   context: GoContext,
@@ -113,17 +118,17 @@ const formatGoValue = (
     return `${defaultGoPackageName}.Float64(${value})`
 
   if (Array.isArray(value)) {
-    return formatGoArray(key, value, context)
+    return formatGoRequestArrayValue(key, value, context)
   }
 
   if (typeof value === 'object') {
-    return formatGoObject(key, value, context)
+    return formatGoRequestObjectValue(key, value, context)
   }
 
   throw new Error(`Unsupported type: ${typeof value}`)
 }
 
-const formatGoArray = (
+const formatGoRequestArrayValue = (
   key: string,
   value: Json[],
   context: GoContext,
@@ -134,7 +139,9 @@ const formatGoArray = (
     return 'nil'
   }
 
-  const formattedItems = value.map((v) => formatGoValue(key, v, context))
+  const formattedItems = value.map((v) =>
+    formatGoRequestArgValue(key, v, context),
+  )
   const item = value[0]
   if (item == null) {
     throw new Error(`Null value in response array for '${key}'`)
@@ -163,7 +170,7 @@ const getPrimitiveTypeName = (value: string | number | boolean): string => {
   }
 }
 
-const formatGoObject = (
+const formatGoRequestObjectValue = (
   key: string,
   value: Record<string, Json>,
   context: GoContext,
@@ -175,7 +182,7 @@ const formatGoObject = (
   const formattedEntries = Object.entries(value)
     .map(
       ([objKey, val]) =>
-        `${pascalCase(objKey)}: ${formatGoValue(objKey, val, context)}`,
+        `${pascalCase(objKey)}: ${formatGoRequestArgValue(objKey, val, context)}`,
     )
     .join(', ')
 
@@ -184,4 +191,183 @@ const formatGoObject = (
   return `${goPackageName}.${pascalCase(`${requestStructName} ${key}`)}{${formattedEntries}}`
 }
 
-export const createGoResponse = createJsonResponse
+export const createGoResponse = (
+  { response, title }: CodeSampleDefinition,
+  context: Context,
+): string => {
+  const { endpoint } = context
+
+  if (endpoint.response.responseType === 'void') return 'nil'
+
+  const { responseKey, resourceType } = endpoint.response
+  const responseValue = response?.body?.[responseKey]
+
+  if (responseValue == null) {
+    throw new Error(`Missing ${responseKey} for '${title}'`)
+  }
+
+  const responseResourceGoStructName = pascalCase(resourceType)
+
+  return Array.isArray(responseValue)
+    ? formatGoArrayResponse(responseValue, responseResourceGoStructName, title)
+    : formatGoResponse(responseValue, responseResourceGoStructName)
+}
+
+const formatGoArrayResponse = (
+  responseArray: Json[],
+  responseResourceGoStructName: string,
+  title: string,
+): string => {
+  const formattedItems = responseArray
+    .map((v) => {
+      if (v == null) {
+        throw new Error(`Null value in response array for '${title}'`)
+      }
+      return formatGoResponse(v, responseResourceGoStructName)
+    })
+    .join(', ')
+
+  return `[]${defaultGoPackageName}.${responseResourceGoStructName}{${formattedItems}}`
+}
+
+const formatGoResponse = (
+  responseParams: NonNullJson,
+  responseResourceGoStructName: string,
+): string => {
+  const params = formatGoResponseParams(
+    responseParams,
+    responseResourceGoStructName,
+  )
+  return `${defaultGoPackageName}.${responseResourceGoStructName}{${params}}`
+}
+
+const formatGoResponseParams = (
+  jsonParams: NonNullJson,
+  responseResourceGoStructName: string,
+): string =>
+  Object.entries(jsonParams as Record<string, Json>)
+    .map(([paramKey, paramValue]) => {
+      const formattedValue = formatGoResponseParamValue(
+        {
+          key: paramKey,
+          value: paramValue,
+          propertyChain: [],
+        },
+        responseResourceGoStructName,
+      )
+      return `${pascalCase(paramKey)}: ${formattedValue}`
+    })
+    .join(', ')
+
+const formatGoResponseParamValue = (
+  {
+    key,
+    value,
+    propertyChain,
+  }: { key: string; value: Json; propertyChain: string[] },
+  responseResourceGoStructName: string,
+): string => {
+  if (value === null) return 'nil'
+  if (typeof value === 'boolean') return value.toString()
+  if (typeof value === 'number') return value.toString()
+  if (typeof value === 'string') return `"${value}"`
+
+  if (Array.isArray(value)) {
+    return formatGoResponseArrayValue(
+      { key, value, propertyChain },
+      responseResourceGoStructName,
+    )
+  }
+
+  if (typeof value === 'object') {
+    return formatGoResponseObjectValue(
+      { key, value, propertyChain },
+      responseResourceGoStructName,
+    )
+  }
+
+  throw new Error(`Unsupported type: ${typeof value}`)
+}
+
+const formatGoResponseArrayValue = (
+  {
+    key,
+    value,
+    propertyChain,
+  }: { key: string; value: Json[]; propertyChain: string[] },
+  responseResourceGoStructName: string,
+): string => {
+  if (value.length === 0) {
+    return 'nil'
+  }
+
+  const rawItem = value[0]
+  if (rawItem == null) {
+    throw new Error(`Null value in response array for '${key}'`)
+  }
+
+  const updatedPropertyChain = [...propertyChain, key]
+
+  const formattedItems = value.map((v) =>
+    formatGoResponseParamValue(
+      { key, value: v, propertyChain: updatedPropertyChain },
+      responseResourceGoStructName,
+    ),
+  )
+
+  if (isPrimitiveValue(rawItem)) {
+    const arrayType = getPrimitiveTypeName(rawItem)
+
+    return `[]${arrayType}{${formattedItems.join(', ')}}`
+  } else {
+    const structName = getStructName(
+      updatedPropertyChain,
+      responseResourceGoStructName,
+    )
+
+    return `[]${structName}{${formattedItems.join(', ')}}`
+  }
+}
+
+const formatGoResponseObjectValue = (
+  {
+    key,
+    value,
+    propertyChain,
+  }: { key: string; value: Record<string, Json>; propertyChain: string[] },
+  responseResourceGoStructName: string,
+): string => {
+  if (Object.keys(value).length === 0) {
+    return 'struct{}{}'
+  }
+
+  const updatedPropertyChain = [...propertyChain, key]
+  const structName = getStructName(
+    updatedPropertyChain,
+    responseResourceGoStructName,
+  )
+
+  const formattedEntries = Object.entries(value)
+    .map(([objKey, val]) => {
+      const formattedValue = formatGoResponseParamValue(
+        {
+          key: objKey,
+          value: val,
+          propertyChain: updatedPropertyChain,
+        },
+        responseResourceGoStructName,
+      )
+      return `${pascalCase(objKey)}: ${formattedValue}`
+    })
+    .join(', ')
+
+  return `${defaultGoPackageName}.${structName}{${formattedEntries}}`
+}
+
+const getStructName = (
+  propertyChain: string[],
+  responseResourceGoStructName: string,
+): string => {
+  const fullPropertyChain = [responseResourceGoStructName, ...propertyChain]
+  return pascalCase(fullPropertyChain.join('_'))
+}
