@@ -7,6 +7,7 @@ import {
 } from 'lib/code-sample/seam-cli.js'
 import { JsonSchema } from 'lib/json.js'
 
+import { createCsharpRequest, createCsharpResponse } from './csharp.js'
 import { formatCodeRecords } from './format.js'
 import { createGoRequest, createGoResponse } from './go.js'
 import { createJavaRequest, createJavaResponse } from './java.js'
@@ -51,12 +52,22 @@ const CodeSampleSyntaxSchema = z.enum([
   'bash',
   'go',
   'java',
+  'csharp',
 ])
 
 export type CodeSampleSyntax = z.infer<typeof CodeSampleSyntaxSchema>
 
 const CodeSchema = z.record(
-  z.enum(['javascript', 'python', 'php', 'ruby', 'seam_cli', 'go', 'java']),
+  z.enum([
+    'javascript',
+    'python',
+    'php',
+    'ruby',
+    'seam_cli',
+    'go',
+    'java',
+    'csharp',
+  ]),
   z.object({
     title: z.string().min(1),
     request: z.string(),
@@ -134,6 +145,13 @@ export const createCodeSample = async (
       request: createJavaRequest(codeSampleDefinition, context),
       response: createJavaResponse(codeSampleDefinition, context),
       request_syntax: 'java',
+      response_syntax: 'json',
+    },
+    csharp: {
+      title: 'C#',
+      request: createCsharpRequest(codeSampleDefinition, context),
+      response: createCsharpResponse(codeSampleDefinition, context),
+      request_syntax: 'csharp',
       response_syntax: 'json',
     },
   }
