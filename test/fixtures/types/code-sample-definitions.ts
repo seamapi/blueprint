@@ -17,6 +17,9 @@ export default [
           number_prop: 10,
           object_prop: {
             foo: 'bar',
+            nested_object_prop: {
+              foo: 'bar',
+            },
           },
           array_prop: ['foo', 'bar'],
         },
@@ -28,7 +31,11 @@ export default [
     description: 'This is the way to list foos',
     request: {
       path: '/foos/list',
-      parameters: {},
+      parameters: {
+        object_prop: {
+          foo: 'bar',
+        },
+      },
     },
     response: {
       body: {
