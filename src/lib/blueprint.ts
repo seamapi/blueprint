@@ -719,13 +719,22 @@ const createResponse = (
   }
 
   const description = okResponse.description ?? ''
+
+  if (!('x-response-key' in parsedOperation)) {
+    throw new Error(`Missing responseKey for ${path}`)
+  }
+
   const responseKey = parsedOperation['x-response-key']
 
-  if (responseKey == null) {
+  if (responseKey === null) {
     return {
       responseType: 'void',
       description,
     }
+  }
+
+  if (responseKey == null) {
+    throw new Error(`Missing responseKey for ${path}`)
   }
 
   const content = 'content' in okResponse ? okResponse.content : null
