@@ -14,6 +14,7 @@ export const ParameterSchema = z.object({
   deprecated: z.boolean().default(false),
   'x-undocumented': z.string().default(''),
   'x-deprecated': z.string().default(''),
+  'x-draft': z.string().default(''),
 })
 
 const ResponseSchema = z.record(
@@ -63,6 +64,7 @@ export const OpenapiOperationSchema = z.object({
   'x-title': z.string().default(''),
   'x-undocumented': z.string().default(''),
   'x-deprecated': z.string().default(''),
+  'x-draft': z.string().default(''),
 })
 
 export const PropertySchema: z.ZodSchema<any> = z.object({
@@ -71,6 +73,7 @@ export const PropertySchema: z.ZodSchema<any> = z.object({
   deprecated: z.boolean().default(false),
   'x-undocumented': z.string().default(''),
   'x-deprecated': z.string().default(''),
+  'x-draft': z.string().default(''),
   enum: z.array(z.string().or(z.boolean())).optional(),
   $ref: z.string().optional(),
   format: z.string().optional(),

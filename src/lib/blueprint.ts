@@ -32,6 +32,7 @@ export interface Route {
   subroutes: Route[]
   isUndocumented: boolean
   isDeprecated: boolean
+  isDraft: boolean
 }
 
 export interface Resource {
@@ -44,6 +45,7 @@ export interface Namespace {
   path: string
   isDeprecated: boolean
   isUndocumented: boolean
+  isDraft: boolean
 }
 
 export interface Endpoint {
@@ -53,6 +55,7 @@ export interface Endpoint {
   description: string
   isUndocumented: boolean
   isDeprecated: boolean
+  isDraft: boolean
   deprecationMessage: string
   request: Request
   response: Response
@@ -64,6 +67,7 @@ interface BaseParameter {
   isRequired: boolean
   isUndocumented: boolean
   isDeprecated: boolean
+  isDraft: boolean
   deprecationMessage: string
   description: string
 }
@@ -161,6 +165,7 @@ interface BaseProperty {
   isDeprecated: boolean
   deprecationMessage: string
   isUndocumented: boolean
+  isDraft: boolean
 }
 
 export type Property =
@@ -318,6 +323,7 @@ const createRoutes = async (
   return routes
     .map(addIsDeprecatedToRoute)
     .map(addIsUndocumentedToRoute)
+    .map(addIsDraftToRoute)
     .map(addNamespaceStatusToRoute)
 }
 
@@ -377,12 +383,14 @@ const createRoute = async (
             path: namespace,
             isDeprecated: false,
             isUndocumented: false,
+            isDraft: false,
           }
         : null,
     endpoints: await createEndpoints(path, pathItem, context),
     subroutes: [],
     isUndocumented: false,
     isDeprecated: false,
+    isDraft: false,
   }
 }
 
@@ -394,6 +402,11 @@ const addIsDeprecatedToRoute = (route: Route): Route => ({
 const addIsUndocumentedToRoute = (route: Route): Route => ({
   ...route,
   isUndocumented: route.endpoints.every((endpoint) => endpoint.isUndocumented),
+})
+
+const addIsDraftToRoute = (route: Route): Route => ({
+  ...route,
+  isDraft: route.endpoints.every((endpoint) => endpoint.isDraft),
 })
 
 const addNamespaceStatusToRoute = (
@@ -408,6 +421,7 @@ const addNamespaceStatusToRoute = (
   )
   const isNamespaceDeprecated = namespaceRoutes.every((r) => r.isDeprecated)
   const isNamespaceUndocumented = namespaceRoutes.every((r) => r.isUndocumented)
+  const isNamespaceDraft = namespaceRoutes.every((r) => r.isDraft)
 
   return {
     ...route,
@@ -415,6 +429,7 @@ const addNamespaceStatusToRoute = (
       ...route.namespace,
       isDeprecated: isNamespaceDeprecated,
       isUndocumented: isNamespaceUndocumented,
+      isDraft: isNamespaceDraft,
     },
   }
 }
@@ -472,6 +487,8 @@ const createEndpoint = async (
 
   const isDeprecated = parsedOperation.deprecated
 
+  const isDraft = parsedOperation['x-draft'].length > 0
+
   const deprecationMessage = parsedOperation['x-deprecated']
 
   const request = createRequest(methods, operation, path)
@@ -483,6 +500,7 @@ const createEndpoint = async (
     description,
     isUndocumented,
     isDeprecated,
+    isDraft,
     deprecationMessage,
     response: createResponse(operation, path),
     request,
@@ -600,6 +618,7 @@ const createParameter = (
     isDeprecated: parsedProp['x-deprecated'].length > 0,
     deprecationMessage: parsedProp['x-deprecated'],
     isUndocumented: parsedProp['x-undocumented'].length > 0,
+    isDraft: parsedProp['x-draft'].length > 0,
   }
 
   switch (parsedProp.type) {
@@ -803,6 +822,7 @@ const createProperty = (
     isDeprecated: parsedProp['x-deprecated'].length > 0,
     deprecationMessage: parsedProp['x-deprecated'],
     isUndocumented: parsedProp['x-undocumented'].length > 0,
+    isDraft: parsedProp['x-draft'].length > 0,
   }
 
   switch (parsedProp.type) {
