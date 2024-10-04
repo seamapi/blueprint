@@ -45,6 +45,7 @@ test('createProperties: uses provided values', (t) => {
       deprecated: true,
       'x-deprecated': 'This property is deprecated',
       'x-undocumented': 'true',
+      'x-draft': 'true',
     },
   }
 
@@ -76,6 +77,10 @@ test('createProperties: uses provided values', (t) => {
   t.true(
     property.isUndocumented,
     'isUndocumented should be true when x-undocumented is provided',
+  )
+  t.true(
+    property.isDraft,
+    'isDraft should be true when x-draft is provided',
   )
 })
 

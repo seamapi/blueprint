@@ -83,4 +83,15 @@ export default [
       body: {},
     },
   },
+  {
+    title: 'Draft endpoint',
+    description: 'This is a draft endpoint',
+    request: {
+      path: '/draft/endpoint',
+      parameters: {},
+    },
+    response: {
+      body: {},
+    },
+  },
 ]
