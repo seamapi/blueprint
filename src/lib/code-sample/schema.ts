@@ -152,7 +152,7 @@ export const createCodeSample = async (
       request: createCsharpRequest(codeSampleDefinition, context),
       response: createCsharpResponse(codeSampleDefinition, context),
       request_syntax: 'csharp',
-      response_syntax: 'csharp',
+      response_syntax: 'json',
     },
   }
 
