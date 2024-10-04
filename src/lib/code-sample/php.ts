@@ -10,7 +10,7 @@ export const createPhpRequest = (
 ): string => {
   const parts = request.path.split('/')
   const requestParams = Object.entries(request.parameters)
-    .map(([key, value]) => `${key}:${JSON.stringify(value)}`)
+    .map(([key, value]) => `${key}: ${formatPhpValue(value)}`)
     .join(',')
 
   return `<?php\n$seam${parts.map((p) => snakeCase(p)).join('->')}(${requestParams})`
