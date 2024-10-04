@@ -78,10 +78,7 @@ test('createProperties: uses provided values', (t) => {
     property.isUndocumented,
     'isUndocumented should be true when x-undocumented is provided',
   )
-  t.true(
-    property.isDraft,
-    'isDraft should be true when x-draft is provided',
-  )
+  t.true(property.isDraft, 'isDraft should be true when x-draft is provided')
 })
 
 const postEndpoint: OpenapiOperation = {
