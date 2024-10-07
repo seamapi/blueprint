@@ -28,6 +28,11 @@ export default {
             type: 'string',
             'x-undocumented': 'This prop is intentionally left undocumented.',
           },
+          draft_prop: {
+            description: 'This prop is draft',
+            type: 'string',
+            'x-draft': 'This prop is intentionally left draft.',
+          },
           nullable_prop: {
             description: 'This prop is nullable',
             type: 'string',
@@ -243,6 +248,32 @@ export default {
         tags: ['/deprecated/undocumented'],
         'x-undocumented': 'true',
         'x-title': 'Deprecated and undocumented endpoint',
+      },
+    },
+    '/draft/endpoint': {
+      get: {
+        operationId: 'draftEndpointGet',
+        responses: {
+          200: {
+            content: {
+              'application/json': {
+                schema: {
+                  properties: {
+                    ok: { type: 'boolean' },
+                  },
+                  required: ['ok'],
+                  type: 'object',
+                },
+              },
+            },
+            description: 'Draft endpoint',
+          },
+        },
+        security: [],
+        summary: '/draft/endpoint',
+        tags: ['/draft'],
+        'x-draft': 'true',
+        'x-title': 'Draft endpoint',
       },
     },
   },

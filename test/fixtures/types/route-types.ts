@@ -12,6 +12,7 @@ export interface Routes {
         name: string
         deprecated_prop?: string
         undocumented_prop?: string
+        draft_prop?: string
         nullable_prop?: string
         number_prop?: number
         object_prop?: Record<string, string>
@@ -32,6 +33,7 @@ export interface Routes {
         name: string
         deprecated_prop?: string
         undocumented_prop?: string
+        draft_prop?: string
         nullable_prop?: string
         number_prop?: number
         object_prop?: Record<string, string>
@@ -55,6 +57,15 @@ export interface Routes {
   }
   '/deprecated/undocumented/endpoint': {
     route: '/deprecated/undocumented/endpoint'
+    method: 'GET'
+    queryParams: Record<string, unknown>
+    jsonBody: Record<string, unknown>
+    commonParams: Record<string, unknown>
+    formData: Record<string, unknown>
+    jsonResponse: Record<string, never>
+  }
+  '/draft/endpoint': {
+    route: '/draft/endpoint'
     method: 'GET'
     queryParams: Record<string, unknown>
     jsonBody: Record<string, unknown>

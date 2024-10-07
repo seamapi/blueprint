@@ -28,5 +28,10 @@ export const routes = {
       methods: ['GET'],
       jsonResponse: z.object({}),
     },
+    '/draft/endpoint': {
+      auth: 'none',
+      methods: ['GET'],
+      jsonResponse: z.object({}),
+    },
   },
 } as const
