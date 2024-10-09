@@ -19,4 +19,5 @@ export {
   type CodeSampleDefinitionInput,
   CodeSampleDefinitionSchema,
   type CodeSampleSyntax,
+  type CodeSampleSdk,
 } from './code-sample/index.js'
