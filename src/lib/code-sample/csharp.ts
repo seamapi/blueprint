@@ -86,23 +86,4 @@ const formatCsharpObject = (value: Record<string, Json>): string => {
   return `new { ${formattedEntries} }`
 }
 
-export const createCsharpResponse = (
-  codeSampleDefinition: CodeSampleDefinition,
-  context: Context,
-): string => {
-  const { response, title } = codeSampleDefinition
-  const { endpoint } = context
-
-  if (endpoint.response.responseType === 'void') return 'null'
-
-  const { responseKey, resourceType } = endpoint.response
-  const responseValue = response?.body?.[responseKey]
-
-  if (responseValue == null) {
-    throw new Error(`Missing ${responseKey} for '${title}'`)
-  }
-
-  return Array.isArray(responseValue)
-    ? `System.Collections.Generic.List\`1[Seam.Model.${pascalCase(resourceType)}]`
-    : createJsonResponse(codeSampleDefinition, context)
-}
+export const createCsharpResponse = createJsonResponse
