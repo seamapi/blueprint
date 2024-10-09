@@ -59,10 +59,12 @@ export interface Endpoint {
   path: string
   name: string
   description: string
-  isUndocumented: boolean
   isDeprecated: boolean
-  isDraft: boolean
   deprecationMessage: string
+  isUndocumented: boolean
+  undocumentedMessage: string
+  isDraft: boolean
+  draftMessage: string
   request: Request
   response: Response
   codeSamples: CodeSample[]
@@ -70,12 +72,14 @@ export interface Endpoint {
 
 interface BaseParameter {
   name: string
-  isRequired: boolean
-  isUndocumented: boolean
-  isDeprecated: boolean
-  isDraft: boolean
-  deprecationMessage: string
   description: string
+  isRequired: boolean
+  isDeprecated: boolean
+  deprecationMessage: string
+  isUndocumented: boolean
+  undocumentedMessage: string
+  isDraft: boolean
+  draftMessage: string
 }
 
 interface StringParameter extends BaseParameter {
@@ -171,7 +175,9 @@ interface BaseProperty {
   isDeprecated: boolean
   deprecationMessage: string
   isUndocumented: boolean
+  undocumentedMessage: string
   isDraft: boolean
+  draftMessage: string
 }
 
 export type Property =
@@ -490,12 +496,13 @@ const createEndpoint = async (
   const description = parsedOperation.description
 
   const isUndocumented = parsedOperation['x-undocumented'].length > 0
+  const undocumentedMessage = parsedOperation['x-undocumented']
 
   const isDeprecated = parsedOperation.deprecated
+  const deprecationMessage = parsedOperation['x-deprecated']
 
   const isDraft = parsedOperation['x-draft'].length > 0
-
-  const deprecationMessage = parsedOperation['x-deprecated']
+  const draftMessage = parsedOperation['x-draft']
 
   const request = createRequest(methods, operation, path)
 
@@ -504,10 +511,12 @@ const createEndpoint = async (
     name,
     path: endpointPath,
     description,
-    isUndocumented,
     isDeprecated,
-    isDraft,
     deprecationMessage,
+    isUndocumented,
+    undocumentedMessage,
+    isDraft,
+    draftMessage,
     response: createResponse(operation, path),
     request,
   }
@@ -624,7 +633,9 @@ const createParameter = (
     isDeprecated: parsedProp['x-deprecated'].length > 0,
     deprecationMessage: parsedProp['x-deprecated'],
     isUndocumented: parsedProp['x-undocumented'].length > 0,
+    undocumentedMessage: parsedProp['x-undocumented'],
     isDraft: parsedProp['x-draft'].length > 0,
+    draftMessage: parsedProp['x-draft'],
   }
 
   switch (parsedProp.type) {
@@ -843,7 +854,9 @@ const createProperty = (
     isDeprecated: parsedProp['x-deprecated'].length > 0,
     deprecationMessage: parsedProp['x-deprecated'],
     isUndocumented: parsedProp['x-undocumented'].length > 0,
+    undocumentedMessage: parsedProp['x-undocumented'],
     isDraft: parsedProp['x-draft'].length > 0,
+    draftMessage: parsedProp['x-draft'],
   }
 
   switch (parsedProp.type) {
