@@ -73,6 +73,10 @@ export interface OpenapiSchema {
   required?: string[]
   format?: string
   description?: string
+  deprecated?: boolean
+  'x-deprecated'?: string
+  'x-draft'?: string
+  'x-undocumented'?: string
 }
 
 export interface OpenapiComponents {

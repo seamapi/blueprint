@@ -70,6 +70,46 @@ export default {
         },
         required: ['plane_id', 'name'],
       },
+      deprecated_resource: {
+        type: 'object',
+        description: 'A deprecated resource.',
+        properties: {
+          deprecated_resource_id: {
+            description: 'Deprecated resource id',
+            format: 'uuid',
+            type: 'string',
+          },
+        },
+        required: ['deprecated_resource_id'],
+        deprecated: true,
+        'x-deprecated': 'This resource is deprecated',
+      },
+      draft_resource: {
+        type: 'object',
+        description: 'A draft resource.',
+        properties: {
+          draft_resource_id: {
+            description: 'Draft resource id',
+            format: 'uuid',
+            type: 'string',
+          },
+        },
+        required: ['draft_resource_id'],
+        'x-draft': 'This resource is draft',
+      },
+      undocumented_resource: {
+        type: 'object',
+        description: 'A undocumented resource.',
+        properties: {
+          undocumented_resource_id: {
+            description: 'Undocumented resource id',
+            format: 'uuid',
+            type: 'string',
+          },
+        },
+        required: ['undocumented_resource_id'],
+        'x-undocumented': 'This resource is undocumented',
+      },
     },
   },
   paths: {

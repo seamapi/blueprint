@@ -39,6 +39,12 @@ export interface Resource {
   resourceType: string
   properties: Property[]
   description: string
+  isDeprecated: boolean
+  deprecationMessage: string
+  isUndocumented: boolean
+  undocumentedMessage: string
+  isDraft: boolean
+  draftMessage: string
 }
 
 export interface Namespace {
@@ -701,6 +707,12 @@ const createResources = (
             resourceType: schemaName,
             properties: createProperties(schema.properties, [schemaName]),
             description: schema.description ?? '',
+            isDeprecated: schema.deprecated ?? false,
+            deprecationMessage: schema['x-deprecated'] ?? '',
+            isUndocumented: (schema['x-undocumented'] ?? '').length > 0,
+            undocumentedMessage: schema['x-undocumented'] ?? '',
+            isDraft: (schema['x-draft'] ?? '').length > 0,
+            draftMessage: schema['x-draft'] ?? '',
           },
         }
       }
