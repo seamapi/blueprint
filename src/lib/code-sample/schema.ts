@@ -43,6 +43,17 @@ export type CodeSampleDefinitionInput = z.input<
 
 export type CodeSampleDefinition = z.output<typeof CodeSampleDefinitionSchema>
 
+const CodeSampleSdkSchema = z.enum([
+  'javascript',
+  'python',
+  'php',
+  'ruby',
+  'seam_cli',
+  'go',
+  'java',
+  'csharp',
+])
+
 const CodeSampleSyntaxSchema = z.enum([
   'javascript',
   'json',
@@ -57,17 +68,10 @@ const CodeSampleSyntaxSchema = z.enum([
 
 export type CodeSampleSyntax = z.infer<typeof CodeSampleSyntaxSchema>
 
+export type CodeSampleSdk = z.infer<typeof CodeSampleSdkSchema>
+
 const CodeSchema = z.record(
-  z.enum([
-    'javascript',
-    'python',
-    'php',
-    'ruby',
-    'seam_cli',
-    'go',
-    'java',
-    'csharp',
-  ]),
+  CodeSampleSdkSchema,
   z.object({
     title: z.string().min(1),
     request: z.string(),
