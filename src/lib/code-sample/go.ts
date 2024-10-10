@@ -24,7 +24,7 @@ export const createGoRequest = (
     goPackageName,
     requestStructName,
   })
-  const goSdkRequestArgs = `context.Background()${isReqWithParams ? `, ${goPackageName}.${requestStructName}(${formattedArgs})` : ''}`
+  const goSdkRequestArgs = `context.Background()${isReqWithParams ? `, ${goPackageName}.${requestStructName}{${formattedArgs}}` : ''}`
 
   const pathParts = request.path.split('/')
 
