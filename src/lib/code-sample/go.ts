@@ -30,7 +30,9 @@ export const createGoRequest = (
 
   return `${goSdkImports}
 
+  func main() {
   client${pathParts.map((p) => pascalCase(p)).join('.')}(${goSdkRequestArgs})
+  }
   `.trim()
 }
 
