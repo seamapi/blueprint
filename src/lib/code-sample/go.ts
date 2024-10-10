@@ -28,7 +28,8 @@ export const createGoRequest = (
 
   const pathParts = request.path.split('/')
 
-  return `${goSdkImports}
+  return `package main
+  ${goSdkImports}
 
   func main() {
   client${pathParts.map((p) => pascalCase(p)).join('.')}(${goSdkRequestArgs})
