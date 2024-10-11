@@ -105,7 +105,7 @@ const formatGoRequestArgs = (
       )
       return `${pascalCase(paramKey)}: ${formattedValue}`
     })
-    .join(',\n\n')
+    .join(',\n')
 
 const formatGoRequestArgValue = (
   key: string,
