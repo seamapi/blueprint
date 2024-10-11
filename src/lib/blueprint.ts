@@ -400,7 +400,7 @@ const createRoute = async (
             isDraft: false,
           }
         : null,
-    endpoints: endpoint ? [endpoint] : [],
+    endpoints: endpoint != null ? [endpoint] : [],
     subroutes: [],
     isUndocumented: false,
     isDeprecated: false,
@@ -466,6 +466,7 @@ const createEndpoint = async (
 
   const validOperation = validOperations[0]
   if (validOperation == null) {
+    // eslint-disable-next-line no-console
     console.warn(`No valid operations found for ${path}`)
 
     return null
@@ -475,7 +476,7 @@ const createEndpoint = async (
 
   return await createEndpointFromOperation(
     supportedMethods,
-    operation,
+    operation as OpenapiOperation,
     path,
     context,
   )
