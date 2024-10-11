@@ -24,7 +24,7 @@ export const createGoRequest = (
     goPackageName,
     requestStructName,
   })
-  const goSdkRequestArgs = `context.Background()${isReqWithParams ? `, ${goPackageName}.${requestStructName}{${formattedArgs}}` : ''}`
+  const goSdkRequestArgs = `context.Background()${isReqWithParams ? `,\n${goPackageName}.${requestStructName}{\n${formattedArgs},\n}` : ''}`
 
   const pathParts = request.path.split('/')
 
@@ -32,7 +32,7 @@ export const createGoRequest = (
   ${goSdkImports}
 
   func main() {
-  client${pathParts.map((p) => pascalCase(p)).join('.')}(${goSdkRequestArgs})
+  client${pathParts.map((p) => pascalCase(p)).join('.')}(${isReqWithParams ? '\n' : ''}${goSdkRequestArgs},\n)
   }
   `.trim()
 }
@@ -105,7 +105,7 @@ const formatGoRequestArgs = (
       )
       return `${pascalCase(paramKey)}: ${formattedValue}`
     })
-    .join(', ')
+    .join(',\n')
 
 const formatGoRequestArgValue = (
   key: string,
