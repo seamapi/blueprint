@@ -919,7 +919,14 @@ export const getSemanticMethod = (methods: Method[]): Method => {
   }
 
   const priorityOrder: Method[] = ['PUT', 'PATCH', 'POST', 'GET', 'DELETE']
-  return methods.find((m) => priorityOrder.includes(m)) ?? 'POST'
+
+  for (const method of priorityOrder) {
+    if (methods.includes(method)) {
+      return method
+    }
+  }
+
+  return 'POST'
 }
 
 export const getPreferredMethod = (
