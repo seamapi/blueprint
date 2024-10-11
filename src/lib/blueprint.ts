@@ -315,6 +315,8 @@ const createRoutes = async (
       ([path]) => isFakeData || path.startsWith(targetPath),
     )
 
+    console.log('🚀 ~ pathEntries:', pathEntries)
+
     for (const [path, pathItem] of pathEntries) {
       const namespace = getNamespace(path, paths)
 
@@ -386,6 +388,8 @@ const createRoute = async (
     throw new Error(`Could not resolve name for route at ${path}`)
   }
 
+  const endpoint = await createEndpoint(path, pathItem, context)
+
   return {
     path: routePath,
     name,
@@ -398,7 +402,7 @@ const createRoute = async (
             isDraft: false,
           }
         : null,
-    endpoints: await createEndpoints(path, pathItem, context),
+    endpoints: endpoint ? [endpoint] : [],
     subroutes: [],
     isUndocumented: false,
     isDeprecated: false,
@@ -446,34 +450,40 @@ const addNamespaceStatusToRoute = (
   }
 }
 
-const createEndpoints = async (
+const createEndpoint = async (
   path: string,
   pathItem: OpenapiPathItem,
   context: Context,
-): Promise<Endpoint[]> => {
+): Promise<Endpoint | null> => {
   const validMethods: Method[] = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH']
+  const validOperations = Object.entries(pathItem).filter(
+    ([method, operation]) =>
+      validMethods.includes(method.toUpperCase() as Method) &&
+      typeof operation === 'object' &&
+      operation !== null,
+  )
+  const supportedMethods = validOperations.map(
+    ([method]) => method.toUpperCase() as Method,
+  )
 
-  return await Promise.all(
-    Object.entries(pathItem)
-      .filter(
-        ([method, operation]) =>
-          validMethods.includes(method.toUpperCase() as Method) &&
-          typeof operation === 'object' &&
-          operation !== null,
-      )
-      .map(async ([method, operation]) => {
-        const uppercaseMethod = method.toUpperCase() as Method
-        return await createEndpoint(
-          [uppercaseMethod],
-          operation as OpenapiOperation,
-          path,
-          context,
-        )
-      }),
+  const validOperation = validOperations[0]
+  if (validOperation == null) {
+    console.warn(`No valid operations found for ${path}`)
+
+    return null
+  }
+
+  const [_, operation] = validOperation
+
+  return await createEndpointFromOperation(
+    supportedMethods,
+    operation,
+    path,
+    context,
   )
 }
 
-const createEndpoint = async (
+const createEndpointFromOperation = async (
   methods: Method[],
   operation: OpenapiOperation,
   path: string,
@@ -505,6 +515,7 @@ const createEndpoint = async (
   const draftMessage = parsedOperation['x-draft']
 
   const request = createRequest(methods, operation, path)
+  const response = createResponse(operation, path)
 
   const endpoint: Omit<Endpoint, 'codeSamples'> = {
     title,
@@ -517,7 +528,7 @@ const createEndpoint = async (
     undocumentedMessage,
     isDraft,
     draftMessage,
-    response: createResponse(operation, path),
+    response,
     request,
   }
 
