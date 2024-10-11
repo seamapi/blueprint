@@ -315,8 +315,6 @@ const createRoutes = async (
       ([path]) => isFakeData || path.startsWith(targetPath),
     )
 
-    console.log('🚀 ~ pathEntries:', pathEntries)
-
     for (const [path, pathItem] of pathEntries) {
       const namespace = getNamespace(path, paths)
 
