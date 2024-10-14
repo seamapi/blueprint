@@ -918,7 +918,7 @@ export const getSemanticMethod = (methods: Method[]): Method => {
     return methods[0]!
   }
 
-  const priorityOrder: Method[] = ['PUT', 'PATCH', 'POST', 'GET', 'DELETE']
+  const priorityOrder: Method[] = ['PUT', 'PATCH', 'GET', 'DELETE', 'POST']
 
   for (const method of priorityOrder) {
     if (methods.includes(method)) {
