@@ -31,9 +31,11 @@ export const createPhpResponse = (
     throw new Error(`Missing ${responseKey} for '${title}'`)
   }
 
-  return Array.isArray(responseValue)
+  const formattedResponse = Array.isArray(responseValue)
     ? formatPhpArrayResponse(responseValue, title)
     : formatPhpResponse(responseValue)
+
+  return `<?php\n${formattedResponse}`
 }
 
 const formatPhpArrayResponse = (
