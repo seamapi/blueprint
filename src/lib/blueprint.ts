@@ -271,21 +271,6 @@ export const createBlueprint = async (
   // TODO: Move openapi to TypesModuleSchema
   const openapi = typesModule.openapi as Openapi
 
-  const isFakeData = openapi.info.title === 'Foo'
-  const targetPaths = ['/acs', '/events', '/thermostats']
-  const targetSchemas = [
-    'acs_access_group',
-    'acs_credential',
-    'acs_credential_pool',
-    'acs_credential_provisioning_automation',
-    'acs_entrance',
-    'acs_system',
-    'acs_user',
-    'event',
-    'climate_preset',
-    'thermostat_schedule',
-  ]
-
   const context = {
     codeSampleDefinitions,
     formatCode,
@@ -293,41 +278,31 @@ export const createBlueprint = async (
 
   return {
     title: openapi.info.title,
-    routes: await createRoutes(openapi.paths, isFakeData, targetPaths, context),
-    resources: createResources(
-      openapi.components.schemas,
-      isFakeData,
-      targetSchemas,
-    ),
+    routes: await createRoutes(openapi.paths, context),
+    resources: createResources(openapi.components.schemas),
   }
 }
 
 const createRoutes = async (
   paths: OpenapiPaths,
-  isFakeData: boolean,
-  targetPaths: string[],
   context: Context,
 ): Promise<Route[]> => {
   const routeMap = new Map<string, Route>()
 
-  for (const targetPath of targetPaths) {
-    const pathEntries = Object.entries(paths).filter(
-      ([path]) => isFakeData || path.startsWith(targetPath),
-    )
+  const pathEntries = Object.entries(paths)
 
-    for (const [path, pathItem] of pathEntries) {
-      const namespace = getNamespace(path, paths)
+  for (const [path, pathItem] of pathEntries) {
+    const namespace = getNamespace(path, paths)
 
-      const route = await createRoute(namespace, path, pathItem, context)
+    const route = await createRoute(namespace, path, pathItem, context)
 
-      const existingRoute = routeMap.get(route.path)
-      if (existingRoute != null) {
-        existingRoute.endpoints.push(...route.endpoints)
-        continue
-      }
-
-      routeMap.set(route.path, route)
+    const existingRoute = routeMap.get(route.path)
+    if (existingRoute != null) {
+      existingRoute.endpoints.push(...route.endpoints)
+      continue
     }
+
+    routeMap.set(route.path, route)
   }
 
   const routes = Array.from(routeMap.values())
@@ -698,12 +673,9 @@ const createParameter = (
 
 const createResources = (
   schemas: Openapi['components']['schemas'],
-  isFakeData: boolean,
-  targetSchemas: string[],
 ): Record<string, Resource> => {
-  return Object.entries(schemas)
-    .filter(([schemaName]) => isFakeData || targetSchemas.includes(schemaName))
-    .reduce<Record<string, Resource>>((acc, [schemaName, schema]) => {
+  return Object.entries(schemas).reduce<Record<string, Resource>>(
+    (acc, [schemaName, schema]) => {
       if (
         typeof schema === 'object' &&
         schema !== null &&
@@ -727,7 +699,9 @@ const createResources = (
         }
       }
       return acc
-    }, {})
+    },
+    {},
+  )
 }
 
 const createResponse = (
