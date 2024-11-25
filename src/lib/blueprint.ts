@@ -17,9 +17,9 @@ import type {
   OpenapiSchema,
 } from './openapi.js'
 import {
+  type AuthMethodSchema,
   OpenapiOperationSchema,
   PropertySchema,
-  AuthMethodSchema,
 } from './openapi-schema.js'
 
 export interface Blueprint {
