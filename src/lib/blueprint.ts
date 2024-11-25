@@ -16,7 +16,11 @@ import type {
   OpenapiPaths,
   OpenapiSchema,
 } from './openapi.js'
-import { OpenapiOperationSchema, PropertySchema } from './openapi-schema.js'
+import {
+  OpenapiOperationSchema,
+  PropertySchema,
+  AuthMethodSchema,
+} from './openapi-schema.js'
 
 export interface Blueprint {
   title: string
@@ -68,7 +72,10 @@ export interface Endpoint {
   request: Request
   response: Response
   codeSamples: CodeSample[]
+  authMethods: AuthMethod[]
 }
+
+type AuthMethod = z.infer<typeof AuthMethodSchema>
 
 interface BaseParameter {
   name: string
@@ -491,6 +498,10 @@ const createEndpointFromOperation = async (
   const request = createRequest(methods, operation, path)
   const response = createResponse(operation, path)
 
+  const authMethods = parsedOperation.security.map(
+    (securitySchema) => Object.keys(securitySchema)[0] as AuthMethod,
+  )
+
   const endpoint: Omit<Endpoint, 'codeSamples'> = {
     title,
     name,
@@ -504,6 +515,7 @@ const createEndpointFromOperation = async (
     draftMessage,
     response,
     request,
+    authMethods,
   }
 
   return {

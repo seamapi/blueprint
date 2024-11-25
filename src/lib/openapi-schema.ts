@@ -40,6 +40,17 @@ const ResponseSchema = z.record(
   }),
 )
 
+export const AuthMethodSchema = z.enum([
+  'access_token',
+  'api_key',
+  'client_session',
+  'console_session',
+  'pat_with_workspace',
+  'pat_without_workspace',
+  'user_session',
+  'user_session_without_workspace',
+])
+
 export const OpenapiOperationSchema = z.object({
   operationId: z.string(),
   summary: z.string().optional(),
@@ -59,6 +70,7 @@ export const OpenapiOperationSchema = z.object({
     })
     .optional(),
   responses: ResponseSchema,
+  security: z.array(z.record(AuthMethodSchema, z.array(z.never()))).default([]),
   deprecated: z.boolean().default(false),
   'x-response-key': z.string().nullable().optional(),
   'x-title': z.string().default(''),
