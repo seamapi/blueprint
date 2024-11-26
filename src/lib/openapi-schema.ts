@@ -40,20 +40,15 @@ const ResponseSchema = z.record(
   }),
 )
 
-const AUTH_METHODS = [
-  'api_key',
-  'client_session',
-  'console_session',
-  'pat_with_workspace',
-  'pat_without_workspace',
-  'unknown',
-] as const
-
-type AuthMethod = (typeof AUTH_METHODS)[number]
-
 export const AuthMethodSchema = z
-  .enum(AUTH_METHODS)
-  .transform((val): AuthMethod => val)
+  .enum([
+    'api_key',
+    'client_session',
+    'console_session',
+    'pat_with_workspace',
+    'pat_without_workspace',
+    'unknown',
+  ])
   .catch('unknown')
 
 export const OpenapiOperationSchema = z.object({
