@@ -3,6 +3,7 @@ export {
   type BlueprintOptions,
   createBlueprint,
   type Endpoint,
+  type SeamAuthMethod,
   type Namespace,
   type Parameter,
   type Property,
