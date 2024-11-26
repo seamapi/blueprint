@@ -499,9 +499,10 @@ const createEndpointFromOperation = async (
   const request = createRequest(methods, operation, path)
   const response = createResponse(operation, path)
 
-  const authMethods = parsedOperation.security.flatMap((securitySchema) =>
-    mapOpenapiToSeamAuthMethod(Object.keys(securitySchema)[0]!),
-  )
+  const authMethods = parsedOperation.security.flatMap((securitySchema) => {
+    const [authMethod = ''] = Object.keys(securitySchema)
+    return mapOpenapiToSeamAuthMethod(authMethod)
+  })
 
   const endpoint: Omit<Endpoint, 'codeSamples'> = {
     title,
