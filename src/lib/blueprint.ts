@@ -17,7 +17,6 @@ import type {
   OpenapiSchema,
 } from './openapi.js'
 import {
-  type AuthMethodSchema,
   OpenapiOperationSchema,
   PropertySchema,
 } from './openapi-schema.js'
@@ -504,7 +503,7 @@ const createEndpointFromOperation = async (
   const response = createResponse(operation, path)
 
   const authMethods = parsedOperation.security.flatMap((securitySchema) =>
-    mapOpenapiToSeamAuthMethod(Object.keys(securitySchema)[0] as string),
+    mapOpenapiToSeamAuthMethod(Object.keys(securitySchema)[0]!),
   )
 
   const endpoint: Omit<Endpoint, 'codeSamples'> = {
