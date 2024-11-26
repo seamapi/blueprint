@@ -40,16 +40,21 @@ const ResponseSchema = z.record(
   }),
 )
 
-export const AuthMethodSchema = z.enum([
-  'access_token',
+const AUTH_METHODS = [
   'api_key',
   'client_session',
   'console_session',
   'pat_with_workspace',
   'pat_without_workspace',
-  'user_session',
-  'user_session_without_workspace',
-])
+  'unknown',
+] as const
+
+type AuthMethod = (typeof AUTH_METHODS)[number]
+
+export const AuthMethodSchema = z
+  .enum(AUTH_METHODS)
+  .transform((val): AuthMethod => val)
+  .catch('unknown')
 
 export const OpenapiOperationSchema = z.object({
   operationId: z.string(),
