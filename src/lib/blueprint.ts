@@ -16,10 +16,7 @@ import type {
   OpenapiPaths,
   OpenapiSchema,
 } from './openapi.js'
-import {
-  OpenapiOperationSchema,
-  PropertySchema,
-} from './openapi-schema.js'
+import { OpenapiOperationSchema, PropertySchema } from './openapi-schema.js'
 
 export interface Blueprint {
   title: string
