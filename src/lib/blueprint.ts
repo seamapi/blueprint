@@ -554,7 +554,7 @@ const mapOpenapiToSeamAuthMethod = (
     case 'publishable_key':
       return 'publishable_key'
     default:
-      return
+      
   }
 }
 
