@@ -499,10 +499,12 @@ const createEndpointFromOperation = async (
   const request = createRequest(methods, operation, path)
   const response = createResponse(operation, path)
 
-  const authMethods = parsedOperation.security.flatMap((securitySchema) => {
-    const [authMethod = ''] = Object.keys(securitySchema)
-    return mapOpenapiToSeamAuthMethod(authMethod)
-  })
+  const authMethods = parsedOperation.security
+    .map((securitySchema) => {
+      const [authMethod = ''] = Object.keys(securitySchema)
+      return mapOpenapiToSeamAuthMethod(authMethod)
+    })
+    .filter((authMethod) => authMethod != null)
 
   const endpoint: Omit<Endpoint, 'codeSamples'> = {
     title,
@@ -536,19 +538,23 @@ const createEndpointFromOperation = async (
   }
 }
 
-const mapOpenapiToSeamAuthMethod = (method: string): SeamAuthMethod[] => {
+const mapOpenapiToSeamAuthMethod = (
+  method: string,
+): SeamAuthMethod | undefined => {
   switch (method) {
     case 'api_key':
-      return ['api_key']
+      return 'api_key'
     case 'pat_with_workspace':
     case 'pat_without_workspace':
-      return ['personal_access_token']
+      return 'personal_access_token'
     case 'console_session':
-      return ['console_session_token']
+      return 'console_session_token'
     case 'client_session':
-      return ['client_session_token', 'publishable_key']
+      return 'client_session_token'
+    case 'publishable_key':
+      return 'publishable_key'
     default:
-      return []
+      return
   }
 }
 

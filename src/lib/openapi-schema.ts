@@ -47,6 +47,7 @@ export const AuthMethodSchema = z
     'console_session',
     'pat_with_workspace',
     'pat_without_workspace',
+    'publishable_key',
     'unknown',
   ])
   .catch('unknown')
