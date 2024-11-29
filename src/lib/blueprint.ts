@@ -17,7 +17,7 @@ import type {
   OpenapiSchema,
 } from './openapi.js'
 import {
-  AuthMethodSchema,
+  type AuthMethodSchema,
   OpenapiOperationSchema,
   PropertySchema,
 } from './openapi-schema.js'
