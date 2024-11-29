@@ -10,6 +10,7 @@ export {
   type Resource,
   type Response,
   type Route,
+  type SeamAuthMethod,
   type TypesModule,
   type TypesModuleInput,
   TypesModuleSchema,

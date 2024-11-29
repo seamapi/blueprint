@@ -16,7 +16,11 @@ import type {
   OpenapiPaths,
   OpenapiSchema,
 } from './openapi.js'
-import { OpenapiOperationSchema, PropertySchema } from './openapi-schema.js'
+import {
+  type AuthMethodSchema,
+  OpenapiOperationSchema,
+  PropertySchema,
+} from './openapi-schema.js'
 
 export interface Blueprint {
   title: string
@@ -68,7 +72,15 @@ export interface Endpoint {
   request: Request
   response: Response
   codeSamples: CodeSample[]
+  authMethods: SeamAuthMethod[]
 }
+
+export type SeamAuthMethod =
+  | 'api_key'
+  | 'personal_access_token'
+  | 'console_session_token'
+  | 'client_session_token'
+  | 'publishable_key'
 
 interface BaseParameter {
   name: string
@@ -491,6 +503,13 @@ const createEndpointFromOperation = async (
   const request = createRequest(methods, operation, path)
   const response = createResponse(operation, path)
 
+  const authMethods = parsedOperation.security
+    .map((securitySchema) => {
+      const [authMethod = ''] = Object.keys(securitySchema)
+      return mapOpenapiToSeamAuthMethod(authMethod)
+    })
+    .filter((authMethod): authMethod is SeamAuthMethod => authMethod != null)
+
   const endpoint: Omit<Endpoint, 'codeSamples'> = {
     title,
     name,
@@ -504,6 +523,7 @@ const createEndpointFromOperation = async (
     draftMessage,
     response,
     request,
+    authMethods,
   }
 
   return {
@@ -520,6 +540,24 @@ const createEndpointFromOperation = async (
         ),
     ),
   }
+}
+
+type OpenapiAuthMethod = z.infer<typeof AuthMethodSchema>
+type KnownOpenapiAuthMethod = Exclude<OpenapiAuthMethod, 'unknown'>
+
+const mapOpenapiToSeamAuthMethod = (
+  method: string,
+): SeamAuthMethod | undefined => {
+  const AUTH_METHOD_MAPPING: Record<KnownOpenapiAuthMethod, SeamAuthMethod> = {
+    api_key: 'api_key',
+    pat_with_workspace: 'personal_access_token',
+    pat_without_workspace: 'personal_access_token',
+    console_session: 'console_session_token',
+    client_session: 'client_session_token',
+    publishable_key: 'publishable_key',
+  } as const
+
+  return AUTH_METHOD_MAPPING[method as KnownOpenapiAuthMethod]
 }
 
 export const createRequest = (

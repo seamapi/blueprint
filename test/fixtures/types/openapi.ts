@@ -135,7 +135,11 @@ export default {
           400: { description: 'Bad Request' },
           401: { description: 'Unauthorized' },
         },
-        security: [],
+        security: [
+          {
+            api_key: [],
+          },
+        ],
         summary: '/foos/get',
         tags: ['/foos'],
         'x-response-key': 'foo',
@@ -194,7 +198,14 @@ export default {
           400: { description: 'Bad Request' },
           401: { description: 'Unauthorized' },
         },
-        security: [],
+        security: [
+          {
+            api_key: [],
+          },
+          {
+            client_session: [],
+          },
+        ],
         summary: '/foos/list',
         tags: ['/foos'],
         'x-response-key': 'foos',
