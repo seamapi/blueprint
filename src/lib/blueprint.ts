@@ -16,7 +16,11 @@ import type {
   OpenapiPaths,
   OpenapiSchema,
 } from './openapi.js'
-import { OpenapiOperationSchema, PropertySchema } from './openapi-schema.js'
+import {
+  AuthMethodSchema,
+  OpenapiOperationSchema,
+  PropertySchema,
+} from './openapi-schema.js'
 
 export interface Blueprint {
   title: string
@@ -504,7 +508,7 @@ const createEndpointFromOperation = async (
       const [authMethod = ''] = Object.keys(securitySchema)
       return mapOpenapiToSeamAuthMethod(authMethod)
     })
-    .filter((authMethod) => authMethod != null)
+    .filter((authMethod): authMethod is SeamAuthMethod => authMethod != null)
 
   const endpoint: Omit<Endpoint, 'codeSamples'> = {
     title,
@@ -538,23 +542,22 @@ const createEndpointFromOperation = async (
   }
 }
 
+type OpenapiAuthMethod = z.infer<typeof AuthMethodSchema>
+type KnownOpenapiAuthMethod = Exclude<OpenapiAuthMethod, 'unknown'>
+
 const mapOpenapiToSeamAuthMethod = (
   method: string,
 ): SeamAuthMethod | undefined => {
-  switch (method) {
-    case 'api_key':
-      return 'api_key'
-    case 'pat_with_workspace':
-    case 'pat_without_workspace':
-      return 'personal_access_token'
-    case 'console_session':
-      return 'console_session_token'
-    case 'client_session':
-      return 'client_session_token'
-    case 'publishable_key':
-      return 'publishable_key'
-    default:
-  }
+  const AUTH_METHOD_MAPPING: Record<KnownOpenapiAuthMethod, SeamAuthMethod> = {
+    api_key: 'api_key',
+    pat_with_workspace: 'personal_access_token',
+    pat_without_workspace: 'personal_access_token',
+    console_session: 'console_session_token',
+    client_session: 'client_session_token',
+    publishable_key: 'publishable_key',
+  } as const
+
+  return AUTH_METHOD_MAPPING[method as KnownOpenapiAuthMethod]
 }
 
 export const createRequest = (
