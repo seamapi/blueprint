@@ -73,6 +73,7 @@ export interface Endpoint {
   response: Response
   codeSamples: CodeSample[]
   authMethods: SeamAuthMethod[]
+  workspaceScope: SeamWorkspaceScope
 }
 
 export type SeamAuthMethod =
@@ -81,6 +82,8 @@ export type SeamAuthMethod =
   | 'console_session_token'
   | 'client_session_token'
   | 'publishable_key'
+
+export type SeamWorkspaceScope = 'none' | 'optional' | 'required'
 
 interface BaseParameter {
   name: string
@@ -503,12 +506,18 @@ const createEndpointFromOperation = async (
   const request = createRequest(methods, operation, path)
   const response = createResponse(operation, path)
 
-  const authMethods = parsedOperation.security
-    .map((securitySchema) => {
+  const operationAuthMethods = parsedOperation.security.map(
+    (securitySchema) => {
       const [authMethod = ''] = Object.keys(securitySchema)
-      return mapOpenapiToSeamAuthMethod(authMethod)
-    })
+      return authMethod as OpenapiAuthMethod
+    },
+  )
+
+  const endpointAuthMethods = operationAuthMethods
+    .map(mapOpenapiToSeamAuthMethod)
     .filter((authMethod): authMethod is SeamAuthMethod => authMethod != null)
+
+  const workspaceScope = getWorkspaceScope(operationAuthMethods)
 
   const endpoint: Omit<Endpoint, 'codeSamples'> = {
     title,
@@ -523,7 +532,8 @@ const createEndpointFromOperation = async (
     draftMessage,
     response,
     request,
-    authMethods,
+    authMethods: endpointAuthMethods,
+    workspaceScope,
   }
 
   return {
@@ -543,6 +553,40 @@ const createEndpointFromOperation = async (
 }
 
 type OpenapiAuthMethod = z.infer<typeof AuthMethodSchema>
+
+export const getWorkspaceScope = (
+  authMethods: OpenapiAuthMethod[],
+): SeamWorkspaceScope => {
+  const hasWorkspaceUnscoped = authMethods.some((method) =>
+    method.endsWith('_without_workspace'),
+  )
+
+  const workspaceScopedAuthMethods: OpenapiAuthMethod[] = [
+    'api_key',
+    'client_session',
+    'console_session_token_with_workspace',
+    'pat_with_workspace',
+    'publishable_key',
+  ]
+  const hasWorkspaceScoped = authMethods.some((method) =>
+    workspaceScopedAuthMethods.includes(method),
+  )
+
+  const hasNoAuthMethods = !hasWorkspaceUnscoped && !hasWorkspaceScoped
+  if (hasNoAuthMethods) return 'none'
+
+  const hasOnlyUnscopedAuth = hasWorkspaceUnscoped && !hasWorkspaceScoped
+  if (hasOnlyUnscopedAuth) return 'none'
+
+  const hasBothScopedAndUnscoped = hasWorkspaceUnscoped && hasWorkspaceScoped
+  if (hasBothScopedAndUnscoped) return 'optional'
+
+  const hasOnlyScopedAuth = !hasWorkspaceUnscoped && hasWorkspaceScoped
+  if (hasOnlyScopedAuth) return 'required'
+
+  return 'none'
+}
+
 type KnownOpenapiAuthMethod = Exclude<OpenapiAuthMethod, 'unknown'>
 
 const mapOpenapiToSeamAuthMethod = (
@@ -552,7 +596,8 @@ const mapOpenapiToSeamAuthMethod = (
     api_key: 'api_key',
     pat_with_workspace: 'personal_access_token',
     pat_without_workspace: 'personal_access_token',
-    console_session: 'console_session_token',
+    console_session_token_with_workspace: 'console_session_token',
+    console_session_token_without_workspace: 'console_session_token',
     client_session: 'client_session_token',
     publishable_key: 'publishable_key',
   } as const
