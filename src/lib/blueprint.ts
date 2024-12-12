@@ -512,11 +512,9 @@ const createEndpointFromOperation = async (
       return authMethod as OpenapiAuthMethod
     },
   )
-
   const endpointAuthMethods = operationAuthMethods
     .map(mapOpenapiToSeamAuthMethod)
     .filter((authMethod): authMethod is SeamAuthMethod => authMethod != null)
-
   const workspaceScope = getWorkspaceScope(operationAuthMethods)
 
   const endpoint: Omit<Endpoint, 'codeSamples'> = {
@@ -552,7 +550,7 @@ const createEndpointFromOperation = async (
   }
 }
 
-type OpenapiAuthMethod = z.infer<typeof AuthMethodSchema>
+export type OpenapiAuthMethod = z.infer<typeof AuthMethodSchema>
 
 export const getWorkspaceScope = (
   authMethods: OpenapiAuthMethod[],

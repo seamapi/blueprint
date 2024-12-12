@@ -4,7 +4,9 @@ import {
   createProperties,
   getPreferredMethod,
   getSemanticMethod,
+  getWorkspaceScope,
   type Method,
+  type OpenapiAuthMethod,
 } from 'lib/blueprint.js'
 import type { OpenapiOperation, OpenapiSchema } from 'lib/openapi.js'
 
@@ -341,5 +343,51 @@ test('getPreferredMethod: delete and post', (t) => {
     getPreferredMethod(deletePostMethods, 'DELETE', deletePostEndpoint),
     'POST',
     'Preferred method should be POST when both DELETE and POST are available',
+  )
+})
+
+test('getWorkspaceScope: no auth methods', (t) => {
+  const authMethods: OpenapiAuthMethod[] = []
+  t.is(
+    getWorkspaceScope(authMethods),
+    'none',
+    'Workspace scope should be "none" when no auth methods are present',
+  )
+})
+
+test('getWorkspaceScope: only unscoped auth methods', (t) => {
+  const authMethods: OpenapiAuthMethod[] = [
+    'pat_without_workspace',
+    'console_session_token_without_workspace',
+  ]
+  t.is(
+    getWorkspaceScope(authMethods),
+    'none',
+    'Workspace scope should be "none" when only unscoped auth methods are present',
+  )
+})
+
+test('getWorkspaceScope: only scoped auth methods', (t) => {
+  const authMethods: OpenapiAuthMethod[] = [
+    'api_key',
+    'client_session',
+    'pat_with_workspace',
+  ]
+  t.is(
+    getWorkspaceScope(authMethods),
+    'required',
+    'Workspace scope should be "required" when only scoped auth methods are present',
+  )
+})
+
+test('getWorkspaceScope: both scoped and unscoped auth methods', (t) => {
+  const authMethods: OpenapiAuthMethod[] = [
+    'pat_with_workspace',
+    'pat_without_workspace',
+  ]
+  t.is(
+    getWorkspaceScope(authMethods),
+    'optional',
+    'Workspace scope should be "optional" when both scoped and unscoped auth methods are present',
   )
 })
