@@ -11,6 +11,7 @@ export {
   type Response,
   type Route,
   type SeamAuthMethod,
+  type SeamWorkspaceScope,
   type TypesModule,
   type TypesModuleInput,
   TypesModuleSchema,
