@@ -44,7 +44,8 @@ export const AuthMethodSchema = z
   .enum([
     'api_key',
     'client_session',
-    'console_session',
+    'console_session_token_with_workspace',
+    'console_session_token_without_workspace',
     'pat_with_workspace',
     'pat_without_workspace',
     'publishable_key',
