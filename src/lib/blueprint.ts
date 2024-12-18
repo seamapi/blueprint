@@ -290,7 +290,7 @@ const createEvents = (
 ): EventResource[] => {
   const eventSchema = schemas['event']
   if (
-    !eventSchema ||
+    eventSchema == null ||
     typeof eventSchema !== 'object' ||
     !('oneOf' in eventSchema) ||
     !Array.isArray(eventSchema.oneOf)
@@ -302,13 +302,13 @@ const createEvents = (
     .map((schema) => {
       if (
         typeof schema !== 'object' ||
-        !schema.properties?.event_type?.enum?.[0]
+        schema.properties?.event_type?.enum?.[0] == null
       ) {
         return null
       }
 
       return {
-        ...createResource('event', schema),
+        ...createResource('event', schema as OpenapiSchema),
         eventType: schema.properties.event_type.enum[0],
         // TODO: Compute routePath and targetResourceType
         routePath: '',
