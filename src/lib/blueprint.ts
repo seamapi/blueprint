@@ -26,6 +26,7 @@ export interface Blueprint {
   title: string
   routes: Route[]
   resources: Record<string, Resource>
+  events: EventResource[]
 }
 
 export interface Route {
@@ -49,6 +50,13 @@ export interface Resource {
   undocumentedMessage: string
   isDraft: boolean
   draftMessage: string
+}
+
+interface EventResource extends Resource {
+  resourceType: 'event'
+  eventType: string
+  routePath: string
+  targetResourceType: string
 }
 
 export interface Namespace {
@@ -277,6 +285,39 @@ export interface BlueprintOptions {
   formatCode?: (content: string, syntax: CodeSampleSyntax) => Promise<string>
 }
 
+const createEvents = (
+  schemas: Openapi['components']['schemas'],
+): EventResource[] => {
+  const eventSchema = schemas['event']
+  if (
+    !eventSchema ||
+    typeof eventSchema !== 'object' ||
+    !('oneOf' in eventSchema) ||
+    !Array.isArray(eventSchema.oneOf)
+  ) {
+    return []
+  }
+
+  return eventSchema.oneOf
+    .map((schema) => {
+      if (
+        typeof schema !== 'object' ||
+        !schema.properties?.event_type?.enum?.[0]
+      ) {
+        return null
+      }
+
+      return {
+        ...createResource('event', schema),
+        eventType: schema.properties.event_type.enum[0],
+        // TODO: Compute routePath and targetResourceType
+        routePath: '',
+        targetResourceType: '',
+      }
+    })
+    .filter((event): event is EventResource => event !== null)
+}
+
 export const createBlueprint = async (
   typesModule: TypesModuleInput,
   { formatCode = async (content) => content }: BlueprintOptions = {},
@@ -295,6 +336,7 @@ export const createBlueprint = async (
     title: openapi.info.title,
     routes: await createRoutes(openapi.paths, context),
     resources: createResources(openapi.components.schemas),
+    events: createEvents(openapi.components.schemas),
   }
 }
 
@@ -766,23 +808,30 @@ const createResources = (
       ) {
         return {
           ...acc,
-          [schemaName]: {
-            resourceType: schemaName,
-            properties: createProperties(schema.properties, [schemaName]),
-            description: schema.description ?? '',
-            isDeprecated: schema.deprecated ?? false,
-            deprecationMessage: schema['x-deprecated'] ?? '',
-            isUndocumented: (schema['x-undocumented'] ?? '').length > 0,
-            undocumentedMessage: schema['x-undocumented'] ?? '',
-            isDraft: (schema['x-draft'] ?? '').length > 0,
-            draftMessage: schema['x-draft'] ?? '',
-          },
+          [schemaName]: createResource(schemaName, schema),
         }
       }
       return acc
     },
     {},
   )
+}
+
+const createResource = (
+  schemaName: string,
+  schema: OpenapiSchema,
+): Resource => {
+  return {
+    resourceType: schemaName,
+    properties: createProperties(schema.properties ?? {}, [schemaName]),
+    description: schema.description ?? '',
+    isDeprecated: schema.deprecated ?? false,
+    deprecationMessage: schema['x-deprecated'] ?? '',
+    isUndocumented: (schema['x-undocumented'] ?? '').length > 0,
+    undocumentedMessage: schema['x-undocumented'] ?? '',
+    isDraft: (schema['x-draft'] ?? '').length > 0,
+    draftMessage: schema['x-draft'] ?? '',
+  }
 }
 
 const createResponse = (
