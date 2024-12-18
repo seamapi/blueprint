@@ -110,6 +110,37 @@ export default {
         required: ['undocumented_resource_id'],
         'x-undocumented': 'This resource is undocumented',
       },
+      event: {
+        oneOf: [
+          {
+            type: 'object',
+            description: 'A foo.created event',
+            properties: {
+              event_id: {
+                description: 'Event ID',
+                format: 'uuid',
+                type: 'string',
+              },
+              event_type: {
+                description: 'Type of event',
+                type: 'string',
+                enum: ['foo.created'],
+              },
+              foo_id: {
+                description: 'ID of the foo that was created',
+                format: 'uuid',
+                type: 'string',
+              },
+              created_at: {
+                description: 'When the event occurred',
+                type: 'string',
+                format: 'date-time',
+              },
+            },
+            required: ['event_id', 'event_type', 'foo_id', 'created_at'],
+          },
+        ],
+      },
     },
   },
   paths: {
