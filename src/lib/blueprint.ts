@@ -1,3 +1,4 @@
+import { findCommonOpenapiSchemaProperties } from 'src/utils/find-common-openapi-schema-properties.js'
 import { z } from 'zod'
 
 import {
@@ -18,8 +19,10 @@ import type {
 } from './openapi.js'
 import {
   type AuthMethodSchema,
+  EventResourceSchema,
   OpenapiOperationSchema,
   PropertySchema,
+  ResourceSchema,
 } from './openapi-schema.js'
 
 export interface Blueprint {
@@ -800,24 +803,37 @@ const createParameter = (
   }
 }
 
-const createResources = (
+export const createResources = (
   schemas: Openapi['components']['schemas'],
 ): Record<string, Resource> => {
   return Object.entries(schemas).reduce<Record<string, Resource>>(
-    (acc, [schemaName, schema]) => {
-      if (
-        typeof schema === 'object' &&
-        schema !== null &&
-        'properties' in schema &&
-        typeof schema.properties === 'object' &&
-        schema.properties !== null
-      ) {
+    (resources, [schemaName, schema]) => {
+      const { success: isValidEventSchema, data: parsedEvent } =
+        EventResourceSchema.safeParse(schema)
+      if (isValidEventSchema) {
+        const commonProperties = findCommonOpenapiSchemaProperties(
+          parsedEvent.oneOf,
+        )
+        const eventSchema: OpenapiSchema = {
+          properties: commonProperties,
+          type: 'object',
+        }
         return {
-          ...acc,
+          ...resources,
+          [schemaName]: createResource(schemaName, eventSchema),
+        }
+      }
+
+      const { success: isValidResourceSchema } =
+        ResourceSchema.safeParse(schema)
+      if (isValidResourceSchema) {
+        return {
+          ...resources,
           [schemaName]: createResource(schemaName, schema),
         }
       }
-      return acc
+
+      return resources
     },
     {},
   )
