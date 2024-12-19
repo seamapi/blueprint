@@ -44,6 +44,7 @@ export interface Resource {
   resourceType: string
   properties: Property[]
   description: string
+  routePath: string
   isDeprecated: boolean
   deprecationMessage: string
   isUndocumented: boolean
@@ -55,7 +56,6 @@ export interface Resource {
 interface EventResource extends Resource {
   resourceType: 'event'
   eventType: string
-  routePath: string
   targetResourceType: string
 }
 
@@ -310,8 +310,7 @@ const createEvents = (
       return {
         ...createResource('event', schema as OpenapiSchema),
         eventType: schema.properties.event_type.enum[0],
-        // TODO: Compute routePath and targetResourceType
-        routePath: '',
+        // TODO: Compute targetResourceType
         targetResourceType: '',
       }
     })
@@ -826,6 +825,7 @@ const createResource = (
     properties: createProperties(schema.properties ?? {}, [schemaName]),
     description: schema.description ?? '',
     isDeprecated: schema.deprecated ?? false,
+    routePath: schema['x-route-path'] ?? '',
     deprecationMessage: schema['x-deprecated'] ?? '',
     isUndocumented: (schema['x-undocumented'] ?? '').length > 0,
     undocumentedMessage: schema['x-undocumented'] ?? '',

@@ -53,6 +53,7 @@ export default {
           },
         },
         required: ['foo_id', 'name'],
+        'x-route-path': '/foos',
       },
       plane: {
         type: 'object',
@@ -69,6 +70,7 @@ export default {
           },
         },
         required: ['plane_id', 'name'],
+        'x-route-path': '/planes',
       },
       deprecated_resource: {
         type: 'object',
@@ -83,6 +85,7 @@ export default {
         required: ['deprecated_resource_id'],
         deprecated: true,
         'x-deprecated': 'This resource is deprecated',
+        'x-route-path': '/deprecated/resources',
       },
       draft_resource: {
         type: 'object',
@@ -96,6 +99,7 @@ export default {
         },
         required: ['draft_resource_id'],
         'x-draft': 'This resource is draft',
+        'x-route-path': '/draft/resources',
       },
       undocumented_resource: {
         type: 'object',
@@ -109,6 +113,7 @@ export default {
         },
         required: ['undocumented_resource_id'],
         'x-undocumented': 'This resource is undocumented',
+        'x-route-path': '/undocumented/resources',
       },
       event: {
         oneOf: [
@@ -138,6 +143,7 @@ export default {
               },
             },
             required: ['event_id', 'event_type', 'foo_id', 'created_at'],
+            'x-route-path': '/foos',
           },
         ],
       },
