@@ -1,6 +1,6 @@
-import { findCommonOpenapiSchemaProperties } from '../utils/find-common-openapi-schema-properties.js'
 import { z } from 'zod'
 
+import { findCommonOpenapiSchemaProperties } from '../utils/find-common-openapi-schema-properties.js'
 import {
   type CodeSample,
   CodeSampleDefinitionSchema,
