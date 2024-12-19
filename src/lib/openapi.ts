@@ -77,6 +77,7 @@ export interface OpenapiSchema {
   'x-deprecated'?: string
   'x-draft'?: string
   'x-undocumented'?: string
+  'x-route-path'?: string
 }
 
 export interface OpenapiComponents {

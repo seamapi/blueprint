@@ -92,3 +92,19 @@ export const PropertySchema: z.ZodSchema<any> = z.object({
   $ref: z.string().optional(),
   format: z.string().optional(),
 })
+
+export const ResourceSchema = z.object({
+  type: z.literal('object'),
+  properties: z.record(z.string(), PropertySchema),
+  required: z.array(z.string()).default([]),
+  description: z.string().default(''),
+  'x-route-path': z.string().default(''),
+  'x-undocumented': z.string().default(''),
+  'x-deprecated': z.string().default(''),
+  'x-draft': z.string().default(''),
+})
+
+export const EventResourceSchema = z.object({
+  discriminator: z.object({ propertyName: z.string() }),
+  oneOf: z.array(ResourceSchema),
+})
