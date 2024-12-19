@@ -56,7 +56,7 @@ export interface Resource {
 interface EventResource extends Resource {
   resourceType: 'event'
   eventType: string
-  targetResourceType: string
+  targetResourceType: string | null
 }
 
 export interface Namespace {
@@ -287,6 +287,7 @@ export interface BlueprintOptions {
 
 const createEvents = (
   schemas: Openapi['components']['schemas'],
+  resources: Record<string, Resource>,
 ): EventResource[] => {
   const eventSchema = schemas['event']
   if (
@@ -307,11 +308,15 @@ const createEvents = (
         return null
       }
 
+      const eventType = schema.properties.event_type.enum[0]
+      const targetResourceType = Object.keys(resources).find((resourceName) =>
+        eventType.split('.').includes(resourceName),
+      )
+
       return {
         ...createResource('event', schema as OpenapiSchema),
-        eventType: schema.properties.event_type.enum[0],
-        // TODO: Compute targetResourceType
-        targetResourceType: '',
+        eventType,
+        targetResourceType: targetResourceType ?? null,
       }
     })
     .filter((event): event is EventResource => event !== null)
@@ -331,11 +336,13 @@ export const createBlueprint = async (
     formatCode,
   }
 
+  const resources = createResources(openapi.components.schemas)
+
   return {
     title: openapi.info.title,
     routes: await createRoutes(openapi.paths, context),
-    resources: createResources(openapi.components.schemas),
-    events: createEvents(openapi.components.schemas),
+    resources,
+    events: createEvents(openapi.components.schemas, resources),
   }
 }
 
