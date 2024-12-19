@@ -1,4 +1,4 @@
-import { findCommonOpenapiSchemaProperties } from 'src/utils/find-common-openapi-schema-properties.js'
+import { findCommonOpenapiSchemaProperties } from '../utils/find-common-openapi-schema-properties.js'
 import { z } from 'zod'
 
 import {
