@@ -15,8 +15,22 @@ export function findCommonOpenapiSchemaProperties(
       Object.keys(schema.properties ?? {}).includes(propKey),
     )
 
-    return isPropInAllSchemas
-      ? { ...commonProps, [propKey]: propValue }
-      : commonProps
+    if (!isPropInAllSchemas) {
+      return commonProps
+    }
+
+    if ('enum' in propValue) {
+      const mergedEnumValues = schemas.reduce<string[]>((allEnums, schema) => {
+        const enumValues = schema.properties?.[propKey]?.enum ?? []
+        return [...new Set([...allEnums, ...enumValues])]
+      }, [])
+
+      return {
+        ...commonProps,
+        [propKey]: { ...propValue, enum: mergedEnumValues },
+      }
+    }
+
+    return { ...commonProps, [propKey]: propValue }
   }, {})
 }
