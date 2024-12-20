@@ -1,6 +1,5 @@
 import { z } from 'zod'
 
-import { findCommonOpenapiSchemaProperties } from '../utils/find-common-openapi-schema-properties.js'
 import {
   type CodeSample,
   CodeSampleDefinitionSchema,
@@ -10,20 +9,21 @@ import type {
   CodeSampleDefinition,
   CodeSampleSyntax,
 } from './code-sample/schema.js'
-import type {
-  Openapi,
-  OpenapiOperation,
-  OpenapiPathItem,
-  OpenapiPaths,
-  OpenapiSchema,
-} from './openapi.js'
+import { findCommonOpenapiSchemaProperties } from './openapi/find-common-openapi-schema-properties.js'
 import {
   type AuthMethodSchema,
   EventResourceSchema,
   OpenapiOperationSchema,
   PropertySchema,
   ResourceSchema,
-} from './openapi-schema.js'
+} from './openapi/schemas.js'
+import type {
+  Openapi,
+  OpenapiOperation,
+  OpenapiPathItem,
+  OpenapiPaths,
+  OpenapiSchema,
+} from './openapi/types.js'
 
 export interface Blueprint {
   title: string

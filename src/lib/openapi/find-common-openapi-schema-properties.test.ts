@@ -1,6 +1,6 @@
 import test from 'ava'
 
-import type { OpenapiSchema } from 'lib/openapi.js'
+import type { OpenapiSchema } from 'lib/openapi/types.js'
 
 import { findCommonOpenapiSchemaProperties } from './find-common-openapi-schema-properties.js'
 
