@@ -72,7 +72,9 @@ export const OpenapiOperationSchema = z.object({
     })
     .optional(),
   responses: ResponseSchema,
-  security: z.array(z.record(AuthMethodSchema, z.array(z.never()))).default([]),
+  security: z
+    .array(z.record(z.string().pipe(AuthMethodSchema), z.array(z.never())))
+    .default([]),
   deprecated: z.boolean().default(false),
   'x-response-key': z.string().nullable().optional(),
   'x-title': z.string().default(''),
