@@ -8,7 +8,7 @@ import {
   type Method,
   type OpenapiAuthMethod,
 } from 'lib/blueprint.js'
-import type { OpenapiOperation, OpenapiSchema } from 'lib/openapi.js'
+import type { OpenapiOperation, OpenapiSchema } from 'lib/openapi/types.js'
 
 test('createProperties: assigns appropriate default values', (t) => {
   const minimalProperties = {

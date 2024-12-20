@@ -71,12 +71,14 @@ export interface OpenapiSchema {
   items?: OpenapiSchema
   $ref?: string
   required?: string[]
+  enum?: string[]
   format?: string
   description?: string
   deprecated?: boolean
   'x-deprecated'?: string
   'x-draft'?: string
   'x-undocumented'?: string
+  'x-route-path'?: string
 }
 
 export interface OpenapiComponents {
