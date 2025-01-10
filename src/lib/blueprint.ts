@@ -1117,14 +1117,14 @@ const createActionAttempts = (
         return null
       }
 
-      const actionType = schema.properties.action_type.enum[0]
+      const actionType = schema.properties.action_type.enum[0] as string
 
       if (processedActionTypes.has(actionType)) {
         return null
       }
       processedActionTypes.add(actionType)
 
-      const schemaWithStandardStatus = {
+      const schemaWithStandardStatus: OpenapiSchema = {
         ...schema,
         properties: {
           ...schema.properties,
