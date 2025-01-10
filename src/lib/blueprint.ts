@@ -762,21 +762,21 @@ const createParameter = (
           jsonType: 'string',
           values: parsedProp.enum.map((value: string | boolean) => {
             const enumValue = parsedProp['x-enums']?.[String(value)]
-            if (parsedProp['x-enums'] && !enumValue) {
+            if (parsedProp['x-enums'] != null && enumValue == null) {
               throw new Error(
                 `Missing enum value definition in x-enums for "${String(value)}"`,
               )
             }
             return {
               name: String(value),
-              title: enumValue?.title || '',
-              description: enumValue?.description || '',
-              isDeprecated: Boolean(enumValue?.deprecated?.length > 0),
-              deprecationMessage: enumValue?.deprecated || '',
-              isUndocumented: Boolean(enumValue?.undocumented?.length > 0),
-              undocumentedMessage: enumValue?.undocumented || '',
-              isDraft: Boolean(enumValue?.draft?.length > 0),
-              draftMessage: enumValue?.draft || '',
+              title: enumValue?.title ?? '',
+              description: enumValue?.description ?? '',
+              isDeprecated: Boolean(enumValue?.deprecated?.length ?? 0),
+              deprecationMessage: enumValue?.deprecated ?? '',
+              isUndocumented: Boolean(enumValue?.undocumented?.length ?? 0),
+              undocumentedMessage: enumValue?.undocumented ?? '',
+              isDraft: Boolean(enumValue?.draft?.length ?? 0),
+              draftMessage: enumValue?.draft ?? '',
             }
           }),
         }
@@ -1019,21 +1019,21 @@ const createProperty = (
           jsonType: 'string',
           values: parsedProp.enum.map((value: string | boolean) => {
             const enumValue = parsedProp['x-enums']?.[String(value)]
-            if (parsedProp['x-enums'] && !enumValue) {
+            if (parsedProp['x-enums'] != null && enumValue == null) {
               throw new Error(
                 `Missing enum value definition in x-enums for "${String(value)}"`,
               )
             }
             return {
               name: String(value),
-              title: enumValue?.title || '',
-              description: enumValue?.description || '',
-              isDeprecated: Boolean(enumValue?.deprecated?.length > 0),
-              deprecationMessage: enumValue?.deprecated || '',
-              isUndocumented: Boolean(enumValue?.undocumented?.length > 0),
-              undocumentedMessage: enumValue?.undocumented || '',
-              isDraft: Boolean(enumValue?.draft?.length > 0),
-              draftMessage: enumValue?.draft || '',
+              title: enumValue?.title ?? '',
+              description: enumValue?.description ?? '',
+              isDeprecated: Boolean(enumValue?.deprecated?.length ?? 0),
+              deprecationMessage: enumValue?.deprecated ?? '',
+              isUndocumented: Boolean(enumValue?.undocumented?.length ?? 0),
+              undocumentedMessage: enumValue?.undocumented ?? '',
+              isDraft: Boolean(enumValue?.draft?.length ?? 0),
+              draftMessage: enumValue?.draft ?? '',
             }
           }),
         }
