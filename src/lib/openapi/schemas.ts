@@ -83,6 +83,14 @@ export const OpenapiOperationSchema = z.object({
   'x-draft': z.string().default(''),
 })
 
+export const EnumValueSchema = z.object({
+  title: z.string().default(''),
+  description: z.string().default(''),
+  undocumented: z.string().default(''),
+  deprecated: z.string().default(''),
+  draft: z.string().default(''),
+})
+
 export const PropertySchema: z.ZodSchema<any> = z.object({
   type: z.enum(['string', 'number', 'integer', 'boolean', 'array', 'object']),
   description: z.string().default(''),
@@ -91,6 +99,7 @@ export const PropertySchema: z.ZodSchema<any> = z.object({
   'x-deprecated': z.string().default(''),
   'x-draft': z.string().default(''),
   enum: z.array(z.string().or(z.boolean())).optional(),
+  'x-enums': z.record(z.string(), EnumValueSchema).optional(),
   $ref: z.string().optional(),
   format: z.string().optional(),
 })

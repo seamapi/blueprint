@@ -79,6 +79,13 @@ export interface OpenapiSchema {
   'x-draft'?: string
   'x-undocumented'?: string
   'x-route-path'?: string
+  'x-enums'?: Record<string, {
+    title?: string
+    description?: string
+    undocumented?: string
+    deprecated?: string
+    draft?: string
+  }>
 }
 
 export interface OpenapiComponents {

@@ -233,9 +233,7 @@ interface EnumProperty extends BaseProperty {
   values: EnumValue[]
 }
 
-interface EnumValue {
-  name: string
-}
+type EnumValue = BaseProperty & { title: string }
 
 interface RecordProperty extends BaseProperty {
   format: 'record'
@@ -762,9 +760,25 @@ const createParameter = (
           ...baseParam,
           format: 'enum',
           jsonType: 'string',
-          values: parsedProp.enum.map((value: any) => ({
-            name: value,
-          })),
+          values: parsedProp.enum.map((value: string | boolean) => {
+            const enumValue = parsedProp['x-enums']?.[String(value)]
+            if (parsedProp['x-enums'] && !enumValue) {
+              throw new Error(
+                `Missing enum value definition in x-enums for "${String(value)}"`,
+              )
+            }
+            return {
+              name: String(value),
+              title: enumValue?.title || '',
+              description: enumValue?.description || '',
+              isDeprecated: Boolean(enumValue?.deprecated?.length > 0),
+              deprecationMessage: enumValue?.deprecated || '',
+              isUndocumented: Boolean(enumValue?.undocumented?.length > 0),
+              undocumentedMessage: enumValue?.undocumented || '',
+              isDraft: Boolean(enumValue?.draft?.length > 0),
+              draftMessage: enumValue?.draft || '',
+            }
+          }),
         }
       }
       if (parsedProp.format === 'date-time') {
@@ -1003,7 +1017,25 @@ const createProperty = (
           ...baseProperty,
           format: 'enum',
           jsonType: 'string',
-          values: parsedProp.enum.map((value: any) => ({ name: value })),
+          values: parsedProp.enum.map((value: string | boolean) => {
+            const enumValue = parsedProp['x-enums']?.[String(value)]
+            if (parsedProp['x-enums'] && !enumValue) {
+              throw new Error(
+                `Missing enum value definition in x-enums for "${String(value)}"`,
+              )
+            }
+            return {
+              name: String(value),
+              title: enumValue?.title || '',
+              description: enumValue?.description || '',
+              isDeprecated: Boolean(enumValue?.deprecated?.length > 0),
+              deprecationMessage: enumValue?.deprecated || '',
+              isUndocumented: Boolean(enumValue?.undocumented?.length > 0),
+              undocumentedMessage: enumValue?.undocumented || '',
+              isDraft: Boolean(enumValue?.draft?.length > 0),
+              draftMessage: enumValue?.draft || '',
+            }
+          }),
         }
       }
       if (parsedProp.format === 'date-time') {
