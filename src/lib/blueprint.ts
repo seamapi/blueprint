@@ -30,6 +30,7 @@ export interface Blueprint {
   routes: Route[]
   resources: Record<string, Resource>
   events: EventResource[]
+  actionAttempts: ActionAttempt[]
 }
 
 export interface Route {
@@ -60,6 +61,11 @@ interface EventResource extends Resource {
   resourceType: 'event'
   eventType: string
   targetResourceType: string | null
+}
+
+interface ActionAttempt extends Resource {
+  resourceType: 'action_attempt'
+  actionAttemptType: string
 }
 
 export interface Namespace {
@@ -288,43 +294,6 @@ export interface BlueprintOptions {
   formatCode?: (content: string, syntax: CodeSampleSyntax) => Promise<string>
 }
 
-const createEvents = (
-  schemas: Openapi['components']['schemas'],
-  resources: Record<string, Resource>,
-): EventResource[] => {
-  const eventSchema = schemas['event']
-  if (
-    eventSchema == null ||
-    typeof eventSchema !== 'object' ||
-    !('oneOf' in eventSchema) ||
-    !Array.isArray(eventSchema.oneOf)
-  ) {
-    return []
-  }
-
-  return eventSchema.oneOf
-    .map((schema) => {
-      if (
-        typeof schema !== 'object' ||
-        schema.properties?.event_type?.enum?.[0] == null
-      ) {
-        return null
-      }
-
-      const eventType = schema.properties.event_type.enum[0]
-      const targetResourceType = Object.keys(resources).find((resourceName) =>
-        eventType.split('.').includes(resourceName),
-      )
-
-      return {
-        ...createResource('event', schema as OpenapiSchema),
-        eventType,
-        targetResourceType: targetResourceType ?? null,
-      }
-    })
-    .filter((event): event is EventResource => event !== null)
-}
-
 export const createBlueprint = async (
   typesModule: TypesModuleInput,
   { formatCode = async (content) => content }: BlueprintOptions = {},
@@ -346,6 +315,7 @@ export const createBlueprint = async (
     routes: await createRoutes(openapi.paths, context),
     resources,
     events: createEvents(openapi.components.schemas, resources),
+    actionAttempts: createActionAttempts(openapi.components.schemas),
   }
 }
 
@@ -1084,4 +1054,97 @@ export const getPreferredMethod = (
   }
 
   return semanticMethod
+}
+
+const createEvents = (
+  schemas: Openapi['components']['schemas'],
+  resources: Record<string, Resource>,
+): EventResource[] => {
+  const eventSchema = schemas['event']
+  if (
+    eventSchema == null ||
+    typeof eventSchema !== 'object' ||
+    !('oneOf' in eventSchema) ||
+    !Array.isArray(eventSchema.oneOf)
+  ) {
+    return []
+  }
+
+  return eventSchema.oneOf
+    .map((schema) => {
+      if (
+        typeof schema !== 'object' ||
+        schema.properties?.event_type?.enum?.[0] == null
+      ) {
+        return null
+      }
+
+      const eventType = schema.properties.event_type.enum[0]
+      const targetResourceType = Object.keys(resources).find((resourceName) =>
+        eventType.split('.').includes(resourceName),
+      )
+
+      return {
+        ...createResource('event', schema as OpenapiSchema),
+        eventType,
+        targetResourceType: targetResourceType ?? null,
+      }
+    })
+    .filter((event): event is EventResource => event !== null)
+}
+
+const createActionAttempts = (
+  schemas: Openapi['components']['schemas'],
+): ActionAttempt[] => {
+  const actionAttemptSchema = schemas['action_attempt']
+  if (
+    actionAttemptSchema == null ||
+    typeof actionAttemptSchema !== 'object' ||
+    !('oneOf' in actionAttemptSchema) ||
+    !Array.isArray(actionAttemptSchema.oneOf)
+  ) {
+    return []
+  }
+
+  const processedActionTypes = new Set<string>()
+
+  return actionAttemptSchema.oneOf
+    .map((schema) => {
+      if (
+        typeof schema !== 'object' ||
+        schema.properties?.action_type?.enum?.[0] == null
+      ) {
+        return null
+      }
+
+      const actionType = schema.properties.action_type.enum[0]
+
+      if (processedActionTypes.has(actionType)) {
+        return null
+      }
+      processedActionTypes.add(actionType)
+
+      const schemaWithStandardStatus = {
+        ...schema,
+        properties: {
+          ...schema.properties,
+          status: {
+            type: 'string',
+            enum: ['success', 'pending', 'error'],
+          },
+        },
+      }
+
+      const resource = createResource(
+        'action_attempt',
+        schemaWithStandardStatus,
+      )
+
+      return {
+        ...resource,
+        resourceType: 'action_attempt',
+        actionAttemptType: actionType,
+      }
+    })
+    .filter((attempt): attempt is ActionAttempt => attempt !== null)
 }
