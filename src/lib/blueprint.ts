@@ -1129,6 +1129,7 @@ const createActionAttempts = (
         properties: {
           ...schema.properties,
           status: {
+            ...schema.properties.status,
             type: 'string',
             enum: ['success', 'pending', 'error'],
           },
