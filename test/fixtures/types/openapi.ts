@@ -163,6 +163,100 @@ export default {
           },
         ],
       },
+      action_attempt: {
+        oneOf: [
+          {
+            type: 'object',
+            properties: {
+              action_attempt_id: {
+                type: 'string',
+                format: 'uuid',
+              },
+              status: {
+                type: 'string',
+                enum: ['pending'],
+              },
+              result: {
+                nullable: true,
+              },
+              error: {
+                nullable: true,
+              },
+              action_type: {
+                type: 'string',
+                enum: ['CREATE_FOO'],
+              },
+            },
+            required: [
+              'action_attempt_id',
+              'status',
+              'result',
+              'error',
+              'action_type',
+            ],
+          },
+          {
+            type: 'object',
+            properties: {
+              action_attempt_id: {
+                type: 'string',
+                format: 'uuid',
+              },
+              status: {
+                type: 'string',
+                enum: ['success'],
+              },
+              result: {
+                nullable: true,
+              },
+              error: {
+                nullable: true,
+              },
+              action_type: {
+                type: 'string',
+                enum: ['CREATE_FOO'],
+              },
+            },
+            required: [
+              'action_attempt_id',
+              'status',
+              'result',
+              'error',
+              'action_type',
+            ],
+          },
+          {
+            type: 'object',
+            properties: {
+              action_attempt_id: {
+                type: 'string',
+                format: 'uuid',
+              },
+              status: {
+                type: 'string',
+                enum: ['error'],
+              },
+              result: {
+                nullable: true,
+              },
+              error: {
+                nullable: true,
+              },
+              action_type: {
+                type: 'string',
+                enum: ['CREATE_FOO'],
+              },
+            },
+            required: [
+              'action_attempt_id',
+              'status',
+              'result',
+              'error',
+              'action_type',
+            ],
+          },
+        ],
+      },
     },
   },
   paths: {
