@@ -20,13 +20,11 @@ export default {
             enum: ['foo_basic', 'foo_advanced'],
             'x-enums': {
               foo_basic: {
-                title: 'Basic Foo',
                 description: 'Use a basic foo',
               },
               foo_advanced: {
-                title: 'Advanced Foo',
                 description: 'Use an advanced foo',
-                deprecated: 'Advanced foo will be deprecated soon',
+                deprecated: 'Advanced foo is deprecated',
               },
             },
           },

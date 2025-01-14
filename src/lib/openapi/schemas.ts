@@ -84,7 +84,6 @@ export const OpenapiOperationSchema = z.object({
 })
 
 export const EnumValueSchema = z.object({
-  title: z.string().default(''),
   description: z.string().default(''),
   undocumented: z.string().default(''),
   deprecated: z.string().default(''),

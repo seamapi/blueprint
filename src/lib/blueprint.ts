@@ -239,7 +239,7 @@ interface EnumProperty extends BaseProperty {
   values: EnumValue[]
 }
 
-type EnumValue = BaseProperty & { title: string }
+type EnumValue = BaseProperty
 
 interface RecordProperty extends BaseProperty {
   format: 'record'
@@ -739,7 +739,6 @@ const createParameter = (
             }
             return {
               name: String(value),
-              title: enumValue?.title ?? '',
               description: enumValue?.description ?? '',
               isDeprecated: Boolean(enumValue?.deprecated?.length ?? 0),
               deprecationMessage: enumValue?.deprecated ?? '',
@@ -996,7 +995,6 @@ const createProperty = (
             }
             return {
               name: String(value),
-              title: enumValue?.title ?? '',
               description: enumValue?.description ?? '',
               isDeprecated: Boolean(enumValue?.deprecated?.length ?? 0),
               deprecationMessage: enumValue?.deprecated ?? '',
