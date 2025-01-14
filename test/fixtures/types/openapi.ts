@@ -14,6 +14,20 @@ export default {
             format: 'uuid',
             type: 'string',
           },
+          foo_type: {
+            description: 'Foo type',
+            type: 'string',
+            enum: ['foo_basic', 'foo_advanced'],
+            'x-enums': {
+              foo_basic: {
+                description: 'Use a basic foo',
+              },
+              foo_advanced: {
+                description: 'Use an advanced foo',
+                deprecated: 'Advanced foo is deprecated',
+              },
+            },
+          },
           name: {
             description: 'Foo name',
             type: 'string',
