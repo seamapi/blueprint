@@ -826,12 +826,16 @@ const createResource = (
   schemaName: string,
   schema: OpenapiSchema,
 ): Resource => {
+  if (schema['x-route-path'] == null) {
+    throw new Error(`Missing route path for ${schemaName}`)
+  }
+
   return {
     resourceType: schemaName,
     properties: createProperties(schema.properties ?? {}, [schemaName]),
     description: schema.description ?? '',
     isDeprecated: schema.deprecated ?? false,
-    routePath: schema['x-route-path'] ?? '',
+    routePath: schema['x-route-path'],
     deprecationMessage: schema['x-deprecated'] ?? '',
     isUndocumented: (schema['x-undocumented'] ?? '').length > 0,
     undocumentedMessage: schema['x-undocumented'] ?? '',

@@ -162,6 +162,7 @@ export default {
         ],
       },
       action_attempt: {
+        "x-route-path": "/action_attempts",
         oneOf: [
           {
             type: 'object',
