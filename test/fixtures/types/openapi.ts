@@ -130,6 +130,7 @@ export default {
         'x-route-path': '/undocumented/resources',
       },
       event: {
+        'x-route-path': '/events',
         oneOf: [
           {
             type: 'object',

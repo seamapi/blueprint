@@ -798,6 +798,7 @@ export const createResources = (
           parsedEvent.oneOf,
         )
         const eventSchema: OpenapiSchema = {
+          'x-route-path': parsedEvent['x-route-path'],
           properties: commonProperties,
           type: 'object',
         }
@@ -826,7 +827,8 @@ const createResource = (
   schemaName: string,
   schema: OpenapiSchema,
 ): Resource => {
-  if (schema['x-route-path'] == null) {
+  const routePath = schema['x-route-path']
+  if (routePath == null || routePath.length === 0) {
     throw new Error(`Missing route path for ${schemaName}`)
   }
 
@@ -835,7 +837,7 @@ const createResource = (
     properties: createProperties(schema.properties ?? {}, [schemaName]),
     description: schema.description ?? '',
     isDeprecated: schema.deprecated ?? false,
-    routePath: schema['x-route-path'],
+    routePath,
     deprecationMessage: schema['x-deprecated'] ?? '',
     isUndocumented: (schema['x-undocumented'] ?? '').length > 0,
     undocumentedMessage: schema['x-undocumented'] ?? '',
@@ -1159,6 +1161,7 @@ const createActionAttempts = (
       processedActionTypes.add(actionType)
 
       const schemaWithStandardStatus: OpenapiSchema = {
+        'x-route-path': actionAttemptSchema['x-route-path'],
         ...schema,
         properties: {
           ...schema.properties,
