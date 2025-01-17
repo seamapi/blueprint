@@ -130,6 +130,7 @@ export default {
         'x-route-path': '/undocumented/resources',
       },
       event: {
+        'x-route-path': '/events',
         oneOf: [
           {
             type: 'object',
@@ -162,6 +163,7 @@ export default {
         ],
       },
       action_attempt: {
+        'x-route-path': '/action_attempts',
         oneOf: [
           {
             type: 'object',
