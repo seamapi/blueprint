@@ -193,6 +193,7 @@ interface ResourceResponse extends BaseResponse {
   responseType: 'resource'
   responseKey: string
   resourceType: string
+  actionAttemptType?: string
 }
 
 interface ResourceListResponse extends BaseResponse {
@@ -920,6 +921,7 @@ const createResponse = (
       )
     }
 
+    const actionAttemptType = parsedOperation['x-action-attempt-type']
     const refKey = responseKey
 
     if (refKey != null && properties[refKey] != null) {
@@ -931,6 +933,7 @@ const createResponse = (
         responseKey: refKey,
         resourceType: refString?.split('/').at(-1) ?? 'unknown',
         description,
+        ...(actionAttemptType != null && { actionAttemptType }),
       }
     }
   }
