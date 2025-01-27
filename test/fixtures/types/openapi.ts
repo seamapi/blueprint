@@ -318,6 +318,38 @@ export default {
         'x-title': 'Get a foo',
       },
     },
+    '/foos/create': {
+      post: {
+        operationId: 'foosCreatePost',
+        responses: {
+          200: {
+            content: {
+              'application/json': {
+                schema: {
+                  properties: {
+                    ok: { type: 'boolean' },
+                    action_attempt: {
+                      $ref: '#/components/schemas/action_attempt',
+                    },
+                  },
+                  required: ['action_attempt', 'ok'],
+                  type: 'object',
+                },
+              },
+            },
+            description: 'Create a foo.',
+          },
+          400: { description: 'Bad Request' },
+          401: { description: 'Unauthorized' },
+        },
+        security: [],
+        summary: '/foos/create',
+        tags: ['/foos'],
+        'x-response-key': 'action_attempt',
+        'x-action-attempt-type': 'CREATE_FOO',
+        'x-title': 'Create a foo',
+      },
+    },
     '/foos/list': {
       get: {
         operationId: 'foosListGet',
