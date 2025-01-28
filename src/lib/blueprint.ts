@@ -952,7 +952,7 @@ const validateActionAttemptType = (
   actionAttemptType: string | undefined,
   responseKey: string,
   path: string,
-) => {
+): string | undefined => {
   const excludedPaths = ['/action_attempts']
   const isPathExcluded = excludedPaths.some((p) => path.startsWith(p))
 
