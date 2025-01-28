@@ -84,7 +84,7 @@ export default {
           },
         },
         required: ['plane_id', 'name'],
-        'x-route-path': '/planes',
+        'x-route-path': '/transport/air/planes',
       },
       deprecated_resource: {
         type: 'object',
@@ -99,7 +99,7 @@ export default {
         required: ['deprecated_resource_id'],
         deprecated: true,
         'x-deprecated': 'This resource is deprecated',
-        'x-route-path': '/deprecated/resources',
+        'x-route-path': '/deprecated/undocumented',
       },
       draft_resource: {
         type: 'object',
@@ -113,7 +113,7 @@ export default {
         },
         required: ['draft_resource_id'],
         'x-draft': 'This resource is draft',
-        'x-route-path': '/draft/resources',
+        'x-route-path': '/draft',
       },
       undocumented_resource: {
         type: 'object',
@@ -127,7 +127,7 @@ export default {
         },
         required: ['undocumented_resource_id'],
         'x-undocumented': 'This resource is undocumented',
-        'x-route-path': '/undocumented/resources',
+        'x-route-path': '/deprecated/undocumented',
       },
       event: {
         'x-route-path': '/events',
@@ -474,6 +474,41 @@ export default {
         'x-response-key': null,
         'x-draft': 'true',
         'x-title': 'Draft endpoint',
+      },
+    },
+    '/action_attempts/get': {
+      post: {
+        operationId: 'actionAttemptsGetPost',
+        responses: {
+          200: {
+            content: {
+              'application/json': {
+                schema: {
+                  properties: {
+                    ok: { type: 'boolean' },
+                    action_attempt: {
+                      $ref: '#/components/schemas/action_attempt',
+                    },
+                  },
+                  required: ['action_attempt', 'ok'],
+                  type: 'object',
+                },
+              },
+            },
+            description: 'Get an action attempt.',
+          },
+          400: { description: 'Bad Request' },
+          401: { description: 'Unauthorized' },
+        },
+        security: [
+          {
+            api_key: [],
+          },
+        ],
+        summary: '/action_attempts/get',
+        tags: ['/action_attempts'],
+        'x-response-key': 'action_attempt',
+        'x-title': 'Get an action attempt',
       },
     },
   },

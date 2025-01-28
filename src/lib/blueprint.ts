@@ -306,14 +306,15 @@ export const createBlueprint = async (
     formatCode,
   }
 
-  const resources = createResources(openapi.components.schemas)
+  const routes = await createRoutes(openapi.paths, context)
+  const resources = createResources(openapi.components.schemas, routes)
 
   return {
     title: openapi.info.title,
-    routes: await createRoutes(openapi.paths, context),
+    routes,
     resources,
-    events: createEvents(openapi.components.schemas, resources),
-    actionAttempts: createActionAttempts(openapi.components.schemas),
+    events: createEvents(openapi.components.schemas, resources, routes),
+    actionAttempts: createActionAttempts(openapi.components.schemas, routes),
   }
 }
 
@@ -788,6 +789,7 @@ const createParameter = (
 
 export const createResources = (
   schemas: Openapi['components']['schemas'],
+  routes: Route[],
 ): Record<string, Resource> => {
   return Object.entries(schemas).reduce<Record<string, Resource>>(
     (resources, [schemaName, schema]) => {
@@ -804,7 +806,7 @@ export const createResources = (
         }
         return {
           ...resources,
-          [schemaName]: createResource(schemaName, eventSchema),
+          [schemaName]: createResource(schemaName, eventSchema, routes),
         }
       }
 
@@ -813,7 +815,7 @@ export const createResources = (
       if (isValidResourceSchema) {
         return {
           ...resources,
-          [schemaName]: createResource(schemaName, schema),
+          [schemaName]: createResource(schemaName, schema, routes),
         }
       }
 
@@ -826,11 +828,9 @@ export const createResources = (
 const createResource = (
   schemaName: string,
   schema: OpenapiSchema,
+  routes: Route[],
 ): Resource => {
-  const routePath = schema['x-route-path']
-  if (routePath == null || routePath.length === 0) {
-    throw new Error(`Missing route path for ${schemaName}`)
-  }
+  const routePath = validateRoutePath(schema['x-route-path'], routes)
 
   return {
     resourceType: schemaName,
@@ -844,6 +844,20 @@ const createResource = (
     isDraft: (schema['x-draft'] ?? '').length > 0,
     draftMessage: schema['x-draft'] ?? '',
   }
+}
+
+const validateRoutePath = (
+  routePath: string | undefined,
+  routes: Route[],
+): string => {
+  if (routePath == null || routePath.length === 0) {
+    throw new Error('Missing route path')
+  }
+  if (!routes.some((r) => r.path === routePath)) {
+    throw new Error(`Route path ${routePath} not found in routes`)
+  }
+
+  return routePath
 }
 
 const createResponse = (
@@ -1095,6 +1109,7 @@ export const getPreferredMethod = (
 const createEvents = (
   schemas: Openapi['components']['schemas'],
   resources: Record<string, Resource>,
+  routes: Route[],
 ): EventResource[] => {
   const eventSchema = schemas['event']
   if (
@@ -1121,7 +1136,7 @@ const createEvents = (
       )
 
       return {
-        ...createResource('event', schema as OpenapiSchema),
+        ...createResource('event', schema as OpenapiSchema, routes),
         eventType,
         targetResourceType: targetResourceType ?? null,
       }
@@ -1131,6 +1146,7 @@ const createEvents = (
 
 const createActionAttempts = (
   schemas: Openapi['components']['schemas'],
+  routes: Route[],
 ): ActionAttempt[] => {
   const actionAttemptSchema = schemas['action_attempt']
   if (
@@ -1176,6 +1192,7 @@ const createActionAttempts = (
       const resource = createResource(
         'action_attempt',
         schemaWithStandardStatus,
+        routes,
       )
 
       return {
