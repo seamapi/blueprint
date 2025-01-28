@@ -921,7 +921,11 @@ const createResponse = (
       )
     }
 
-    const actionAttemptType = parsedOperation['x-action-attempt-type']
+    const actionAttemptType = validateActionAttemptType(
+      parsedOperation['x-action-attempt-type'],
+      responseKey,
+      path,
+    )
     const refKey = responseKey
 
     if (refKey != null && properties[refKey] != null) {
@@ -942,6 +946,25 @@ const createResponse = (
     responseType: 'void',
     description: 'Unknown',
   }
+}
+
+const validateActionAttemptType = (
+  actionAttemptType: string | undefined,
+  responseKey: string,
+  path: string,
+) => {
+  const excludedPaths = ['/action_attempts']
+  const isPathExcluded = excludedPaths.some((p) => path.startsWith(p))
+
+  if (
+    actionAttemptType == null &&
+    responseKey === 'action_attempt' &&
+    !isPathExcluded
+  ) {
+    throw new Error(`Missing action_attempt_type for path ${path}`)
+  }
+
+  return actionAttemptType
 }
 
 export const createProperties = (
