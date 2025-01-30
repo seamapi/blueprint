@@ -277,6 +277,7 @@ export type Method = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH'
 
 interface Context extends Required<BlueprintOptions> {
   codeSampleDefinitions: CodeSampleDefinition[]
+  actionAttempts: ActionAttempt[]
 }
 
 export const TypesModuleSchema = z.object({
@@ -302,19 +303,21 @@ export const createBlueprint = async (
   // TODO: Move openapi to TypesModuleSchema
   const openapi = typesModule.openapi as Openapi
 
+  const resources = createResources(openapi.components.schemas)
+  const actionAttempts = createActionAttempts(openapi.components.schemas)
+
   const context = {
     codeSampleDefinitions,
     formatCode,
+    actionAttempts,
   }
-
-  const resources = createResources(openapi.components.schemas)
 
   return {
     title: openapi.info.title,
     routes: await createRoutes(openapi.paths, context),
     resources,
     events: createEvents(openapi.components.schemas, resources),
-    actionAttempts: createActionAttempts(openapi.components.schemas),
+    actionAttempts,
   }
 }
 
@@ -524,7 +527,7 @@ const createEndpointFromOperation = async (
   const draftMessage = parsedOperation['x-draft']
 
   const request = createRequest(methods, operation, path)
-  const response = createResponse(operation, path)
+  const response = createResponse(operation, path, context)
 
   const operationAuthMethods = parsedOperation.security.map(
     (securitySchema) => {
@@ -844,6 +847,7 @@ const createResource = (
 const createResponse = (
   operation: OpenapiOperation,
   path: string,
+  context: Context,
 ): Response => {
   if (!('responses' in operation) || operation.responses == null) {
     throw new Error(
@@ -925,6 +929,7 @@ const createResponse = (
       parsedOperation['x-action-attempt-type'],
       responseKey,
       path,
+      context,
     )
     const refKey = responseKey
 
@@ -952,6 +957,7 @@ const validateActionAttemptType = (
   actionAttemptType: string | undefined,
   responseKey: string,
   path: string,
+  context: Context,
 ): string | undefined => {
   const excludedPaths = ['/action_attempts']
   const isPathExcluded = excludedPaths.some((p) => path.startsWith(p))
@@ -962,6 +968,17 @@ const validateActionAttemptType = (
     !isPathExcluded
   ) {
     throw new Error(`Missing action_attempt_type for path ${path}`)
+  }
+
+  if (
+    actionAttemptType != null &&
+    !context.actionAttempts.some(
+      (attempt) => attempt.actionAttemptType === actionAttemptType,
+    )
+  ) {
+    throw new Error(
+      `Invalid action_attempt_type '${actionAttemptType}' for path ${path}`,
+    )
   }
 
   return actionAttemptType
