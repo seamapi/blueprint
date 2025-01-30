@@ -830,7 +830,11 @@ const createResource = (
   schema: OpenapiSchema,
   routes: Route[],
 ): Resource => {
-  const routePath = validateRoutePath(schema['x-route-path'], routes)
+  const routePath = validateRoutePath(
+    schemaName,
+    schema['x-route-path'],
+    routes,
+  )
 
   return {
     resourceType: schemaName,
@@ -847,11 +851,12 @@ const createResource = (
 }
 
 const validateRoutePath = (
+  resourceName: string,
   routePath: string | undefined,
   routes: Route[],
 ): string => {
   if (routePath == null || routePath.length === 0) {
-    throw new Error('Missing route path')
+    throw new Error(`Resource ${resourceName} is missing a route path`)
   }
   if (!routes.some((r) => r.path === routePath)) {
     throw new Error(`Route path ${routePath} not found in routes`)
