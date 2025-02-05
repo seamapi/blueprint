@@ -277,7 +277,7 @@ export type Method = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH'
 
 interface Context extends Required<BlueprintOptions> {
   codeSampleDefinitions: CodeSampleDefinition[]
-  // actionAttempts: ActionAttempt[]
+  validActionAttemptTypes: string[]
 }
 
 export const TypesModuleSchema = z.object({
@@ -303,10 +303,14 @@ export const createBlueprint = async (
   // TODO: Move openapi to TypesModuleSchema
   const openapi = typesModule.openapi as Openapi
 
-  const context = {
+  const validActionAttemptTypes = extractValidActionAttemptTypes(
+    openapi.components.schemas,
+  )
+
+  const context: Context = {
     codeSampleDefinitions,
     formatCode,
-    // actionAttempts,
+    validActionAttemptTypes,
   }
 
   const routes = await createRoutes(openapi.paths, context)
@@ -323,6 +327,30 @@ export const createBlueprint = async (
     events: createEvents(openapi.components.schemas, resources, routes),
     actionAttempts,
   }
+}
+
+const extractValidActionAttemptTypes = (
+  schemas: Openapi['components']['schemas'],
+): string[] => {
+  const actionAttemptSchema = schemas['action_attempt']
+  if (
+    actionAttemptSchema == null ||
+    typeof actionAttemptSchema !== 'object' ||
+    !('oneOf' in actionAttemptSchema) ||
+    !Array.isArray(actionAttemptSchema.oneOf)
+  ) {
+    return []
+  }
+
+  const processedActionAttemptTypes = new Set<string>()
+  actionAttemptSchema.oneOf.forEach((schema) => {
+    const actionType = schema.properties?.action_type?.enum?.[0]
+    if (typeof actionType === 'string') {
+      processedActionAttemptTypes.add(actionType)
+    }
+  })
+
+  return Array.from(processedActionAttemptTypes)
 }
 
 const createRoutes = async (
@@ -957,7 +985,7 @@ const createResponse = (
       parsedOperation['x-action-attempt-type'],
       responseKey,
       path,
-      context,
+      context.validActionAttemptTypes,
     )
     const refKey = responseKey
 
@@ -985,7 +1013,7 @@ const validateActionAttemptType = (
   actionAttemptType: string | undefined,
   responseKey: string,
   path: string,
-  context: Context,
+  validActionAttemptTypes: string[],
 ): string | undefined => {
   const excludedPaths = ['/action_attempts']
   const isPathExcluded = excludedPaths.some((p) => path.startsWith(p))
@@ -998,16 +1026,14 @@ const validateActionAttemptType = (
     throw new Error(`Missing action_attempt_type for path ${path}`)
   }
 
-  // if (
-  //   actionAttemptType != null &&
-  //   !context.actionAttempts.some(
-  //     (attempt) => attempt.actionAttemptType === actionAttemptType,
-  //   )
-  // ) {
-  //   throw new Error(
-  //     `Invalid action_attempt_type '${actionAttemptType}' for path ${path}`,
-  //   )
-  // }
+  if (
+    actionAttemptType != null &&
+    !validActionAttemptTypes.includes(actionAttemptType)
+  ) {
+    throw new Error(
+      `Invalid action_attempt_type '${actionAttemptType}' for path ${path}`,
+    )
+  }
 
   return actionAttemptType
 }
