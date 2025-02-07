@@ -277,7 +277,7 @@ export type Method = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH'
 
 interface Context extends Required<BlueprintOptions> {
   codeSampleDefinitions: CodeSampleDefinition[]
-  actionAttempts: ActionAttempt[]
+  validActionAttemptTypes: string[]
 }
 
 export const TypesModuleSchema = z.object({
@@ -303,22 +303,54 @@ export const createBlueprint = async (
   // TODO: Move openapi to TypesModuleSchema
   const openapi = typesModule.openapi as Openapi
 
-  const resources = createResources(openapi.components.schemas)
-  const actionAttempts = createActionAttempts(openapi.components.schemas)
+  const validActionAttemptTypes = extractValidActionAttemptTypes(
+    openapi.components.schemas,
+  )
 
-  const context = {
+  const context: Context = {
     codeSampleDefinitions,
     formatCode,
-    actionAttempts,
+    validActionAttemptTypes,
   }
+
+  const routes = await createRoutes(openapi.paths, context)
+  const resources = createResources(openapi.components.schemas, routes)
+  const actionAttempts = createActionAttempts(
+    openapi.components.schemas,
+    routes,
+  )
 
   return {
     title: openapi.info.title,
-    routes: await createRoutes(openapi.paths, context),
+    routes,
     resources,
-    events: createEvents(openapi.components.schemas, resources),
+    events: createEvents(openapi.components.schemas, resources, routes),
     actionAttempts,
   }
+}
+
+const extractValidActionAttemptTypes = (
+  schemas: Openapi['components']['schemas'],
+): string[] => {
+  const actionAttemptSchema = schemas['action_attempt']
+  if (
+    actionAttemptSchema == null ||
+    typeof actionAttemptSchema !== 'object' ||
+    !('oneOf' in actionAttemptSchema) ||
+    !Array.isArray(actionAttemptSchema.oneOf)
+  ) {
+    return []
+  }
+
+  const processedActionAttemptTypes = new Set<string>()
+  actionAttemptSchema.oneOf.forEach((schema) => {
+    const actionType = schema.properties?.action_type?.enum?.[0]
+    if (typeof actionType === 'string') {
+      processedActionAttemptTypes.add(actionType)
+    }
+  })
+
+  return Array.from(processedActionAttemptTypes)
 }
 
 const createRoutes = async (
@@ -792,6 +824,7 @@ const createParameter = (
 
 export const createResources = (
   schemas: Openapi['components']['schemas'],
+  routes: Route[],
 ): Record<string, Resource> => {
   return Object.entries(schemas).reduce<Record<string, Resource>>(
     (resources, [schemaName, schema]) => {
@@ -802,12 +835,13 @@ export const createResources = (
           parsedEvent.oneOf,
         )
         const eventSchema: OpenapiSchema = {
+          'x-route-path': parsedEvent['x-route-path'],
           properties: commonProperties,
           type: 'object',
         }
         return {
           ...resources,
-          [schemaName]: createResource(schemaName, eventSchema),
+          [schemaName]: createResource(schemaName, eventSchema, routes),
         }
       }
 
@@ -816,7 +850,7 @@ export const createResources = (
       if (isValidResourceSchema) {
         return {
           ...resources,
-          [schemaName]: createResource(schemaName, schema),
+          [schemaName]: createResource(schemaName, schema, routes),
         }
       }
 
@@ -829,19 +863,41 @@ export const createResources = (
 const createResource = (
   schemaName: string,
   schema: OpenapiSchema,
+  routes: Route[],
 ): Resource => {
+  const routePath = validateRoutePath(
+    schemaName,
+    schema['x-route-path'],
+    routes,
+  )
+
   return {
     resourceType: schemaName,
     properties: createProperties(schema.properties ?? {}, [schemaName]),
     description: schema.description ?? '',
     isDeprecated: schema.deprecated ?? false,
-    routePath: schema['x-route-path'] ?? '',
+    routePath,
     deprecationMessage: schema['x-deprecated'] ?? '',
     isUndocumented: (schema['x-undocumented'] ?? '').length > 0,
     undocumentedMessage: schema['x-undocumented'] ?? '',
     isDraft: (schema['x-draft'] ?? '').length > 0,
     draftMessage: schema['x-draft'] ?? '',
   }
+}
+
+const validateRoutePath = (
+  resourceName: string,
+  routePath: string | undefined,
+  routes: Route[],
+): string => {
+  if (routePath == null || routePath.length === 0) {
+    throw new Error(`Resource ${resourceName} is missing a route path`)
+  }
+  if (!routes.some((r) => r.path === routePath)) {
+    throw new Error(`Route path ${routePath} not found in routes`)
+  }
+
+  return routePath
 }
 
 const createResponse = (
@@ -929,7 +985,7 @@ const createResponse = (
       parsedOperation['x-action-attempt-type'],
       responseKey,
       path,
-      context,
+      context.validActionAttemptTypes,
     )
     const refKey = responseKey
 
@@ -957,7 +1013,7 @@ const validateActionAttemptType = (
   actionAttemptType: string | undefined,
   responseKey: string,
   path: string,
-  context: Context,
+  validActionAttemptTypes: string[],
 ): string | undefined => {
   const excludedPaths = ['/action_attempts']
   const isPathExcluded = excludedPaths.some((p) => path.startsWith(p))
@@ -972,9 +1028,7 @@ const validateActionAttemptType = (
 
   if (
     actionAttemptType != null &&
-    !context.actionAttempts.some(
-      (attempt) => attempt.actionAttemptType === actionAttemptType,
-    )
+    !validActionAttemptTypes.includes(actionAttemptType)
   ) {
     throw new Error(
       `Invalid action_attempt_type '${actionAttemptType}' for path ${path}`,
@@ -1132,6 +1186,7 @@ export const getPreferredMethod = (
 const createEvents = (
   schemas: Openapi['components']['schemas'],
   resources: Record<string, Resource>,
+  routes: Route[],
 ): EventResource[] => {
   const eventSchema = schemas['event']
   if (
@@ -1158,7 +1213,7 @@ const createEvents = (
       )
 
       return {
-        ...createResource('event', schema as OpenapiSchema),
+        ...createResource('event', schema as OpenapiSchema, routes),
         eventType,
         targetResourceType: targetResourceType ?? null,
       }
@@ -1168,6 +1223,7 @@ const createEvents = (
 
 const createActionAttempts = (
   schemas: Openapi['components']['schemas'],
+  routes: Route[],
 ): ActionAttempt[] => {
   const actionAttemptSchema = schemas['action_attempt']
   if (
@@ -1198,6 +1254,7 @@ const createActionAttempts = (
       processedActionTypes.add(actionType)
 
       const schemaWithStandardStatus: OpenapiSchema = {
+        'x-route-path': actionAttemptSchema['x-route-path'],
         ...schema,
         properties: {
           ...schema.properties,
@@ -1212,6 +1269,7 @@ const createActionAttempts = (
       const resource = createResource(
         'action_attempt',
         schemaWithStandardStatus,
+        routes,
       )
 
       return {

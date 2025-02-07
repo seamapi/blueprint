@@ -116,6 +116,7 @@ export const ResourceSchema = z.object({
 })
 
 export const EventResourceSchema = z.object({
+  'x-route-path': z.string().default(''),
   discriminator: z.object({ propertyName: z.string() }),
   oneOf: z.array(ResourceSchema),
 })
