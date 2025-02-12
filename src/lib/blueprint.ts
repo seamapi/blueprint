@@ -362,6 +362,8 @@ const createRoutes = async (
   const pathEntries = Object.entries(paths)
 
   for (const [path, pathItem] of pathEntries) {
+    if (path.startsWith('/seam')) continue
+
     const namespace = getNamespace(path, paths)
 
     const route = await createRoute(namespace, path, pathItem, context)
