@@ -10,6 +10,7 @@ import type {
   CodeSampleSyntax,
 } from './code-sample/schema.js'
 import { findCommonOpenapiSchemaProperties } from './openapi/find-common-openapi-schema-properties.js'
+import { flattenOpenapiSchema } from './openapi/flatten-openapi-schema.js'
 import {
   type AuthMethodSchema,
   EventResourceSchema,
@@ -700,19 +701,19 @@ const createRequestBody = (
   }
 
   const requestBody = operation.requestBody
+  const jsonSchema = requestBody.content?.['application/json']?.schema
+  if (jsonSchema == null) return []
 
-  if (
-    requestBody.content?.['application/json']?.schema?.properties === undefined
-  )
-    return []
-
-  const schema = requestBody.content['application/json'].schema
-
-  if (schema.type !== 'object' || schema.properties == null) {
+  const flattenedSchema = flattenOpenapiSchema(jsonSchema)
+  if (flattenedSchema.type !== 'object' || flattenedSchema.properties == null) {
     return []
   }
 
-  return createParameters(schema.properties, path, schema.required)
+  return createParameters(
+    flattenedSchema.properties,
+    path,
+    flattenedSchema.required,
+  )
 }
 
 const createParameters = (

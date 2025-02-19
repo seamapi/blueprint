@@ -89,6 +89,8 @@ export interface OpenapiSchema {
       draft?: string
     }
   >
+  oneOf?: OpenapiSchema[]
+  allOf?: OpenapiSchema[]
 }
 
 export interface OpenapiComponents {
