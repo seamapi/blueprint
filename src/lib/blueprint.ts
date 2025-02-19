@@ -345,7 +345,7 @@ const extractValidActionAttemptTypes = (
 
   const processedActionAttemptTypes = new Set<string>()
   actionAttemptSchema.oneOf.forEach((schema) => {
-    const actionType = schema.properties?.action_type?.enum?.[0]
+    const actionType = schema.properties?.['action_type']?.enum?.[0]
     if (typeof actionType === 'string') {
       processedActionAttemptTypes.add(actionType)
     }
@@ -1203,12 +1203,12 @@ const createEvents = (
     .map((schema) => {
       if (
         typeof schema !== 'object' ||
-        schema.properties?.event_type?.enum?.[0] == null
+        schema.properties?.['event_type']?.enum?.[0] == null
       ) {
         return null
       }
 
-      const eventType = schema.properties.event_type.enum[0]
+      const eventType = schema.properties['event_type'].enum[0]
       const targetResourceType = Object.keys(resources).find((resourceName) =>
         eventType.split('.').includes(resourceName),
       )
@@ -1242,12 +1242,12 @@ const createActionAttempts = (
     .map((schema) => {
       if (
         typeof schema !== 'object' ||
-        schema.properties?.action_type?.enum?.[0] == null
+        schema.properties?.['action_type']?.enum?.[0] == null
       ) {
         return null
       }
 
-      const actionType = schema.properties.action_type.enum[0]
+      const actionType = schema.properties['action_type'].enum[0]
 
       if (processedActionTypes.has(actionType)) {
         return null
@@ -1255,12 +1255,14 @@ const createActionAttempts = (
       processedActionTypes.add(actionType)
 
       const schemaWithStandardStatus: OpenapiSchema = {
-        'x-route-path': actionAttemptSchema['x-route-path'],
+        ...(actionAttemptSchema['x-route-path'] !== null && {
+          'x-route-path': actionAttemptSchema['x-route-path'],
+        }),
         ...schema,
         properties: {
           ...schema.properties,
           status: {
-            ...schema.properties.status,
+            ...schema.properties['status'],
             type: 'string',
             enum: ['success', 'pending', 'error'],
           },

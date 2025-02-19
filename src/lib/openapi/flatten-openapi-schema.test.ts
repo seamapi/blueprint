@@ -100,7 +100,7 @@ test('flattenOpenapiSchema: recursively flattens nested properties', (t) => {
   const flattened = flattenOpenapiSchema(schema)
   t.is(flattened.type, 'object')
   t.truthy(flattened.properties)
-  t.deepEqual(flattened.properties?.foo, {
+  t.deepEqual(flattened.properties?.['foo'], {
     type: 'object',
     properties: {
       a: { type: 'string' },
