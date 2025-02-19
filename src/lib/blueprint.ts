@@ -1214,7 +1214,7 @@ const createEvents = (
       )
 
       return {
-        ...createResource('event', schema as OpenapiSchema, routes),
+        ...createResource('event', schema, routes),
         eventType,
         targetResourceType: targetResourceType ?? null,
       }
@@ -1247,7 +1247,7 @@ const createActionAttempts = (
         return null
       }
 
-      const actionType = schema.properties.action_type.enum[0] as string
+      const actionType = schema.properties.action_type.enum[0]
 
       if (processedActionTypes.has(actionType)) {
         return null
