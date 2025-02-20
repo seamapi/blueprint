@@ -13,7 +13,10 @@ export const flattenOpenapiSchema = (schema: OpenapiSchema): OpenapiSchema => {
     }
 
     return { ...schema, properties: flattenedProperties }
+  } else if (schema.type === 'array' && schema.items != null) {
+    return { ...schema, items: flattenOpenapiSchema(schema.items) }
   }
+
   return schema
 }
 
