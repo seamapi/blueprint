@@ -10,6 +10,7 @@ import type {
   CodeSampleSyntax,
 } from './code-sample/schema.js'
 import { findCommonOpenapiSchemaProperties } from './openapi/find-common-openapi-schema-properties.js'
+import { flattenOpenapiSchema } from './openapi/flatten-openapi-schema.js'
 import {
   type AuthMethodSchema,
   EventResourceSchema,
@@ -344,7 +345,7 @@ const extractValidActionAttemptTypes = (
 
   const processedActionAttemptTypes = new Set<string>()
   actionAttemptSchema.oneOf.forEach((schema) => {
-    const actionType = schema.properties?.action_type?.enum?.[0]
+    const actionType = schema.properties?.['action_type']?.enum?.[0]
     if (typeof actionType === 'string') {
       processedActionAttemptTypes.add(actionType)
     }
@@ -700,19 +701,19 @@ const createRequestBody = (
   }
 
   const requestBody = operation.requestBody
+  const jsonSchema = requestBody.content?.['application/json']?.schema
+  if (jsonSchema == null) return []
 
-  if (
-    requestBody.content?.['application/json']?.schema?.properties === undefined
-  )
-    return []
-
-  const schema = requestBody.content['application/json'].schema
-
-  if (schema.type !== 'object' || schema.properties == null) {
+  const flattenedSchema = flattenOpenapiSchema(jsonSchema)
+  if (flattenedSchema.type !== 'object' || flattenedSchema.properties == null) {
     return []
   }
 
-  return createParameters(schema.properties, path, schema.required)
+  return createParameters(
+    flattenedSchema.properties,
+    path,
+    flattenedSchema.required,
+  )
 }
 
 const createParameters = (
@@ -1202,18 +1203,18 @@ const createEvents = (
     .map((schema) => {
       if (
         typeof schema !== 'object' ||
-        schema.properties?.event_type?.enum?.[0] == null
+        schema.properties?.['event_type']?.enum?.[0] == null
       ) {
         return null
       }
 
-      const eventType = schema.properties.event_type.enum[0]
+      const eventType = schema.properties['event_type'].enum[0]
       const targetResourceType = Object.keys(resources).find((resourceName) =>
         eventType.split('.').includes(resourceName),
       )
 
       return {
-        ...createResource('event', schema as OpenapiSchema, routes),
+        ...createResource('event', schema, routes),
         eventType,
         targetResourceType: targetResourceType ?? null,
       }
@@ -1241,12 +1242,12 @@ const createActionAttempts = (
     .map((schema) => {
       if (
         typeof schema !== 'object' ||
-        schema.properties?.action_type?.enum?.[0] == null
+        schema.properties?.['action_type']?.enum?.[0] == null
       ) {
         return null
       }
 
-      const actionType = schema.properties.action_type.enum[0] as string
+      const actionType = schema.properties['action_type'].enum[0]
 
       if (processedActionTypes.has(actionType)) {
         return null
@@ -1254,12 +1255,14 @@ const createActionAttempts = (
       processedActionTypes.add(actionType)
 
       const schemaWithStandardStatus: OpenapiSchema = {
-        'x-route-path': actionAttemptSchema['x-route-path'],
+        ...(actionAttemptSchema['x-route-path'] !== null && {
+          'x-route-path': actionAttemptSchema['x-route-path'],
+        }),
         ...schema,
         properties: {
           ...schema.properties,
           status: {
-            ...schema.properties.status,
+            ...schema.properties['status'],
             type: 'string',
             enum: ['success', 'pending', 'error'],
           },
