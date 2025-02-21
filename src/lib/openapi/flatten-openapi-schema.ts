@@ -3,9 +3,13 @@ import type { OpenapiSchema } from './types.js'
 export const flattenOpenapiSchema = (schema: OpenapiSchema): OpenapiSchema => {
   if ('allOf' in schema && Array.isArray(schema.allOf)) {
     return flattenAllOfSchema(schema as { allOf: OpenapiSchema[] })
-  } else if ('oneOf' in schema && Array.isArray(schema.oneOf)) {
+  }
+
+  if ('oneOf' in schema && Array.isArray(schema.oneOf)) {
     return flattenOneOfSchema(schema as { oneOf: OpenapiSchema[] })
-  } else if (schema.type === 'object' && schema.properties != null) {
+  }
+
+  if (schema.type === 'object' && schema.properties != null) {
     const flattenedProperties: Record<string, OpenapiSchema> = {}
 
     for (const [propKey, propSchema] of Object.entries(schema.properties)) {
@@ -14,18 +18,23 @@ export const flattenOpenapiSchema = (schema: OpenapiSchema): OpenapiSchema => {
 
     return { ...schema, properties: flattenedProperties }
   }
+
+  if (schema.type === 'array' && schema.items != null) {
+    return { ...schema, items: flattenOpenapiSchema(schema.items) }
+  }
+
   return schema
 }
 
-export const flattenAllOfSchema = (schema: {
-  allOf: OpenapiSchema[]
-}): OpenapiSchema => {
-  const flattenedSchema: Required<
-    Pick<OpenapiSchema, 'type' | 'properties' | 'required'>
-  > = {
+type AllOfSchema = OpenapiSchema & Required<Pick<OpenapiSchema, 'allOf'>>
+
+export const flattenAllOfSchema = (schema: AllOfSchema): OpenapiSchema => {
+  const flattenedSchema: OpenapiSchema &
+    Required<Pick<OpenapiSchema, 'type' | 'properties' | 'required'>> = {
     type: 'object',
     properties: {},
     required: [],
+    ...(schema?.description != null && { description: schema.description }),
   }
 
   for (const subschema of schema.allOf) {
@@ -51,9 +60,12 @@ export const flattenAllOfSchema = (schema: {
   return flattenedSchema
 }
 
-export const flattenOneOfSchema = (schema: {
-  oneOf: OpenapiSchema[]
-}): OpenapiSchema => {
+type OneOfSchema = OpenapiSchema & Required<Pick<OpenapiSchema, 'oneOf'>>
+
+export const flattenOneOfSchema = (schema: OneOfSchema): OpenapiSchema => {
+  const baseFlattenedSchema: OpenapiSchema = {
+    ...(schema?.description != null && { description: schema.description }),
+  }
   const flattenedSubschemas = schema.oneOf.map(flattenOpenapiSchema)
 
   if (
@@ -65,7 +77,11 @@ export const flattenOneOfSchema = (schema: {
       new Set(flattenedSubschemas.flatMap((s) => s.enum ?? [])),
     )
 
-    return { type: 'string', enum: mergedEnums }
+    return {
+      ...baseFlattenedSchema,
+      type: 'string',
+      enum: mergedEnums,
+    }
   } else {
     let mergedProperties: Record<string, OpenapiSchema> = {}
     const requiredFieldsLists: string[][] = []
@@ -99,6 +115,7 @@ export const flattenOneOfSchema = (schema: {
     }
 
     return {
+      ...baseFlattenedSchema,
       type: 'object',
       properties: mergedProperties,
       required: commonRequiredFields,
