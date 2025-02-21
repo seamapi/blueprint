@@ -3,9 +3,13 @@ import type { OpenapiSchema } from './types.js'
 export const flattenOpenapiSchema = (schema: OpenapiSchema): OpenapiSchema => {
   if ('allOf' in schema && Array.isArray(schema.allOf)) {
     return flattenAllOfSchema(schema as { allOf: OpenapiSchema[] })
-  } else if ('oneOf' in schema && Array.isArray(schema.oneOf)) {
+  }
+
+  if ('oneOf' in schema && Array.isArray(schema.oneOf)) {
     return flattenOneOfSchema(schema as { oneOf: OpenapiSchema[] })
-  } else if (schema.type === 'object' && schema.properties != null) {
+  }
+
+  if (schema.type === 'object' && schema.properties != null) {
     const flattenedProperties: Record<string, OpenapiSchema> = {}
 
     for (const [propKey, propSchema] of Object.entries(schema.properties)) {
@@ -13,7 +17,9 @@ export const flattenOpenapiSchema = (schema: OpenapiSchema): OpenapiSchema => {
     }
 
     return { ...schema, properties: flattenedProperties }
-  } else if (schema.type === 'array' && schema.items != null) {
+  }
+
+  if (schema.type === 'array' && schema.items != null) {
     return { ...schema, items: flattenOpenapiSchema(schema.items) }
   }
 
