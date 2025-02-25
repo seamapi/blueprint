@@ -64,7 +64,7 @@ interface EventResource extends Resource {
   targetResourceType: string | null
 }
 
-interface ActionAttempt extends Resource {
+export interface ActionAttempt extends Resource {
   resourceType: 'action_attempt'
   actionAttemptType: string
 }

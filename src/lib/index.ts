@@ -1,4 +1,5 @@
 export {
+  type ActionAttempt,
   type Blueprint,
   type BlueprintOptions,
   createBlueprint,
