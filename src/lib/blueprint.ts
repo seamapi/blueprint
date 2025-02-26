@@ -28,14 +28,16 @@ import type {
 import {
   mapOpenapiToSeamAuthMethod,
   type SeamAuthMethod,
-  seamRoutelessResources,
   type SeamWorkspaceScope,
 } from './seam.js'
+
+const paginationResponseKey = 'pagination'
 
 export interface Blueprint {
   title: string
   routes: Route[]
   resources: Record<string, Resource>
+  pagination: Pagination
   events: EventResource[]
   actionAttempts: ActionAttempt[]
 }
@@ -62,6 +64,12 @@ export interface Resource {
   undocumentedMessage: string
   isDraft: boolean
   draftMessage: string
+}
+
+export interface Pagination {
+  properties: Property[]
+  description: string
+  paginationResponseKey: string
 }
 
 interface EventResource extends Resource {
@@ -95,6 +103,7 @@ export interface Endpoint {
   draftMessage: string
   request: Request
   response: Response
+  hasPagination: boolean
   codeSamples: CodeSample[]
   authMethods: SeamAuthMethod[]
   workspaceScope: SeamWorkspaceScope
@@ -322,6 +331,12 @@ export const createBlueprint = async (
     title: openapi.info.title,
     routes,
     resources,
+    pagination: {
+      paginationResponseKey,
+      // TODO: Generate this from openapi.components.schemas.pagination if exists
+      description: '',
+      properties: [],
+    },
     events: createEvents(openapi.components.schemas, resources, routes),
     actionAttempts,
   }
@@ -584,6 +599,8 @@ const createEndpointFromOperation = async (
     draftMessage,
     response,
     request,
+    // TODO: True if response contains paginationResponseKey
+    hasPagination: false,
     authMethods: endpointAuthMethods,
     workspaceScope,
   }
@@ -869,10 +886,6 @@ const validateRoutePath = (
   routePath: string | undefined,
   routes: Route[],
 ): string => {
-  if (seamRoutelessResources.includes(resourceName)) {
-    return null
-  }
-
   if (routePath == null || routePath.length === 0) {
     throw new Error(`Resource ${resourceName} is missing a route path`)
   }

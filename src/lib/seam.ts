@@ -1,7 +1,5 @@
 import type { KnownOpenapiAuthMethod } from './openapi/types.js'
 
-export const seamRoutelessResources = ['pagination']
-
 export type SeamWorkspaceScope = 'none' | 'optional' | 'required'
 
 export type SeamAuthMethod =

@@ -11,6 +11,7 @@ export {
   type Resource,
   type Response,
   type Route,
+  type Pagination,
   type TypesModule,
   type TypesModuleInput,
   TypesModuleSchema,
