@@ -37,7 +37,7 @@ export interface Blueprint {
   title: string
   routes: Route[]
   resources: Record<string, Resource>
-  pagination: Pagination
+  pagination: Pagination | null
   events: EventResource[]
   actionAttempts: ActionAttempt[]
 }
