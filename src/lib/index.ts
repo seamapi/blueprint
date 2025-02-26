@@ -16,13 +16,10 @@ export {
   TypesModuleSchema,
 } from './blueprint.js'
 export {
-  type SeamAuthMethod,
-  type SeamWorkspaceScope,
-} from './seam.js'
-export {
   type CodeSample,
   type CodeSampleDefinitionInput,
   CodeSampleDefinitionSchema,
   type CodeSampleSdk,
   type CodeSampleSyntax,
 } from './code-sample/index.js'
+export { type SeamAuthMethod, type SeamWorkspaceScope } from './seam.js'
