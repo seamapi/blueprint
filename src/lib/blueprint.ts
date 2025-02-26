@@ -321,7 +321,8 @@ export const createBlueprint = async (
   }
 
   const routes = await createRoutes(openapi.paths, context)
-  const resources = createResources(openapi.components.schemas, routes)
+  const { pagination, ...openapiSchemas } = openapi.components.schemas
+  const resources = createResources(openapiSchemas, routes)
   const actionAttempts = createActionAttempts(
     openapi.components.schemas,
     routes,
@@ -331,13 +332,8 @@ export const createBlueprint = async (
     title: openapi.info.title,
     routes,
     resources,
-    pagination: {
-      paginationResponseKey,
-      // TODO: Generate this from openapi.components.schemas.pagination if exists
-      description: '',
-      properties: [],
-    },
-    events: createEvents(openapi.components.schemas, resources, routes),
+    pagination: createPagination(pagination),
+    events: createEvents(openapiSchemas, resources, routes),
     actionAttempts,
   }
 }
@@ -599,7 +595,7 @@ const createEndpointFromOperation = async (
     draftMessage,
     response,
     request,
-    // TODO: True if response contains paginationResponseKey
+    // TODO: True if response properties contains the paginationResponseKey
     hasPagination: false,
     authMethods: endpointAuthMethods,
     workspaceScope,
@@ -815,6 +811,17 @@ const createParameter = (
       }
     default:
       throw new Error(`Unsupported property type: ${parsedProp.type}`)
+  }
+}
+
+const createPagination = (
+  schema: Openapi['components']['schemas'][number] | undefined,
+): Pagination | null => {
+  if (schema == null) return null
+  return {
+    paginationResponseKey,
+    description: '',
+    properties: [],
   }
 }
 
