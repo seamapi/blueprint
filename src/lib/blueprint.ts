@@ -1122,7 +1122,7 @@ const createProperty = (
       return { ...baseProperty, format: 'string', jsonType: 'string' }
     case 'boolean':
       return { ...baseProperty, format: 'boolean', jsonType: 'boolean' }
-    case 'array':
+    case 'array': {
       const baseListProperty: ListProperty = {
         ...baseProperty,
         format: 'list',
@@ -1149,7 +1149,7 @@ const createProperty = (
             ]),
             description: schema.description ?? '',
           })),
-          ...(prop.items.discriminator?.propertyName && {
+          ...(prop.items.discriminator?.propertyName != null && {
             discriminator: prop.items.discriminator.propertyName,
           }),
         }
@@ -1171,6 +1171,7 @@ const createProperty = (
           itemEnumValues: itemProperty.values,
         }),
       }
+    }
 
     case 'object':
       if (prop.properties !== undefined) {
