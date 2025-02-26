@@ -11,12 +11,14 @@ export {
   type Resource,
   type Response,
   type Route,
-  type SeamAuthMethod,
-  type SeamWorkspaceScope,
   type TypesModule,
   type TypesModuleInput,
   TypesModuleSchema,
 } from './blueprint.js'
+export {
+  type SeamAuthMethod,
+  type SeamWorkspaceScope,
+} from './seam.js'
 export {
   type CodeSample,
   type CodeSampleDefinitionInput,
