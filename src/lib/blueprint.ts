@@ -251,6 +251,15 @@ interface RecordProperty extends BaseProperty {
 interface ListProperty extends BaseProperty {
   format: 'list'
   jsonType: 'array'
+  itemFormat?: Property['format'] | 'discriminated_object'
+  itemProperties?: Property[]
+  itemEnumValues?: EnumValue[]
+  discriminator?: string
+  variants?: Array<{
+    jsonType: string
+    properties: Property[]
+    description: BaseProperty['description']
+  }>
 }
 
 interface BooleanProperty extends BaseProperty {
@@ -1114,7 +1123,55 @@ const createProperty = (
     case 'boolean':
       return { ...baseProperty, format: 'boolean', jsonType: 'boolean' }
     case 'array':
-      return { ...baseProperty, format: 'list', jsonType: 'array' }
+      const baseListProperty: ListProperty = {
+        ...baseProperty,
+        format: 'list',
+        jsonType: 'array',
+      }
+
+      if (prop.items == null) {
+        return baseListProperty
+      }
+
+      if ('oneOf' in prop.items) {
+        if (!prop.items.oneOf.every((schema) => schema.type === 'object')) {
+          return baseListProperty
+        }
+
+        return {
+          ...baseListProperty,
+          itemFormat: 'discriminated_object',
+          variants: prop.items.oneOf.map((schema) => ({
+            jsonType: schema.type ?? '',
+            properties: createProperties(schema.properties ?? {}, [
+              ...parentPaths,
+              name,
+            ]),
+            description: schema.description ?? '',
+          })),
+          ...(prop.items.discriminator?.propertyName && {
+            discriminator: prop.items.discriminator.propertyName,
+          }),
+        }
+      }
+
+      const itemProperty = createProperty('items', prop.items, [
+        ...parentPaths,
+        name,
+      ])
+      return {
+        ...baseProperty,
+        format: 'list',
+        jsonType: 'array',
+        itemFormat: itemProperty.format,
+        ...(itemProperty.format === 'object' && {
+          itemProperties: itemProperty.properties,
+        }),
+        ...(itemProperty.format === 'enum' && {
+          itemEnumValues: itemProperty.values,
+        }),
+      }
+
     case 'object':
       if (prop.properties !== undefined) {
         return {
