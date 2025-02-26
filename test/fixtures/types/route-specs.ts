@@ -15,6 +15,7 @@ export const routes = {
     methods: ['GET', 'POST'],
     jsonResponse: z.object({
       foos: z.array(schemas.foo),
+      pagination: schemas.pagination,
     }),
     '/transport/air/planes/list': {
       auth: 'none',

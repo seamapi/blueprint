@@ -39,6 +39,9 @@ export interface Routes {
         object_prop?: Record<string, string>
         array_prop?: string[]
       }
+      pagination: {
+        has_next_page: boolean
+      }
     }
   }
   '/transport/air/planes/list': {
