@@ -28,6 +28,7 @@ import type {
 import {
   mapOpenapiToSeamAuthMethod,
   type SeamAuthMethod,
+  seamRoutelessResources,
   type SeamWorkspaceScope,
 } from './seam.js'
 
@@ -54,7 +55,7 @@ export interface Resource {
   resourceType: string
   properties: Property[]
   description: string
-  routePath: string
+  routePath: string | null
   isDeprecated: boolean
   deprecationMessage: string
   isUndocumented: boolean
@@ -868,6 +869,10 @@ const validateRoutePath = (
   routePath: string | undefined,
   routes: Route[],
 ): string => {
+  if (seamRoutelessResources.includes(resourceName)) {
+    return null
+  }
+
   if (routePath == null || routePath.length === 0) {
     throw new Error(`Resource ${resourceName} is missing a route path`)
   }
