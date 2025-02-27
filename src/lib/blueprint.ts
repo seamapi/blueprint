@@ -820,8 +820,10 @@ const createPagination = (
   if (schema == null) return null
   return {
     paginationResponseKey,
-    description: '',
-    properties: [],
+    description: schema.description ?? '',
+    properties: createProperties(schema.properties ?? {}, [
+      paginationResponseKey,
+    ]),
   }
 }
 
