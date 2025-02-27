@@ -5,6 +5,16 @@ export default {
   tags: [{ description: 'foos', name: '/foos' }],
   components: {
     schemas: {
+      pagination: {
+        type: 'object',
+        description: 'A pagination resource.',
+        properties: {
+          has_next_page: {
+            description: 'If there is a next page',
+            type: 'boolean',
+          },
+        },
+      },
       foo: {
         type: 'object',
         description: 'A foo resource.',
@@ -365,6 +375,9 @@ export default {
                     foos: {
                       items: { $ref: '#/components/schemas/foo' },
                       type: 'array',
+                    },
+                    pagination: {
+                      $ref: '#/components/schemas/pagination',
                     },
                   },
                   required: ['foos', 'ok'],

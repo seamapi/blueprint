@@ -1,3 +1,7 @@
+import type { z } from 'zod'
+
+import type { AuthMethodSchema } from './schemas.js'
+
 export interface Openapi {
   openapi: string
   info: OpenapiInfo
@@ -101,3 +105,7 @@ export interface OpenapiComponents {
 }
 
 export type OpenapiSecurity = Record<string, string[]>
+
+export type KnownOpenapiAuthMethod = Exclude<OpenapiAuthMethod, 'unknown'>
+
+export type OpenapiAuthMethod = z.infer<typeof AuthMethodSchema>
