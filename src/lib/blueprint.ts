@@ -568,7 +568,11 @@ const createEndpointFromOperation = async (
   const draftMessage = parsedOperation['x-draft']
 
   const request = createRequest(methods, operation, path)
-  const response = createResponse(operation, path, context)
+  const { hasPagination, ...response } = createResponse(
+    operation,
+    path,
+    context,
+  )
 
   const operationAuthMethods = parsedOperation.security.map(
     (securitySchema) => {
@@ -595,8 +599,7 @@ const createEndpointFromOperation = async (
     draftMessage,
     response,
     request,
-    // TODO: True if response properties contains the paginationResponseKey
-    hasPagination: false,
+    hasPagination,
     authMethods: endpointAuthMethods,
     workspaceScope,
   }
@@ -909,7 +912,7 @@ const createResponse = (
   operation: OpenapiOperation,
   path: string,
   context: Context,
-): Response => {
+): Response & { hasPagination: boolean } => {
   if (!('responses' in operation) || operation.responses == null) {
     throw new Error(
       `Missing responses in operation for ${operation.operationId}`,
@@ -924,7 +927,11 @@ const createResponse = (
   const okResponse = responses['200']
 
   if (typeof okResponse !== 'object' || okResponse == null) {
-    return { responseType: 'void', description: 'Unknown' }
+    return {
+      responseType: 'void',
+      description: 'Unknown',
+      hasPagination: false,
+    }
   }
 
   const description = okResponse.description ?? ''
@@ -939,6 +946,7 @@ const createResponse = (
     return {
       responseType: 'void',
       description,
+      hasPagination: false,
     }
   }
 
@@ -951,6 +959,7 @@ const createResponse = (
     return {
       responseType: 'void',
       description,
+      hasPagination: false,
     }
   }
 
@@ -960,6 +969,7 @@ const createResponse = (
     return {
       responseType: 'void',
       description,
+      hasPagination: false,
     }
   }
 
@@ -968,6 +978,7 @@ const createResponse = (
     return {
       responseType: 'void',
       description,
+      hasPagination: false,
     }
   }
 
@@ -1003,6 +1014,12 @@ const createResponse = (
         responseKey: refKey,
         resourceType: refString?.split('/').at(-1) ?? 'unknown',
         description,
+        hasPagination:
+          (paginationResponseKey in properties &&
+            properties[paginationResponseKey]?.$ref?.endsWith(
+              `/${paginationResponseKey}`,
+            )) ??
+          false,
         ...(actionAttemptType != null && { actionAttemptType }),
       }
     }
@@ -1011,6 +1028,7 @@ const createResponse = (
   return {
     responseType: 'void',
     description: 'Unknown',
+    hasPagination: false,
   }
 }
 
