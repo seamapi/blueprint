@@ -57,7 +57,7 @@ export interface Resource {
   resourceType: string
   properties: Property[]
   description: string
-  routePath: string | null
+  routePath: string
   isDeprecated: boolean
   deprecationMessage: string
   isUndocumented: boolean
