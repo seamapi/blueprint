@@ -69,7 +69,7 @@ export interface Resource {
 export interface Pagination {
   properties: Property[]
   description: string
-  paginationResponseKey: string
+  responseKey: string
 }
 
 interface EventResource extends Resource {
@@ -822,7 +822,7 @@ const createPagination = (
 ): Pagination | null => {
   if (schema == null) return null
   return {
-    paginationResponseKey,
+    responseKey: paginationResponseKey,
     description: schema.description ?? '',
     properties: createProperties(schema.properties ?? {}, [
       paginationResponseKey,
