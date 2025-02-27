@@ -1236,50 +1236,82 @@ const createActionAttempts = (
     return []
   }
 
-  const processedActionTypes = new Set<string>()
+  const schemasByActionType: Record<string, OpenapiSchema[]> = {}
 
-  return actionAttemptSchema.oneOf
-    .map((schema) => {
-      if (
-        typeof schema !== 'object' ||
-        schema.properties?.['action_type']?.enum?.[0] == null
-      ) {
-        return null
+  for (const schema of actionAttemptSchema.oneOf) {
+    if (
+      typeof schema !== 'object' ||
+      schema.properties?.['action_type']?.enum?.[0] == null
+    ) {
+      continue
+    }
+
+    const actionType = schema.properties['action_type'].enum[0]
+    if (schemasByActionType[actionType] == null) {
+      schemasByActionType[actionType] = []
+    }
+
+    schemasByActionType[actionType].push(schema)
+  }
+
+  return Object.entries(schemasByActionType).map(([actionType, schemas]) => {
+    const mergedProperties: Record<string, OpenapiSchema> = {}
+
+    const allPropertyKeys = new Set<string>()
+    for (const schema of schemas) {
+      if (schema.properties != null) {
+        Object.keys(schema.properties).forEach((key) =>
+          allPropertyKeys.add(key),
+        )
       }
+    }
 
-      const actionType = schema.properties['action_type'].enum[0]
+    for (const propKey of allPropertyKeys) {
+      const propDefinitions = schemas
+        .filter((schema) => schema.properties?.[propKey] != null)
+        .map((schema) => schema.properties?.[propKey])
 
-      if (processedActionTypes.has(actionType)) {
-        return null
-      }
-      processedActionTypes.add(actionType)
+      if (propDefinitions.length === 0) continue
 
-      const schemaWithStandardStatus: OpenapiSchema = {
-        ...(actionAttemptSchema['x-route-path'] !== null && {
-          'x-route-path': actionAttemptSchema['x-route-path'],
-        }),
-        ...schema,
-        properties: {
-          ...schema.properties,
-          status: {
-            ...schema.properties['status'],
-            type: 'string',
-            enum: ['success', 'pending', 'error'],
-          },
-        },
-      }
+      const nonNullableDefinition = propDefinitions.find((prop) => {
+        if (prop == null) return false
 
-      const resource = createResource(
-        'action_attempt',
-        schemaWithStandardStatus,
-        routes,
-      )
+        return !(
+          'nullable' in prop &&
+          prop.nullable === true &&
+          Object.keys(prop).length <= 1
+        )
+      })
 
-      return {
-        ...resource,
-        resourceType: 'action_attempt',
-        actionAttemptType: actionType,
-      }
-    })
-    .filter((attempt): attempt is ActionAttempt => attempt !== null)
+      mergedProperties[propKey] =
+        nonNullableDefinition ?? propDefinitions[0] ?? {}
+    }
+
+    // Ensure standard status field
+    mergedProperties['status'] = {
+      ...mergedProperties['status'],
+      type: 'string',
+      enum: ['success', 'pending', 'error'],
+    }
+
+    const schemaWithMergedProperties: OpenapiSchema = {
+      ...(actionAttemptSchema['x-route-path'] !== null && {
+        'x-route-path': actionAttemptSchema['x-route-path'],
+      }),
+      ...schemas[0],
+      properties: mergedProperties,
+    }
+
+    const resource = createResource(
+      'action_attempt',
+      schemaWithMergedProperties,
+      routes,
+    )
+
+    return {
+      ...resource,
+      resourceType: 'action_attempt',
+      actionAttemptType: actionType,
+    }
+  })
 }
