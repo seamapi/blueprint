@@ -1251,7 +1251,7 @@ const createActionAttempts = (
       schemasByActionType[actionType] = []
     }
 
-    schemasByActionType[actionType].push(schema)
+    ;(schemasByActionType[actionType] as OpenapiSchema[]).push(schema)
   }
 
   return Object.entries(schemasByActionType).map(([actionType, schemas]) => {
