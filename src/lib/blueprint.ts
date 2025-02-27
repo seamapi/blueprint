@@ -321,7 +321,14 @@ export const createBlueprint = async (
   }
 
   const routes = await createRoutes(openapi.paths, context)
-  const { pagination, ...openapiSchemas } = openapi.components.schemas
+
+  const pagination = openapi.components.schemas[paginationResponseKey]
+  const openapiSchemas = Object.fromEntries(
+    Object.entries(openapi.components.schemas).filter(
+      ([k]) => k !== paginationResponseKey,
+    ),
+  )
+
   const resources = createResources(openapiSchemas, routes)
   const actionAttempts = createActionAttempts(
     openapi.components.schemas,
