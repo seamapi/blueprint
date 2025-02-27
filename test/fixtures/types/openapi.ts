@@ -14,9 +14,6 @@ export default {
             type: 'boolean',
           },
         },
-        required: ['draft_resource_id'],
-        'x-draft': 'This resource is draft',
-        'x-route-path': '/draft',
       },
       foo: {
         type: 'object',
