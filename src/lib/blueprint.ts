@@ -12,7 +12,6 @@ import type {
 import { findCommonOpenapiSchemaProperties } from './openapi/find-common-openapi-schema-properties.js'
 import { flattenOpenapiSchema } from './openapi/flatten-openapi-schema.js'
 import {
-  type AuthMethodSchema,
   EventResourceSchema,
   OpenapiOperationSchema,
   PropertySchema,
@@ -20,16 +19,25 @@ import {
 } from './openapi/schemas.js'
 import type {
   Openapi,
+  OpenapiAuthMethod,
   OpenapiOperation,
   OpenapiPathItem,
   OpenapiPaths,
   OpenapiSchema,
 } from './openapi/types.js'
+import {
+  mapOpenapiToSeamAuthMethod,
+  type SeamAuthMethod,
+  type SeamWorkspaceScope,
+} from './seam.js'
+
+const paginationResponseKey = 'pagination'
 
 export interface Blueprint {
   title: string
   routes: Route[]
   resources: Record<string, Resource>
+  pagination: Pagination | null
   events: EventResource[]
   actionAttempts: ActionAttempt[]
 }
@@ -56,6 +64,12 @@ export interface Resource {
   undocumentedMessage: string
   isDraft: boolean
   draftMessage: string
+}
+
+export interface Pagination {
+  properties: Property[]
+  description: string
+  responseKey: string
 }
 
 interface EventResource extends Resource {
@@ -89,19 +103,11 @@ export interface Endpoint {
   draftMessage: string
   request: Request
   response: Response
+  hasPagination: boolean
   codeSamples: CodeSample[]
   authMethods: SeamAuthMethod[]
   workspaceScope: SeamWorkspaceScope
 }
-
-export type SeamAuthMethod =
-  | 'api_key'
-  | 'personal_access_token'
-  | 'console_session_token'
-  | 'client_session_token'
-  | 'publishable_key'
-
-export type SeamWorkspaceScope = 'none' | 'optional' | 'required'
 
 interface BaseParameter {
   name: string
@@ -315,7 +321,15 @@ export const createBlueprint = async (
   }
 
   const routes = await createRoutes(openapi.paths, context)
-  const resources = createResources(openapi.components.schemas, routes)
+
+  const pagination = openapi.components.schemas[paginationResponseKey]
+  const openapiSchemas = Object.fromEntries(
+    Object.entries(openapi.components.schemas).filter(
+      ([k]) => k !== paginationResponseKey,
+    ),
+  )
+
+  const resources = createResources(openapiSchemas, routes)
   const actionAttempts = createActionAttempts(
     openapi.components.schemas,
     routes,
@@ -325,7 +339,8 @@ export const createBlueprint = async (
     title: openapi.info.title,
     routes,
     resources,
-    events: createEvents(openapi.components.schemas, resources, routes),
+    pagination: createPagination(pagination),
+    events: createEvents(openapiSchemas, resources, routes),
     actionAttempts,
   }
 }
@@ -560,7 +575,11 @@ const createEndpointFromOperation = async (
   const draftMessage = parsedOperation['x-draft']
 
   const request = createRequest(methods, operation, path)
-  const response = createResponse(operation, path, context)
+  const { hasPagination, ...response } = createResponse(
+    operation,
+    path,
+    context,
+  )
 
   const operationAuthMethods = parsedOperation.security.map(
     (securitySchema) => {
@@ -571,6 +590,7 @@ const createEndpointFromOperation = async (
   const endpointAuthMethods = operationAuthMethods
     .map(mapOpenapiToSeamAuthMethod)
     .filter((authMethod): authMethod is SeamAuthMethod => authMethod != null)
+
   const workspaceScope = getWorkspaceScope(operationAuthMethods)
 
   const endpoint: Omit<Endpoint, 'codeSamples'> = {
@@ -586,6 +606,7 @@ const createEndpointFromOperation = async (
     draftMessage,
     response,
     request,
+    hasPagination,
     authMethods: endpointAuthMethods,
     workspaceScope,
   }
@@ -605,8 +626,6 @@ const createEndpointFromOperation = async (
     ),
   }
 }
-
-export type OpenapiAuthMethod = z.infer<typeof AuthMethodSchema>
 
 export const getWorkspaceScope = (
   authMethods: OpenapiAuthMethod[],
@@ -639,24 +658,6 @@ export const getWorkspaceScope = (
   if (hasOnlyScopedAuth) return 'required'
 
   return 'none'
-}
-
-type KnownOpenapiAuthMethod = Exclude<OpenapiAuthMethod, 'unknown'>
-
-const mapOpenapiToSeamAuthMethod = (
-  method: string,
-): SeamAuthMethod | undefined => {
-  const AUTH_METHOD_MAPPING: Record<KnownOpenapiAuthMethod, SeamAuthMethod> = {
-    api_key: 'api_key',
-    pat_with_workspace: 'personal_access_token',
-    pat_without_workspace: 'personal_access_token',
-    console_session_token_with_workspace: 'console_session_token',
-    console_session_token_without_workspace: 'console_session_token',
-    client_session: 'client_session_token',
-    publishable_key: 'publishable_key',
-  } as const
-
-  return AUTH_METHOD_MAPPING[method as KnownOpenapiAuthMethod]
 }
 
 export const createRequest = (
@@ -823,6 +824,19 @@ const createParameter = (
   }
 }
 
+const createPagination = (
+  schema: Openapi['components']['schemas'][number] | undefined,
+): Pagination | null => {
+  if (schema == null) return null
+  return {
+    responseKey: paginationResponseKey,
+    description: schema.description ?? '',
+    properties: createProperties(schema.properties ?? {}, [
+      paginationResponseKey,
+    ]),
+  }
+}
+
 export const createResources = (
   schemas: Openapi['components']['schemas'],
   routes: Route[],
@@ -905,7 +919,7 @@ const createResponse = (
   operation: OpenapiOperation,
   path: string,
   context: Context,
-): Response => {
+): Response & { hasPagination: boolean } => {
   if (!('responses' in operation) || operation.responses == null) {
     throw new Error(
       `Missing responses in operation for ${operation.operationId}`,
@@ -920,7 +934,11 @@ const createResponse = (
   const okResponse = responses['200']
 
   if (typeof okResponse !== 'object' || okResponse == null) {
-    return { responseType: 'void', description: 'Unknown' }
+    return {
+      responseType: 'void',
+      description: 'Unknown',
+      hasPagination: false,
+    }
   }
 
   const description = okResponse.description ?? ''
@@ -935,6 +953,7 @@ const createResponse = (
     return {
       responseType: 'void',
       description,
+      hasPagination: false,
     }
   }
 
@@ -947,6 +966,7 @@ const createResponse = (
     return {
       responseType: 'void',
       description,
+      hasPagination: false,
     }
   }
 
@@ -956,6 +976,7 @@ const createResponse = (
     return {
       responseType: 'void',
       description,
+      hasPagination: false,
     }
   }
 
@@ -964,6 +985,7 @@ const createResponse = (
     return {
       responseType: 'void',
       description,
+      hasPagination: false,
     }
   }
 
@@ -999,6 +1021,12 @@ const createResponse = (
         responseKey: refKey,
         resourceType: refString?.split('/').at(-1) ?? 'unknown',
         description,
+        hasPagination:
+          (paginationResponseKey in properties &&
+            properties[paginationResponseKey]?.$ref?.endsWith(
+              `/${paginationResponseKey}`,
+            )) ??
+          false,
         ...(actionAttemptType != null && { actionAttemptType }),
       }
     }
@@ -1007,6 +1035,7 @@ const createResponse = (
   return {
     responseType: 'void',
     description: 'Unknown',
+    hasPagination: false,
   }
 }
 
