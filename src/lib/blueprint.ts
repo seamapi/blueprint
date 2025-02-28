@@ -1207,7 +1207,6 @@ const createProperty = (
           {
             discriminator: prop.items.discriminator.propertyName,
             variants: prop.items.oneOf.map((schema) => ({
-              jsonType: schema.type ?? '',
               properties: createProperties(schema.properties ?? {}, [
                 ...parentPaths,
                 name,
