@@ -248,19 +248,65 @@ interface RecordProperty extends BaseProperty {
   jsonType: 'object'
 }
 
-interface ListProperty extends BaseProperty {
+interface BaseListProperty extends BaseProperty {
   format: 'list'
   jsonType: 'array'
-  itemFormat?: Property['format'] | 'discriminated_object'
-  itemProperties?: Property[]
-  itemEnumValues?: EnumValue[]
-  discriminator?: string
-  variants?: Array<{
-    jsonType: string
+  itemFormat: string
+}
+
+interface StringListProperty extends BaseListProperty {
+  itemFormat: 'string'
+}
+
+interface NumberListProperty extends BaseListProperty {
+  itemFormat: 'number'
+}
+
+interface BooleanListProperty extends BaseListProperty {
+  itemFormat: 'boolean'
+}
+
+interface DatetimeListProperty extends BaseListProperty {
+  itemFormat: 'datetime'
+}
+
+interface IdListProperty extends BaseListProperty {
+  itemFormat: 'id'
+}
+
+interface EnumListProperty extends BaseListProperty {
+  itemFormat: 'enum'
+  itemEnumValues: EnumValue[]
+}
+
+interface ObjectListProperty extends BaseListProperty {
+  itemFormat: 'object'
+  itemProperties: Property[]
+}
+
+interface RecordListProperty extends BaseListProperty {
+  itemFormat: 'record'
+}
+
+interface DiscriminatedListProperty extends BaseListProperty {
+  itemFormat: 'discriminated_object'
+  discriminator: string
+  variants: Array<{
     properties: Property[]
     description: BaseProperty['description']
   }>
 }
+
+type ListProperty =
+  | StringListProperty
+  | NumberListProperty
+  | BooleanListProperty
+  | DatetimeListProperty
+  | IdListProperty
+  | EnumListProperty
+  | ObjectListProperty
+  | RecordListProperty
+  | DiscriminatedListProperty
 
 interface BooleanProperty extends BaseProperty {
   format: 'boolean'
@@ -1123,53 +1169,91 @@ const createProperty = (
     case 'boolean':
       return { ...baseProperty, format: 'boolean', jsonType: 'boolean' }
     case 'array': {
-      const baseListProperty: ListProperty = {
-        ...baseProperty,
-        format: 'list',
-        jsonType: 'array',
+      function createListProperty<T extends BaseListProperty>(
+        format: string,
+        extraProps = {},
+      ): T {
+        const baseListProps = {
+          ...baseProperty,
+          format: 'list' as const,
+          jsonType: 'array' as const,
+          itemFormat: format,
+          ...extraProps,
+        }
+
+        return baseListProps as T
       }
 
+      const fallbackListProperty =
+        createListProperty<RecordListProperty>('record')
+
       if (prop.items == null) {
-        return baseListProperty
+        return fallbackListProperty
       }
 
       if ('oneOf' in prop.items) {
         if (!prop.items.oneOf.every((schema) => schema.type === 'object')) {
-          return baseListProperty
+          return fallbackListProperty
         }
 
-        return {
-          ...baseListProperty,
-          itemFormat: 'discriminated_object',
-          variants: prop.items.oneOf.map((schema) => ({
-            jsonType: schema.type ?? '',
-            properties: createProperties(schema.properties ?? {}, [
-              ...parentPaths,
-              name,
-            ]),
-            description: schema.description ?? '',
-          })),
-          ...(prop.items.discriminator?.propertyName != null && {
-            discriminator: prop.items.discriminator.propertyName,
-          }),
+        if (prop.items.discriminator?.propertyName == null) {
+          throw new Error(
+            `Missing discriminator property name for ${name} in ${parentPaths.join('.')}`,
+          )
         }
+
+        return createListProperty<DiscriminatedListProperty>(
+          'discriminated_object',
+          {
+            discriminator: prop.items.discriminator.propertyName,
+            variants: prop.items.oneOf.map((schema) => ({
+              jsonType: schema.type ?? '',
+              properties: createProperties(schema.properties ?? {}, [
+                ...parentPaths,
+                name,
+              ]),
+              description: schema.description ?? '',
+            })),
+          },
+        )
       }
 
-      const itemProperty = createProperty('items', prop.items, [
+      const itemProperty = createProperty('item', prop.items, [
         ...parentPaths,
         name,
       ])
-      return {
-        ...baseProperty,
-        format: 'list',
-        jsonType: 'array',
-        itemFormat: itemProperty.format,
-        ...(itemProperty.format === 'object' && {
-          itemProperties: itemProperty.properties,
-        }),
-        ...(itemProperty.format === 'enum' && {
-          itemEnumValues: itemProperty.values,
-        }),
+
+      switch (itemProperty.format) {
+        case 'string':
+          return createListProperty<StringListProperty>('string')
+
+        case 'number':
+          return createListProperty<NumberListProperty>('number')
+
+        case 'boolean':
+          return createListProperty<BooleanListProperty>('boolean')
+
+        case 'datetime':
+          return createListProperty<DatetimeListProperty>('datetime')
+
+        case 'id':
+          return createListProperty<IdListProperty>('id')
+
+        case 'enum':
+          return createListProperty<EnumListProperty>('enum', {
+            itemEnumValues: itemProperty.values,
+          })
+
+        case 'object':
+          return createListProperty<ObjectListProperty>('object', {
+            itemProperties: itemProperty.properties,
+          })
+
+        case 'record':
+          return createListProperty<RecordListProperty>('record')
+
+        default:
+          return fallbackListProperty
       }
     }
 
