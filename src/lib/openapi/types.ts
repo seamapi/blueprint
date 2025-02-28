@@ -95,6 +95,9 @@ export interface OpenapiSchema {
   >
   oneOf?: OpenapiSchema[]
   allOf?: OpenapiSchema[]
+  discriminator?: {
+    propertyName: string
+  }
 }
 
 export interface OpenapiComponents {
