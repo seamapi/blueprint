@@ -1236,7 +1236,7 @@ const createActionAttempts = (
     return []
   }
 
-  const schemasByActionType: Record<string, OpenapiSchema[]> = {}
+  const schemasByActionType = new Map<string, OpenapiSchema[]>()
 
   for (const schema of actionAttemptSchema.oneOf) {
     if (
@@ -1247,71 +1247,75 @@ const createActionAttempts = (
     }
 
     const actionType = schema.properties['action_type'].enum[0]
-    if (schemasByActionType[actionType] == null) {
-      schemasByActionType[actionType] = []
-    }
+    const currentSchemas = schemasByActionType.get(actionType)
 
-    schemasByActionType[actionType]!.push(schema)
+    if (currentSchemas == null) {
+      schemasByActionType.set(actionType, [schema])
+    } else {
+      currentSchemas.push(schema)
+    }
   }
 
-  return Object.entries(schemasByActionType).map(([actionType, schemas]) => {
-    const mergedProperties: Record<string, OpenapiSchema> = {}
+  return Array.from(schemasByActionType.entries()).map(
+    ([actionType, schemas]) => {
+      const mergedProperties: Record<string, OpenapiSchema> = {}
 
-    const allPropertyKeys = new Set<string>()
-    for (const schema of schemas) {
-      if (schema.properties != null) {
-        Object.keys(schema.properties).forEach((key) =>
-          allPropertyKeys.add(key),
-        )
+      const allPropertyKeys = new Set<string>()
+      for (const schema of schemas) {
+        if (schema.properties != null) {
+          Object.keys(schema.properties).forEach((key) =>
+            allPropertyKeys.add(key),
+          )
+        }
       }
-    }
 
-    for (const propKey of allPropertyKeys) {
-      const propDefinitions = schemas
-        .filter((schema) => schema.properties?.[propKey] != null)
-        .map((schema) => schema.properties?.[propKey])
+      for (const propKey of allPropertyKeys) {
+        const propDefinitions = schemas
+          .filter((schema) => schema.properties?.[propKey] != null)
+          .map((schema) => schema.properties?.[propKey])
 
-      if (propDefinitions.length === 0) continue
+        if (propDefinitions.length === 0) continue
 
-      const nonNullableDefinition = propDefinitions.find((prop) => {
-        if (prop == null) return false
+        const nonNullableDefinition = propDefinitions.find((prop) => {
+          if (prop == null) return false
 
-        return !(
-          'nullable' in prop &&
-          prop.nullable === true &&
-          Object.keys(prop).length <= 1
-        )
-      })
+          return !(
+            'nullable' in prop &&
+            prop.nullable === true &&
+            Object.keys(prop).length <= 1
+          )
+        })
 
-      mergedProperties[propKey] =
-        nonNullableDefinition ?? propDefinitions[0] ?? {}
-    }
+        mergedProperties[propKey] =
+          nonNullableDefinition ?? propDefinitions[0] ?? {}
+      }
 
-    // Ensure standard status field
-    mergedProperties['status'] = {
-      ...mergedProperties['status'],
-      type: 'string',
-      enum: ['success', 'pending', 'error'],
-    }
+      // Ensure standard status field
+      mergedProperties['status'] = {
+        ...mergedProperties['status'],
+        type: 'string',
+        enum: ['success', 'pending', 'error'],
+      }
 
-    const schemaWithMergedProperties: OpenapiSchema = {
-      ...(actionAttemptSchema['x-route-path'] != null && {
-        'x-route-path': actionAttemptSchema['x-route-path'],
-      }),
-      ...schemas[0],
-      properties: mergedProperties,
-    }
+      const schemaWithMergedProperties: OpenapiSchema = {
+        ...(actionAttemptSchema['x-route-path'] != null && {
+          'x-route-path': actionAttemptSchema['x-route-path'],
+        }),
+        ...schemas[0],
+        properties: mergedProperties,
+      }
 
-    const resource = createResource(
-      'action_attempt',
-      schemaWithMergedProperties,
-      routes,
-    )
+      const resource = createResource(
+        'action_attempt',
+        schemaWithMergedProperties,
+        routes,
+      )
 
-    return {
-      ...resource,
-      resourceType: 'action_attempt',
-      actionAttemptType: actionType,
-    }
-  })
+      return {
+        ...resource,
+        resourceType: 'action_attempt',
+        actionAttemptType: actionType,
+      }
+    },
+  )
 }
