@@ -16,3 +16,7 @@ export const plane = z.object({
   plane_id: z.string().uuid(),
   name: z.string(),
 })
+
+export const pagination = z.object({
+  has_next_page: z.boolean(),
+})

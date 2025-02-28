@@ -5,14 +5,13 @@ export {
   createBlueprint,
   type Endpoint,
   type Namespace,
+  type Pagination,
   type Parameter,
   type Property,
   type Request,
   type Resource,
   type Response,
   type Route,
-  type SeamAuthMethod,
-  type SeamWorkspaceScope,
   type TypesModule,
   type TypesModuleInput,
   TypesModuleSchema,
@@ -24,3 +23,4 @@ export {
   type CodeSampleSdk,
   type CodeSampleSyntax,
 } from './code-sample/index.js'
+export { type SeamAuthMethod, type SeamWorkspaceScope } from './seam.js'
