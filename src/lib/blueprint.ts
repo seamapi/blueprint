@@ -1295,7 +1295,7 @@ const createActionAttempts = (
     }
 
     const schemaWithMergedProperties: OpenapiSchema = {
-      ...(actionAttemptSchema['x-route-path'] !== null && {
+      ...(actionAttemptSchema['x-route-path'] != null && {
         'x-route-path': actionAttemptSchema['x-route-path'],
       }),
       ...schemas[0],
