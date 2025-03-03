@@ -257,7 +257,6 @@ interface RecordProperty extends BaseProperty {
 interface BaseListProperty extends BaseProperty {
   format: 'list'
   jsonType: 'array'
-  itemFormat: string
 }
 
 interface StringListProperty extends BaseListProperty {
