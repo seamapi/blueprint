@@ -37,9 +37,9 @@ export const flattenAllOfSchema = (schema: AllOfSchema): OpenapiSchema => {
     ...(schema?.description != null && { description: schema.description }),
   }
 
-  for (const subschema of schema.allOf) {
-    const flattenedSubschema = flattenOpenapiSchema(subschema)
+  const flattenedSubschemas = schema.allOf.map(flattenOpenapiSchema)
 
+  for (const flattenedSubschema of flattenedSubschemas) {
     if (flattenedSubschema.properties != null) {
       flattenedSchema.properties = {
         ...flattenedSchema.properties,
@@ -54,6 +54,30 @@ export const flattenAllOfSchema = (schema: AllOfSchema): OpenapiSchema => {
       flattenedSchema.required = Array.from(
         new Set([...flattenedSchema.required, ...flattenedSubschema.required]),
       )
+    }
+  }
+
+  for (const [propKey, propSchema] of Object.entries(
+    flattenedSchema.properties,
+  )) {
+    if ('enum' in propSchema && Array.isArray(propSchema.enum)) {
+      const enumValues = new Set<string>()
+
+      for (const subschema of flattenedSubschemas) {
+        const enumProp = subschema.properties?.[propKey]
+        if (
+          enumProp != null &&
+          'enum' in enumProp &&
+          Array.isArray(enumProp.enum)
+        ) {
+          enumProp.enum.forEach((val) => enumValues.add(val))
+        }
+      }
+
+      flattenedSchema.properties[propKey] = {
+        ...propSchema,
+        enum: Array.from(enumValues),
+      }
     }
   }
 
@@ -101,6 +125,28 @@ export const flattenOneOfSchema = (schema: OneOfSchema): OpenapiSchema => {
         requiredFieldsLists.push(flattenedSubschema.required)
       } else {
         requiredFieldsLists.push([])
+      }
+    }
+
+    for (const [propKey, propSchema] of Object.entries(mergedProperties)) {
+      if ('enum' in propSchema && Array.isArray(propSchema.enum)) {
+        const enumValues = new Set<string>()
+
+        for (const subschema of flattenedSubschemas) {
+          const enumProp = subschema.properties?.[propKey]
+          if (
+            enumProp != null &&
+            'enum' in enumProp &&
+            Array.isArray(enumProp.enum)
+          ) {
+            enumProp.enum.forEach((val) => enumValues.add(val))
+          }
+        }
+
+        mergedProperties[propKey] = {
+          ...propSchema,
+          enum: Array.from(enumValues),
+        }
       }
     }
 
