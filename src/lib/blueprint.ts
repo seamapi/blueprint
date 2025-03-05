@@ -241,7 +241,7 @@ interface NumberProperty extends BaseProperty {
   jsonType: 'number'
 }
 
-interface EnumProperty extends BaseProperty {
+export interface EnumProperty extends BaseProperty {
   format: 'enum'
   jsonType: 'string'
   values: EnumValue[]
@@ -293,7 +293,7 @@ interface RecordListProperty extends BaseListProperty {
   itemFormat: 'record'
 }
 
-interface DiscriminatedListProperty extends BaseListProperty {
+export interface DiscriminatedListProperty extends BaseListProperty {
   itemFormat: 'discriminated_object'
   discriminator: string
   variants: Array<{
@@ -1127,10 +1127,18 @@ export const createProperties = (
   parentPaths: string[],
 ): Property[] => {
   return Object.entries(properties)
-    .map(
-      ([name, property]) =>
-        [name, flattenOpenapiSchema(property)] as [string, OpenapiSchema],
-    )
+    .map(([name, property]) => {
+      // Don't flatten discriminated arrays as they are handled separately in createProperty
+      if (
+        property.type === 'array' &&
+        'items' in property &&
+        'discriminator' in property.items
+      ) {
+        return [name, property] as [string, OpenapiSchema]
+      }
+
+      return [name, flattenOpenapiSchema(property)] as [string, OpenapiSchema]
+    })
     .filter(([name, property]) => {
       if (property.type == null) {
         // eslint-disable-next-line no-console
