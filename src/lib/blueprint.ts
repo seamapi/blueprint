@@ -1130,7 +1130,7 @@ export const createProperties = (
     .map(([name, property]) => {
       // Don't flatten discriminated arrays as they are handled separately in createProperty
       if (
-        property.type == 'array' &&
+        property.type === 'array' &&
         'items' in property &&
         'discriminator' in property.items
       ) {
