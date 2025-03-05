@@ -1127,10 +1127,18 @@ export const createProperties = (
   parentPaths: string[],
 ): Property[] => {
   return Object.entries(properties)
-    .map(
-      ([name, property]) =>
-        [name, flattenOpenapiSchema(property)] as [string, OpenapiSchema],
-    )
+    .map(([name, property]) => {
+      // Don't flatten discriminated arrays as they are handled separately in createProperty
+      if (
+        property.type == 'array' &&
+        'items' in property &&
+        'discriminator' in property.items
+      ) {
+        return [name, property] as [string, OpenapiSchema]
+      }
+
+      return [name, flattenOpenapiSchema(property)] as [string, OpenapiSchema]
+    })
     .filter(([name, property]) => {
       if (property.type == null) {
         // eslint-disable-next-line no-console
