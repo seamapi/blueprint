@@ -241,7 +241,7 @@ interface NumberProperty extends BaseProperty {
   jsonType: 'number'
 }
 
-interface EnumProperty extends BaseProperty {
+export interface EnumProperty extends BaseProperty {
   format: 'enum'
   jsonType: 'string'
   values: EnumValue[]

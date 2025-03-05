@@ -5,6 +5,7 @@ export {
   createBlueprint,
   type DiscriminatedListProperty,
   type Endpoint,
+  type EnumProperty,
   type Namespace,
   type Pagination,
   type Parameter,
