@@ -1073,6 +1073,10 @@ export const createProperties = (
   parentPaths: string[],
 ): Property[] => {
   return Object.entries(properties)
+    .map(
+      ([name, property]) =>
+        [name, flattenOpenapiSchema(property)] as [string, OpenapiSchema],
+    )
     .filter(([name, property]) => {
       if (property.type == null) {
         // eslint-disable-next-line no-console
