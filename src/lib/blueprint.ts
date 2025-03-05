@@ -293,7 +293,7 @@ interface RecordListProperty extends BaseListProperty {
   itemFormat: 'record'
 }
 
-interface DiscriminatedListProperty extends BaseListProperty {
+export interface DiscriminatedListProperty extends BaseListProperty {
   itemFormat: 'discriminated_object'
   discriminator: string
   variants: Array<{

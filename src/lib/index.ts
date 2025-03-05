@@ -3,6 +3,7 @@ export {
   type Blueprint,
   type BlueprintOptions,
   createBlueprint,
+  type DiscriminatedListProperty,
   type Endpoint,
   type Namespace,
   type Pagination,
