@@ -39,6 +39,49 @@ test('flattenAllOfSchema: merges properties and required fields', (t) => {
   t.deepEqual(flattened.required, ['a', 'b'])
 })
 
+test('flattenAllOfSchema: merges enum values from properties', (t) => {
+  const schema = {
+    allOf: [
+      {
+        type: 'object',
+        properties: {
+          status: {
+            type: 'string',
+            enum: ['pending', 'processing'],
+          },
+        },
+      },
+      {
+        type: 'object',
+        properties: {
+          status: {
+            type: 'string',
+            enum: ['processing', 'completed'],
+          },
+        },
+      },
+    ],
+  }
+  const flattened = flattenAllOfSchema(schema as { allOf: OpenapiSchema[] })
+
+  t.is(flattened.type, 'object')
+
+  if (flattened.properties == null) {
+    t.fail('Expected properties to exist')
+    return
+  }
+
+  if (flattened.properties['status'] == null) {
+    t.fail('Expected "status" property to exist')
+    return
+  }
+
+  const statusProp = flattened.properties['status'] as OpenapiSchema & {
+    enum: string[]
+  }
+  t.deepEqual(statusProp.enum, ['pending', 'processing', 'completed'])
+})
+
 test('flattenOneOfSchema (string enums): merges enums and deduplicates', (t) => {
   const schema: OpenapiSchema = {
     oneOf: [
@@ -76,6 +119,67 @@ test('flattenOneOfSchema (object merging): merges properties and computes requir
   t.deepEqual(flattened.required, ['a'])
 })
 
+test('flattenOneOfSchema (object merging): merges enum values from properties', (t) => {
+  const schema: OpenapiSchema = {
+    oneOf: [
+      {
+        type: 'object',
+        properties: {
+          status: {
+            type: 'string',
+            enum: ['pending', 'processing'],
+          },
+          type: {
+            type: 'string',
+            enum: ['type1', 'type2'],
+          },
+        },
+      },
+      {
+        type: 'object',
+        properties: {
+          status: {
+            type: 'string',
+            enum: ['processing', 'completed'],
+          },
+          type: {
+            type: 'string',
+            enum: ['type2', 'type3'],
+          },
+        },
+      },
+    ],
+  }
+  const flattened = flattenOneOfSchema(schema as { oneOf: OpenapiSchema[] })
+
+  t.is(flattened.type, 'object')
+
+  if (flattened.properties == null) {
+    t.fail('Expected properties to exist')
+    return
+  }
+
+  if (flattened.properties['status'] == null) {
+    t.fail('Expected "status" property to exist')
+    return
+  }
+
+  const statusProp = flattened.properties['status'] as OpenapiSchema & {
+    enum: string[]
+  }
+  t.deepEqual(statusProp.enum, ['pending', 'processing', 'completed'])
+
+  if (flattened.properties['type'] == null) {
+    t.fail('Expected "type" property to exist')
+    return
+  }
+
+  const typeProp = flattened.properties['type'] as OpenapiSchema & {
+    enum: string[]
+  }
+  t.deepEqual(typeProp.enum, ['type1', 'type2', 'type3'])
+})
+
 test('flattenOpenapiSchema: recursively flattens nested properties', (t) => {
   // Create an object schema that has a nested property using allOf.
   const schema: OpenapiSchema = {
@@ -99,8 +203,18 @@ test('flattenOpenapiSchema: recursively flattens nested properties', (t) => {
   }
   const flattened = flattenOpenapiSchema(schema)
   t.is(flattened.type, 'object')
-  t.truthy(flattened.properties)
-  t.deepEqual(flattened.properties?.['foo'], {
+
+  if (flattened.properties == null) {
+    t.fail('Expected properties to exist')
+    return
+  }
+
+  if (flattened.properties['foo'] == null) {
+    t.fail('Expected "foo" property to exist')
+    return
+  }
+
+  t.deepEqual(flattened.properties['foo'], {
     type: 'object',
     properties: {
       a: { type: 'string' },
