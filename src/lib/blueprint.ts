@@ -1201,19 +1201,17 @@ const createProperty = (
     case 'boolean':
       return { ...baseProperty, format: 'boolean', jsonType: 'boolean' }
     case 'array': {
-      function createListProperty<T extends BaseListProperty>(
+      function createListProperty<T extends ListProperty>(
         format: string,
-        extraProps = {},
+        extraProps: Partial<T> = {},
       ): T {
-        const baseListProps = {
+        return {
           ...baseProperty,
           format: 'list' as const,
           jsonType: 'array' as const,
           itemFormat: format,
           ...extraProps,
-        }
-
-        return baseListProps as T
+        } as unknown as T
       }
 
       const fallbackListProperty =
