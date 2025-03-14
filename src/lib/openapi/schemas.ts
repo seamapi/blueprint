@@ -91,18 +91,34 @@ export const EnumValueSchema = z.object({
   draft: z.string().default(''),
 })
 
-export const PropertySchema: z.ZodSchema<any> = z.object({
-  type: z.enum(['string', 'number', 'integer', 'boolean', 'array', 'object']),
+const commonPropertyFields = {
   description: z.string().default(''),
   deprecated: z.boolean().default(false),
   'x-undocumented': z.string().default(''),
   'x-deprecated': z.string().default(''),
   'x-draft': z.string().default(''),
-  enum: z.array(z.string().or(z.boolean())).optional(),
-  'x-enums': z.record(z.string(), EnumValueSchema).optional(),
-  $ref: z.string().optional(),
-  format: z.string().optional(),
-})
+}
+export const PropertySchema: z.ZodSchema<any> = z.union([
+  z.object({
+    type: z.enum(['string', 'number', 'integer', 'boolean', 'array', 'object']),
+    ...commonPropertyFields,
+    enum: z.array(z.string().or(z.boolean())).optional(),
+    'x-enums': z.record(z.string(), EnumValueSchema).optional(),
+    format: z.string().optional(),
+    $ref: z.string().optional(),
+  }),
+
+  z.object({
+    oneOf: z.array(z.lazy(() => PropertySchema)),
+    ...commonPropertyFields,
+    discriminator: z.object({ propertyName: z.string() }).optional(),
+  }),
+
+  z.object({
+    allOf: z.array(z.lazy(() => PropertySchema)),
+    ...commonPropertyFields,
+  }),
+])
 
 export const ResourceSchema = z.object({
   type: z.literal('object'),
