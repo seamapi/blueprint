@@ -977,7 +977,7 @@ const createArrayParameter = (
 
     if (property.items.discriminator?.propertyName == null) {
       throw new Error(
-        `Missing discriminator property name for ${name} in ${path}`,
+        `Missing discriminator property name for ${baseParam.name} in ${path}`,
       )
     }
 
