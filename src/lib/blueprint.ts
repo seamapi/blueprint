@@ -917,91 +917,7 @@ const createParameter = (
     case 'boolean':
       return { ...baseParam, format: 'boolean', jsonType: 'boolean' }
     case 'array': {
-      function createListParameter<T extends BaseListParameter>(
-        format: string,
-        extraProps: Partial<T> = {},
-      ): T {
-        return {
-          ...baseParam,
-          format: 'list' as const,
-          jsonType: 'array' as const,
-          itemFormat: format,
-          ...extraProps,
-        } as unknown as T
-      }
-
-      const fallbackListParameter =
-        createListParameter<RecordListParameter>('record')
-
-      if (property.items == null) {
-        return fallbackListParameter
-      }
-
-      if ('oneOf' in property.items) {
-        if (
-          !property.items.oneOf.every(
-            (schema: OpenapiSchema) => schema.type === 'object',
-          )
-        ) {
-          return fallbackListParameter
-        }
-
-        if (property.items.discriminator?.propertyName == null) {
-          throw new Error(
-            `Missing discriminator property name for ${name} in ${path}`,
-          )
-        }
-
-        return createListParameter<DiscriminatedListParameter>(
-          'discriminated_object',
-          {
-            discriminator: property.items.discriminator.propertyName,
-            variants: property.items.oneOf.map((schema: OpenapiSchema) => ({
-              parameters: createParameters(
-                schema.properties ?? {},
-                path,
-                schema.required ?? [],
-              ),
-              description: schema.description ?? '',
-            })),
-          },
-        )
-      }
-
-      const itemParameter = createParameter('item', property.items, path, [])
-
-      switch (itemParameter.format) {
-        case 'string':
-          return createListParameter<StringListParameter>('string')
-
-        case 'number':
-          return createListParameter<NumberListParameter>('number')
-
-        case 'boolean':
-          return createListParameter<BooleanListParameter>('boolean')
-
-        case 'datetime':
-          return createListParameter<DatetimeListParameter>('datetime')
-
-        case 'id':
-          return createListParameter<IdListParameter>('id')
-
-        case 'enum':
-          return createListParameter<EnumListParameter>('enum', {
-            itemEnumValues: itemParameter.values,
-          })
-
-        case 'object':
-          return createListParameter<ObjectListParameter>('object', {
-            itemParameters: itemParameter.parameters,
-          })
-
-        case 'record':
-          return createListParameter<RecordListParameter>('record')
-
-        default:
-          return fallbackListParameter
-      }
+      return createArrayParameter(baseParam, property, path)
     }
     case 'object':
       if (property.properties !== undefined) {
@@ -1022,6 +938,98 @@ const createParameter = (
       }
     default:
       throw new Error(`Unsupported property type: ${parsedProp.type}`)
+  }
+}
+
+const createArrayParameter = (
+  baseParam: BaseParameter,
+  property: OpenapiSchema,
+  path: string,
+): Parameter => {
+  function createListParameter<T extends BaseListParameter>(
+    format: string,
+    extraProps: Partial<T> = {},
+  ): T {
+    return {
+      ...baseParam,
+      format: 'list' as const,
+      jsonType: 'array' as const,
+      itemFormat: format,
+      ...extraProps,
+    } as unknown as T
+  }
+
+  const fallbackListParameter =
+    createListParameter<RecordListParameter>('record')
+
+  if (property.items == null) {
+    return fallbackListParameter
+  }
+
+  if ('oneOf' in property.items) {
+    if (
+      !property.items.oneOf.every(
+        (schema: OpenapiSchema) => schema.type === 'object',
+      )
+    ) {
+      return fallbackListParameter
+    }
+
+    if (property.items.discriminator?.propertyName == null) {
+      throw new Error(
+        `Missing discriminator property name for ${name} in ${path}`,
+      )
+    }
+
+    return createListParameter<DiscriminatedListParameter>(
+      'discriminated_object',
+      {
+        discriminator: property.items.discriminator.propertyName,
+        variants: property.items.oneOf.map((schema: OpenapiSchema) => ({
+          parameters: createParameters(
+            schema.properties ?? {},
+            path,
+            schema.required ?? [],
+          ),
+          description: schema.description ?? '',
+        })),
+      },
+    )
+  }
+
+  const itemParameter = createParameter('item', property.items, path, [])
+
+  switch (itemParameter.format) {
+    case 'string':
+      return createListParameter<StringListParameter>('string')
+
+    case 'number':
+      return createListParameter<NumberListParameter>('number')
+
+    case 'boolean':
+      return createListParameter<BooleanListParameter>('boolean')
+
+    case 'datetime':
+      return createListParameter<DatetimeListParameter>('datetime')
+
+    case 'id':
+      return createListParameter<IdListParameter>('id')
+
+    case 'enum':
+      return createListParameter<EnumListParameter>('enum', {
+        itemEnumValues: itemParameter.values,
+      })
+
+    case 'object':
+      return createListParameter<ObjectListParameter>('object', {
+        itemParameters: itemParameter.parameters,
+      })
+
+    case 'record':
+      return createListParameter<RecordListParameter>('record')
+
+    default:
+      return fallbackListParameter
   }
 }
 
@@ -1356,91 +1364,8 @@ const createProperty = (
     case 'boolean':
       return { ...baseProperty, format: 'boolean', jsonType: 'boolean' }
     case 'array': {
-      function createListProperty<T extends ListProperty>(
-        format: string,
-        extraProps: Partial<T> = {},
-      ): T {
-        return {
-          ...baseProperty,
-          format: 'list' as const,
-          jsonType: 'array' as const,
-          itemFormat: format,
-          ...extraProps,
-        } as unknown as T
-      }
-
-      const fallbackListProperty =
-        createListProperty<RecordListProperty>('record')
-
-      if (prop.items == null) {
-        return fallbackListProperty
-      }
-
-      if ('oneOf' in prop.items) {
-        if (!prop.items.oneOf.every((schema) => schema.type === 'object')) {
-          return fallbackListProperty
-        }
-
-        if (prop.items.discriminator?.propertyName == null) {
-          throw new Error(
-            `Missing discriminator property name for ${name} in ${parentPaths.join('.')}`,
-          )
-        }
-
-        return createListProperty<DiscriminatedListProperty>(
-          'discriminated_object',
-          {
-            discriminator: prop.items.discriminator.propertyName,
-            variants: prop.items.oneOf.map((schema) => ({
-              properties: createProperties(schema.properties ?? {}, [
-                ...parentPaths,
-                name,
-              ]),
-              description: schema.description ?? '',
-            })),
-          },
-        )
-      }
-
-      const itemProperty = createProperty('item', prop.items, [
-        ...parentPaths,
-        name,
-      ])
-
-      switch (itemProperty.format) {
-        case 'string':
-          return createListProperty<StringListProperty>('string')
-
-        case 'number':
-          return createListProperty<NumberListProperty>('number')
-
-        case 'boolean':
-          return createListProperty<BooleanListProperty>('boolean')
-
-        case 'datetime':
-          return createListProperty<DatetimeListProperty>('datetime')
-
-        case 'id':
-          return createListProperty<IdListProperty>('id')
-
-        case 'enum':
-          return createListProperty<EnumListProperty>('enum', {
-            itemEnumValues: itemProperty.values,
-          })
-
-        case 'object':
-          return createListProperty<ObjectListProperty>('object', {
-            itemProperties: itemProperty.properties,
-          })
-
-        case 'record':
-          return createListProperty<RecordListProperty>('record')
-
-        default:
-          return fallbackListProperty
-      }
+      return createArrayProperty(baseProperty, prop, parentPaths)
     }
-
     case 'object':
       if (prop.properties !== undefined) {
         return {
@@ -1460,6 +1385,95 @@ const createProperty = (
       }
     default:
       throw new Error(`Unsupported property type: ${parsedProp.type}`)
+  }
+}
+
+const createArrayProperty = (
+  baseProperty: BaseProperty,
+  prop: OpenapiSchema,
+  parentPaths: string[],
+): Property => {
+  function createListProperty<T extends ListProperty>(
+    format: string,
+    extraProps: Partial<T> = {},
+  ): T {
+    return {
+      ...baseProperty,
+      format: 'list' as const,
+      jsonType: 'array' as const,
+      itemFormat: format,
+      ...extraProps,
+    } as unknown as T
+  }
+
+  const fallbackListProperty = createListProperty<RecordListProperty>('record')
+
+  if (prop.items == null) {
+    return fallbackListProperty
+  }
+
+  if ('oneOf' in prop.items) {
+    if (!prop.items.oneOf.every((schema) => schema.type === 'object')) {
+      return fallbackListProperty
+    }
+
+    if (prop.items.discriminator?.propertyName == null) {
+      throw new Error(
+        `Missing discriminator property name for ${baseProperty.name} in ${parentPaths.join('.')}`,
+      )
+    }
+
+    return createListProperty<DiscriminatedListProperty>(
+      'discriminated_object',
+      {
+        discriminator: prop.items.discriminator.propertyName,
+        variants: prop.items.oneOf.map((schema) => ({
+          properties: createProperties(schema.properties ?? {}, [
+            ...parentPaths,
+            baseProperty.name,
+          ]),
+          description: schema.description ?? '',
+        })),
+      },
+    )
+  }
+
+  const itemProperty = createProperty('item', prop.items, [
+    ...parentPaths,
+    baseProperty.name,
+  ])
+
+  switch (itemProperty.format) {
+    case 'string':
+      return createListProperty<StringListProperty>('string')
+
+    case 'number':
+      return createListProperty<NumberListProperty>('number')
+
+    case 'boolean':
+      return createListProperty<BooleanListProperty>('boolean')
+
+    case 'datetime':
+      return createListProperty<DatetimeListProperty>('datetime')
+
+    case 'id':
+      return createListProperty<IdListProperty>('id')
+
+    case 'enum':
+      return createListProperty<EnumListProperty>('enum', {
+        itemEnumValues: itemProperty.values,
+      })
+
+    case 'object':
+      return createListProperty<ObjectListProperty>('object', {
+        itemProperties: itemProperty.properties,
+      })
+
+    case 'record':
+      return createListProperty<RecordListProperty>('record')
+
+    default:
+      return fallbackListProperty
   }
 }
 
