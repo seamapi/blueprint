@@ -97,6 +97,7 @@ const commonPropertyFields = {
   'x-undocumented': z.string().default(''),
   'x-deprecated': z.string().default(''),
   'x-draft': z.string().default(''),
+  'x-property-group': z.string().default(''),
 }
 export const PropertySchema: z.ZodSchema<any> = z.union([
   z.object({

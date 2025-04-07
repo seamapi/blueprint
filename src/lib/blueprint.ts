@@ -64,6 +64,12 @@ export interface Resource {
   undocumentedMessage: string
   isDraft: boolean
   draftMessage: string
+  propertyGroups: PropertyGroup[]
+}
+
+interface PropertyGroup {
+  groupKey: string
+  groupName: string
 }
 
 export interface Pagination {
@@ -272,6 +278,7 @@ interface BaseProperty {
   undocumentedMessage: string
   isDraft: boolean
   draftMessage: string
+  propertyGroup: string
 }
 
 export type Property =
@@ -1106,7 +1113,39 @@ const createResource = (
     undocumentedMessage: schema['x-undocumented'] ?? '',
     isDraft: (schema['x-draft'] ?? '').length > 0,
     draftMessage: schema['x-draft'] ?? '',
+    propertyGroups: getPropertyGroupsForResource(schemaName),
   }
+}
+
+const getPropertyGroupsForResource = (
+  resourceName: string,
+): PropertyGroup[] => {
+  if (resourceName === 'acs_system') {
+    return [
+      {
+        groupKey: 'general_info',
+        groupName: 'General Info',
+      },
+      {
+        groupKey: 'capabilities_features',
+        groupName: 'Capabilities & Features',
+      },
+      {
+        groupKey: 'related_resources',
+        groupName: 'Related Resources',
+      },
+      {
+        groupKey: 'system_specific_properties',
+        groupName: 'System-specific Properties',
+      },
+      {
+        groupKey: 'errors_warnings',
+        groupName: 'Errors & warnings',
+      },
+    ]
+  }
+
+  return []
 }
 
 const validateRoutePath = (
@@ -1325,7 +1364,10 @@ const createProperty = (
     undocumentedMessage: parsedProp['x-undocumented'],
     isDraft: parsedProp['x-draft'].length > 0,
     draftMessage: parsedProp['x-draft'],
+    propertyGroup: parsedProp['x-property-group'],
   }
+
+  validatePropertyGroup(baseProperty.propertyGroup as string, name, parentPaths)
 
   switch (parsedProp.type) {
     case 'string':
@@ -1385,6 +1427,31 @@ const createProperty = (
       }
     default:
       throw new Error(`Unsupported property type: ${parsedProp.type}`)
+  }
+}
+
+const validatePropertyGroup = (
+  propertyGroup: string,
+  propertyName: string,
+  parentPaths: string[],
+): void => {
+  if (propertyGroup.length === 0) return
+
+  const resourceName = parentPaths.at(0)
+  if (resourceName == null) {
+    throw new Error(
+      `Missing resource name for property "${propertyName}" in ${parentPaths.join('.')}`,
+    )
+  }
+
+  const resourcePropertyGroups = getPropertyGroupsForResource(resourceName)
+  const validGroupKeys = resourcePropertyGroups.map((group) => group.groupKey)
+
+  if (!validGroupKeys.includes(propertyGroup)) {
+    throw new Error(
+      `Invalid property group "${propertyGroup}" for property "${propertyName}" in resource "${resourceName}". ` +
+        `Valid groups are: ${validGroupKeys.length > 0 ? validGroupKeys.join(', ') : 'none defined'}`,
+    )
   }
 }
 
