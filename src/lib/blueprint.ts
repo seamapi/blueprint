@@ -1339,7 +1339,7 @@ const createProperty = (
     path: [...parentPaths, name],
   })
 
-  const propertyGroup = parsedProp['x-property-group']
+  const propertyGroup = parsedProp['x-property-group'] as string
   validatePropertyGroup(propertyGroup, name, parentPaths)
 
   const baseProperty = {
