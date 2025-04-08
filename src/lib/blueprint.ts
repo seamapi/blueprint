@@ -14,6 +14,7 @@ import { flattenOpenapiSchema } from './openapi/flatten-openapi-schema.js'
 import {
   EventResourceSchema,
   OpenapiOperationSchema,
+  PropertyGroupSchema,
   PropertySchema,
   ResourceSchema,
 } from './openapi/schemas.js'
@@ -64,11 +65,10 @@ export interface Resource {
   undocumentedMessage: string
   isDraft: boolean
   draftMessage: string
-  propertyGroups: PropertyGroup[]
+  propertyGroups: Record<string, PropertyGroup>
 }
 
 interface PropertyGroup {
-  groupKey: string
   name: string
 }
 
@@ -1102,6 +1102,8 @@ const createResource = (
     routes,
   )
 
+  const propertyGroups = getPropertyGroupsForResource(schemaName, schema)
+
   return {
     resourceType: schemaName,
     properties: createProperties(schema.properties ?? {}, [schemaName]),
@@ -1113,39 +1115,8 @@ const createResource = (
     undocumentedMessage: schema['x-undocumented'] ?? '',
     isDraft: (schema['x-draft'] ?? '').length > 0,
     draftMessage: schema['x-draft'] ?? '',
-    propertyGroups: getPropertyGroupsForResource(schemaName),
+    propertyGroups,
   }
-}
-
-const getPropertyGroupsForResource = (
-  resourceName: string,
-): PropertyGroup[] => {
-  if (resourceName === 'acs_system') {
-    return [
-      {
-        groupKey: 'general_info',
-        name: 'General Info',
-      },
-      {
-        groupKey: 'capabilities_features',
-        name: 'Capabilities & Features',
-      },
-      {
-        groupKey: 'related_resources',
-        name: 'Related Resources',
-      },
-      {
-        groupKey: 'system_specific_properties',
-        name: 'System-specific Properties',
-      },
-      {
-        groupKey: 'errors_warnings',
-        name: 'Errors & warnings',
-      },
-    ]
-  }
-
-  return []
 }
 
 const validateRoutePath = (
@@ -1161,6 +1132,19 @@ const validateRoutePath = (
   }
 
   return routePath
+}
+
+// Store the property groups for each resource during processing
+const resourcePropertyGroups: Record<string, Record<string, PropertyGroup>> = {}
+
+const getPropertyGroupsForResource = (
+  schemaName: string,
+  schema: OpenapiSchema,
+): Record<string, PropertyGroup> => {
+  const propertyGroups = PropertyGroupSchema.parse(schema['x-property-groups'])
+  resourcePropertyGroups[schemaName] = propertyGroups
+
+  return propertyGroups
 }
 
 const createResponse = (
@@ -1355,6 +1339,9 @@ const createProperty = (
     path: [...parentPaths, name],
   })
 
+  const propertyGroup = parsedProp['x-property-group']
+  validatePropertyGroup(propertyGroup, name, parentPaths)
+
   const baseProperty = {
     name,
     description: parsedProp.description,
@@ -1364,10 +1351,8 @@ const createProperty = (
     undocumentedMessage: parsedProp['x-undocumented'],
     isDraft: parsedProp['x-draft'].length > 0,
     draftMessage: parsedProp['x-draft'],
-    propertyGroup: parsedProp['x-property-group'],
+    propertyGroup: propertyGroup,
   }
-
-  validatePropertyGroup(baseProperty.propertyGroup as string, name, parentPaths)
 
   switch (parsedProp.type) {
     case 'string':
@@ -1444,13 +1429,15 @@ const validatePropertyGroup = (
     )
   }
 
-  const resourcePropertyGroups = getPropertyGroupsForResource(resourceName)
-  const validGroupKeys = resourcePropertyGroups.map((group) => group.groupKey)
+  const groups = resourcePropertyGroups[resourceName] ?? {}
+  const validGroupKeys = Object.keys(groups)
+
+  if (validGroupKeys.length === 0) return
 
   if (!validGroupKeys.includes(propertyGroup)) {
     throw new Error(
       `Invalid property group "${propertyGroup}" for property "${propertyName}" in resource "${resourceName}". ` +
-        `Valid groups are: ${validGroupKeys.length > 0 ? validGroupKeys.join(', ') : 'none defined'}`,
+        `Valid groups are: ${validGroupKeys.join(', ')}`,
     )
   }
 }

@@ -132,6 +132,15 @@ export const ResourceSchema = z.object({
   'x-draft': z.string().default(''),
 })
 
+export const PropertyGroupSchema = z
+  .record(
+    z.string(),
+    z.object({
+      name: z.string(),
+    }),
+  )
+  .default({})
+
 export const EventResourceSchema = z.object({
   'x-route-path': z.string().default(''),
   discriminator: z.object({ propertyName: z.string() }),
