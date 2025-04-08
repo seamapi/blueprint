@@ -23,6 +23,7 @@ export default {
             description: 'Foo id',
             format: 'uuid',
             type: 'string',
+            'x-property-group': 'foo_group',
           },
           foo_type: {
             description: 'Foo type',
@@ -78,6 +79,11 @@ export default {
         },
         required: ['foo_id', 'name'],
         'x-route-path': '/foos',
+        'x-property-groups': {
+          foo_group: {
+            name: 'Foo Group',
+          },
+        },
       },
       plane: {
         type: 'object',
@@ -87,6 +93,7 @@ export default {
             description: 'plane id',
             format: 'uuid',
             type: 'string',
+            'x-property-group': 'plane_group',
           },
           name: {
             description: 'Planej name',
@@ -95,6 +102,11 @@ export default {
         },
         required: ['plane_id', 'name'],
         'x-route-path': '/transport/air/planes',
+        'x-property-groups': {
+          plane_group: {
+            name: 'Plane Group',
+          },
+        },
       },
       deprecated_resource: {
         type: 'object',
