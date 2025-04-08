@@ -69,7 +69,7 @@ export interface Resource {
 
 interface PropertyGroup {
   groupKey: string
-  groupName: string
+  name: string
 }
 
 export interface Pagination {
@@ -1124,23 +1124,23 @@ const getPropertyGroupsForResource = (
     return [
       {
         groupKey: 'general_info',
-        groupName: 'General Info',
+        name: 'General Info',
       },
       {
         groupKey: 'capabilities_features',
-        groupName: 'Capabilities & Features',
+        name: 'Capabilities & Features',
       },
       {
         groupKey: 'related_resources',
-        groupName: 'Related Resources',
+        name: 'Related Resources',
       },
       {
         groupKey: 'system_specific_properties',
-        groupName: 'System-specific Properties',
+        name: 'System-specific Properties',
       },
       {
         groupKey: 'errors_warnings',
-        groupName: 'Errors & warnings',
+        name: 'Errors & warnings',
       },
     ]
   }
