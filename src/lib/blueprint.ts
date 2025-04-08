@@ -1351,7 +1351,7 @@ const createProperty = (
     undocumentedMessage: parsedProp['x-undocumented'],
     isDraft: parsedProp['x-draft'].length > 0,
     draftMessage: parsedProp['x-draft'],
-    propertyGroup: propertyGroup,
+    propertyGroup,
   }
 
   switch (parsedProp.type) {
