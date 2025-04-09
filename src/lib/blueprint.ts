@@ -1436,8 +1436,7 @@ const validatePropertyGroup = (
 
   if (!validGroupKeys.includes(propertyGroup)) {
     throw new Error(
-      `Invalid property group "${propertyGroup}" for property "${propertyName}" in resource "${resourceName}". ` +
-        `Valid groups are: ${validGroupKeys.join(', ')}`,
+      `Invalid property group "${propertyGroup}" for property "${propertyName}" in resource "${resourceName}". Valid groups are: ${validGroupKeys.join(', ')}`,
     )
   }
 }
