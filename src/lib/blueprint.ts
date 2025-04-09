@@ -70,6 +70,7 @@ export interface Resource {
 
 interface PropertyGroup {
   name: string
+  propertyGroupKey: string
 }
 
 export interface Pagination {
@@ -1141,7 +1142,19 @@ const getPropertyGroupsForResource = (
   schemaName: string,
   schema: OpenapiSchema,
 ): Record<string, PropertyGroup> => {
-  const propertyGroups = PropertyGroupSchema.parse(schema['x-property-groups'])
+  const rawPropertyGroups = PropertyGroupSchema.parse(
+    schema['x-property-groups'],
+  )
+
+  const propertyGroups: Record<string, PropertyGroup> = {}
+
+  for (const [key, group] of Object.entries(rawPropertyGroups)) {
+    propertyGroups[key] = {
+      name: group.name,
+      propertyGroupKey: key,
+    }
+  }
+
   resourcePropertyGroups[schemaName] = propertyGroups
 
   return propertyGroups
