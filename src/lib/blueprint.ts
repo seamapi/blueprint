@@ -1103,11 +1103,15 @@ const createResource = (
     routes,
   )
 
-  const propertyGroups = getPropertyGroupsForResource(schemaName, schema)
+  const propertyGroups = getPropertyGroupsForResource(schema)
 
   return {
     resourceType: schemaName,
-    properties: createProperties(schema.properties ?? {}, [schemaName]),
+    properties: createProperties(
+      schema.properties ?? {},
+      [schemaName],
+      propertyGroups,
+    ),
     description: schema.description ?? '',
     isDeprecated: schema.deprecated ?? false,
     routePath,
@@ -1135,11 +1139,7 @@ const validateRoutePath = (
   return routePath
 }
 
-// Store the property groups for each resource during processing
-const resourcePropertyGroups: Record<string, Record<string, PropertyGroup>> = {}
-
 const getPropertyGroupsForResource = (
-  schemaName: string,
   schema: OpenapiSchema,
 ): Record<string, PropertyGroup> => {
   const rawPropertyGroups = PropertyGroupSchema.parse(
@@ -1154,8 +1154,6 @@ const getPropertyGroupsForResource = (
       propertyGroupKey: key,
     }
   }
-
-  resourcePropertyGroups[schemaName] = propertyGroups
 
   return propertyGroups
 }
@@ -1316,6 +1314,7 @@ const validateActionAttemptType = (
 export const createProperties = (
   properties: Record<string, OpenapiSchema>,
   parentPaths: string[],
+  resourcePropertyGroups: Record<string, PropertyGroup> = {},
 ): Property[] => {
   return Object.entries(properties)
     .map(([name, property]) => {
@@ -1340,20 +1339,28 @@ export const createProperties = (
       }
       return true
     })
-    .map(([name, prop]) => createProperty(name, prop, [...parentPaths]))
+    .map(([name, prop]) =>
+      createProperty(name, prop, parentPaths, resourcePropertyGroups),
+    )
 }
 
 const createProperty = (
   name: string,
   prop: OpenapiSchema,
   parentPaths: string[],
+  resourcePropertyGroups: Record<string, PropertyGroup> = {},
 ): Property => {
   const parsedProp = PropertySchema.parse(prop, {
     path: [...parentPaths, name],
   })
 
   const propertyGroup = parsedProp['x-property-group'] as string
-  validatePropertyGroup(propertyGroup, name, parentPaths)
+  validatePropertyGroup(
+    propertyGroup,
+    name,
+    parentPaths,
+    resourcePropertyGroups,
+  )
 
   const baseProperty = {
     name,
@@ -1432,6 +1439,7 @@ const validatePropertyGroup = (
   propertyGroup: string,
   propertyName: string,
   parentPaths: string[],
+  resourcePropertyGroups: Record<string, PropertyGroup>,
 ): void => {
   if (propertyGroup.length === 0) return
 
