@@ -98,6 +98,7 @@ export interface OpenapiSchema {
   discriminator?: {
     propertyName: string
   }
+  'x-property-groups'?: Record<string, { name: string }>
 }
 
 export interface OpenapiComponents {

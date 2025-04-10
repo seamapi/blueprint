@@ -14,6 +14,7 @@ import { flattenOpenapiSchema } from './openapi/flatten-openapi-schema.js'
 import {
   EventResourceSchema,
   OpenapiOperationSchema,
+  PropertyGroupSchema,
   PropertySchema,
   ResourceSchema,
 } from './openapi/schemas.js'
@@ -64,6 +65,12 @@ export interface Resource {
   undocumentedMessage: string
   isDraft: boolean
   draftMessage: string
+  propertyGroups: Record<string, PropertyGroup>
+}
+
+interface PropertyGroup {
+  name: string
+  propertyGroupKey: string
 }
 
 export interface Pagination {
@@ -272,6 +279,7 @@ interface BaseProperty {
   undocumentedMessage: string
   isDraft: boolean
   draftMessage: string
+  propertyGroupKey: string | null
 }
 
 export type Property =
@@ -1095,9 +1103,15 @@ const createResource = (
     routes,
   )
 
+  const propertyGroups = getPropertyGroupsForResource(schema)
+
   return {
     resourceType: schemaName,
-    properties: createProperties(schema.properties ?? {}, [schemaName]),
+    properties: createProperties(
+      schema.properties ?? {},
+      [schemaName],
+      propertyGroups,
+    ),
     description: schema.description ?? '',
     isDeprecated: schema.deprecated ?? false,
     routePath,
@@ -1106,6 +1120,7 @@ const createResource = (
     undocumentedMessage: schema['x-undocumented'] ?? '',
     isDraft: (schema['x-draft'] ?? '').length > 0,
     draftMessage: schema['x-draft'] ?? '',
+    propertyGroups,
   }
 }
 
@@ -1122,6 +1137,25 @@ const validateRoutePath = (
   }
 
   return routePath
+}
+
+const getPropertyGroupsForResource = (
+  schema: OpenapiSchema,
+): Record<string, PropertyGroup> => {
+  const rawPropertyGroups = PropertyGroupSchema.parse(
+    schema['x-property-groups'],
+  )
+
+  const propertyGroups: Record<string, PropertyGroup> = {}
+
+  for (const [key, group] of Object.entries(rawPropertyGroups)) {
+    propertyGroups[key] = {
+      name: group.name,
+      propertyGroupKey: key,
+    }
+  }
+
+  return propertyGroups
 }
 
 const createResponse = (
@@ -1280,6 +1314,7 @@ const validateActionAttemptType = (
 export const createProperties = (
   properties: Record<string, OpenapiSchema>,
   parentPaths: string[],
+  resourcePropertyGroups: Record<string, PropertyGroup> = {},
 ): Property[] => {
   return Object.entries(properties)
     .map(([name, property]) => {
@@ -1304,17 +1339,28 @@ export const createProperties = (
       }
       return true
     })
-    .map(([name, prop]) => createProperty(name, prop, [...parentPaths]))
+    .map(([name, prop]) =>
+      createProperty(name, prop, parentPaths, resourcePropertyGroups),
+    )
 }
 
 const createProperty = (
   name: string,
   prop: OpenapiSchema,
   parentPaths: string[],
+  resourcePropertyGroups: Record<string, PropertyGroup> = {},
 ): Property => {
   const parsedProp = PropertySchema.parse(prop, {
     path: [...parentPaths, name],
   })
+
+  const propertyGroupKey = parsedProp['x-property-group-key'] as string
+  validatePropertyGroupKey(
+    propertyGroupKey,
+    name,
+    parentPaths,
+    resourcePropertyGroups,
+  )
 
   const baseProperty = {
     name,
@@ -1325,6 +1371,7 @@ const createProperty = (
     undocumentedMessage: parsedProp['x-undocumented'],
     isDraft: parsedProp['x-draft'].length > 0,
     draftMessage: parsedProp['x-draft'],
+    propertyGroupKey: propertyGroupKey === '' ? null : propertyGroupKey,
   }
 
   switch (parsedProp.type) {
@@ -1385,6 +1432,35 @@ const createProperty = (
       }
     default:
       throw new Error(`Unsupported property type: ${parsedProp.type}`)
+  }
+}
+
+const validatePropertyGroupKey = (
+  propertyGroupKey: string,
+  propertyName: string,
+  parentPaths: string[],
+  resourcePropertyGroups: Record<string, PropertyGroup>,
+): void => {
+  if (propertyGroupKey.length === 0) return
+
+  const resourceName = parentPaths.at(0)
+  if (resourceName == null) {
+    throw new Error(
+      `Missing resource name for property "${propertyName}" in ${parentPaths.join('.')}`,
+    )
+  }
+
+  const validGroupKeys = Object.keys(resourcePropertyGroups)
+  if (validGroupKeys.length === 0) {
+    throw new Error(
+      `The "${propertyName}" has property group ${propertyGroupKey} but ${resourceName} does not define any property groups`,
+    )
+  }
+
+  if (!validGroupKeys.includes(propertyGroupKey)) {
+    throw new Error(
+      `Invalid property group "${propertyGroupKey}" for property "${propertyName}" in resource "${resourceName}". Valid groups are: ${validGroupKeys.join(', ')}`,
+    )
   }
 }
 

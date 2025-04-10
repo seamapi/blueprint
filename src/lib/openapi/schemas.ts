@@ -97,6 +97,7 @@ const commonPropertyFields = {
   'x-undocumented': z.string().default(''),
   'x-deprecated': z.string().default(''),
   'x-draft': z.string().default(''),
+  'x-property-group-key': z.string().default(''),
 }
 export const PropertySchema: z.ZodSchema<any> = z.union([
   z.object({
@@ -130,6 +131,15 @@ export const ResourceSchema = z.object({
   'x-deprecated': z.string().default(''),
   'x-draft': z.string().default(''),
 })
+
+export const PropertyGroupSchema = z
+  .record(
+    z.string(),
+    z.object({
+      name: z.string(),
+    }),
+  )
+  .default({})
 
 export const EventResourceSchema = z.object({
   'x-route-path': z.string().default(''),
