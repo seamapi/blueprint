@@ -1450,10 +1450,12 @@ const validatePropertyGroup = (
     )
   }
 
-  const groups = resourcePropertyGroups[resourceName] ?? {}
-  const validGroupKeys = Object.keys(groups)
-
-  if (validGroupKeys.length === 0) return
+  const validGroupKeys = Object.keys(resourcePropertyGroups)
+  if (validGroupKeys.length === 0) {
+    throw new Error(
+      `The "${propertyName}" has property group ${propertyGroup} but ${resourceName} does not define any property groups`,
+    )
+  }
 
   if (!validGroupKeys.includes(propertyGroup)) {
     throw new Error(
