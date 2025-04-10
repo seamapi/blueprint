@@ -279,7 +279,7 @@ interface BaseProperty {
   undocumentedMessage: string
   isDraft: boolean
   draftMessage: string
-  propertyGroup: string
+  propertyGroupKey: string | null
 }
 
 export type Property =
@@ -1354,9 +1354,9 @@ const createProperty = (
     path: [...parentPaths, name],
   })
 
-  const propertyGroup = parsedProp['x-property-group'] as string
-  validatePropertyGroup(
-    propertyGroup,
+  const propertyGroupKey = parsedProp['x-property-group-key'] as string
+  validatePropertyGroupKey(
+    propertyGroupKey,
     name,
     parentPaths,
     resourcePropertyGroups,
@@ -1371,7 +1371,7 @@ const createProperty = (
     undocumentedMessage: parsedProp['x-undocumented'],
     isDraft: parsedProp['x-draft'].length > 0,
     draftMessage: parsedProp['x-draft'],
-    propertyGroup,
+    propertyGroupKey: propertyGroupKey === '' ? null : propertyGroupKey,
   }
 
   switch (parsedProp.type) {
@@ -1435,13 +1435,13 @@ const createProperty = (
   }
 }
 
-const validatePropertyGroup = (
-  propertyGroup: string,
+const validatePropertyGroupKey = (
+  propertyGroupKey: string,
   propertyName: string,
   parentPaths: string[],
   resourcePropertyGroups: Record<string, PropertyGroup>,
 ): void => {
-  if (propertyGroup.length === 0) return
+  if (propertyGroupKey.length === 0) return
 
   const resourceName = parentPaths.at(0)
   if (resourceName == null) {
@@ -1453,13 +1453,13 @@ const validatePropertyGroup = (
   const validGroupKeys = Object.keys(resourcePropertyGroups)
   if (validGroupKeys.length === 0) {
     throw new Error(
-      `The "${propertyName}" has property group ${propertyGroup} but ${resourceName} does not define any property groups`,
+      `The "${propertyName}" has property group ${propertyGroupKey} but ${resourceName} does not define any property groups`,
     )
   }
 
-  if (!validGroupKeys.includes(propertyGroup)) {
+  if (!validGroupKeys.includes(propertyGroupKey)) {
     throw new Error(
-      `Invalid property group "${propertyGroup}" for property "${propertyName}" in resource "${resourceName}". Valid groups are: ${validGroupKeys.join(', ')}`,
+      `Invalid property group "${propertyGroupKey}" for property "${propertyName}" in resource "${resourceName}". Valid groups are: ${validGroupKeys.join(', ')}`,
     )
   }
 }
