@@ -23,7 +23,7 @@ export default {
             description: 'Foo id',
             format: 'uuid',
             type: 'string',
-            'x-property-group': 'foo_group',
+            'x-property-group-key': 'foo_group',
           },
           foo_type: {
             description: 'Foo type',
@@ -93,7 +93,7 @@ export default {
             description: 'plane id',
             format: 'uuid',
             type: 'string',
-            'x-property-group': 'plane_group',
+            'x-property-group-key': 'plane_group',
           },
           name: {
             description: 'Planej name',
