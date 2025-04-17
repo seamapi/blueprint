@@ -220,7 +220,7 @@ interface DiscriminatedListParameter extends BaseListParameter {
 interface BooleanParameter extends BaseParameter {
   format: 'boolean'
   jsonType: 'boolean'
-  default?: boolean
+  default?: boolean | null
 }
 
 interface ObjectParameter extends BaseParameter {
