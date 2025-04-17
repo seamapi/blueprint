@@ -882,7 +882,9 @@ const createParameter = (
     path: [...path.split('/'), name],
   })
 
-  const baseParam: BaseParameter = {
+  const baseParam: BaseParameter & {
+    default?: any
+  } = {
     name,
     description: parsedProp.description,
     isRequired: requiredParameters.includes(name),
