@@ -126,23 +126,25 @@ interface BaseParameter {
   undocumentedMessage: string
   isDraft: boolean
   draftMessage: string
-  default?: any
 }
 
 interface StringParameter extends BaseParameter {
   format: 'string'
   jsonType: 'string'
+  default?: string
 }
 
 interface NumberParameter extends BaseParameter {
   format: 'number'
   jsonType: 'number'
+  default?: number
 }
 
 interface EnumParameter extends BaseParameter {
   format: 'enum'
   jsonType: 'string'
   values: EnumValue[]
+  default?: string
 }
 
 interface RecordParameter extends BaseParameter {
@@ -212,6 +214,7 @@ interface DiscriminatedListParameter extends BaseListParameter {
 interface BooleanParameter extends BaseParameter {
   format: 'boolean'
   jsonType: 'boolean'
+  default?: boolean
 }
 
 interface ObjectParameter extends BaseParameter {
@@ -223,11 +226,13 @@ interface ObjectParameter extends BaseParameter {
 interface DatetimeParameter extends BaseParameter {
   format: 'datetime'
   jsonType: 'string'
+  default?: string
 }
 
 interface IdParameter extends BaseParameter {
   format: 'id'
   jsonType: 'string'
+  default?: string
 }
 
 export type Parameter =
