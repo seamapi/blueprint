@@ -902,7 +902,9 @@ const createParameter = (
     draftMessage: parsedProp['x-draft'],
   }
 
-  if (parsedProp.default != null) {
+  const hasDefault = 'default' in parsedProp
+  baseParam.hasDefault = hasDefault
+  if (hasDefault) {
     baseParam.default = parsedProp.default
   }
 
