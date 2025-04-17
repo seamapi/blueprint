@@ -170,27 +170,33 @@ type ListParameter =
 
 interface StringListParameter extends BaseListParameter {
   itemFormat: 'string'
+  default?: string[]
 }
 
 interface NumberListParameter extends BaseListParameter {
   itemFormat: 'number'
+  default?: number[]
 }
 
 interface BooleanListParameter extends BaseListParameter {
   itemFormat: 'boolean'
+  default?: boolean[]
 }
 
 interface DatetimeListParameter extends BaseListParameter {
   itemFormat: 'datetime'
+  default?: string[]
 }
 
 interface IdListParameter extends BaseListParameter {
   itemFormat: 'id'
+  default?: string[]
 }
 
 interface EnumListParameter extends BaseListParameter {
   itemFormat: 'enum'
   itemEnumValues: EnumValue[]
+  default?: EnumValue[]
 }
 
 interface ObjectListParameter extends BaseListParameter {
