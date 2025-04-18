@@ -126,6 +126,7 @@ interface BaseParameter {
   undocumentedMessage: string
   isDraft: boolean
   draftMessage: string
+  hasDefault: boolean
 }
 
 interface StringParameter extends BaseParameter {
@@ -900,11 +901,10 @@ const createParameter = (
     undocumentedMessage: parsedProp['x-undocumented'],
     isDraft: parsedProp['x-draft'].length > 0,
     draftMessage: parsedProp['x-draft'],
+    hasDefault: 'default' in parsedProp,
   }
 
-  const hasDefault = 'default' in parsedProp
-  baseParam.hasDefault = hasDefault
-  if (hasDefault) {
+  if (baseParam.hasDefault) {
     baseParam.default = parsedProp.default
   }
 
