@@ -137,7 +137,7 @@ interface StringParameter extends BaseParameter {
 interface NumberParameter extends BaseParameter {
   format: 'number'
   jsonType: 'number'
-  default?: number
+  default?: number | null
 }
 
 interface EnumParameter extends BaseParameter {
