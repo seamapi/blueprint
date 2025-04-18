@@ -238,7 +238,7 @@ interface DatetimeParameter extends BaseParameter {
 interface IdParameter extends BaseParameter {
   format: 'id'
   jsonType: 'string'
-  default?: string
+  default?: string | null
 }
 
 export type Parameter =
