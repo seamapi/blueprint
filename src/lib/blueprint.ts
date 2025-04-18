@@ -144,7 +144,7 @@ interface EnumParameter extends BaseParameter {
   format: 'enum'
   jsonType: 'string'
   values: EnumValue[]
-  default?: string
+  default?: string | null
 }
 
 interface RecordParameter extends BaseParameter {
