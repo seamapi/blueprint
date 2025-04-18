@@ -232,7 +232,7 @@ interface ObjectParameter extends BaseParameter {
 interface DatetimeParameter extends BaseParameter {
   format: 'datetime'
   jsonType: 'string'
-  default?: string
+  default?: string | null
 }
 
 interface IdParameter extends BaseParameter {
