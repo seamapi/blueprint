@@ -79,6 +79,7 @@ export interface OpenapiSchema {
   format?: string
   description?: string
   deprecated?: boolean
+  default?: any
   'x-deprecated'?: string
   'x-draft'?: string
   'x-undocumented'?: string

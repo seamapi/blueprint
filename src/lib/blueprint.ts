@@ -126,22 +126,26 @@ interface BaseParameter {
   undocumentedMessage: string
   isDraft: boolean
   draftMessage: string
+  hasDefault: boolean
 }
 
 interface StringParameter extends BaseParameter {
   format: 'string'
   jsonType: 'string'
+  default?: string | null
 }
 
 interface NumberParameter extends BaseParameter {
   format: 'number'
   jsonType: 'number'
+  default?: number | null
 }
 
 interface EnumParameter extends BaseParameter {
   format: 'enum'
   jsonType: 'string'
   values: EnumValue[]
+  default?: string | null
 }
 
 interface RecordParameter extends BaseParameter {
@@ -167,27 +171,33 @@ type ListParameter =
 
 interface StringListParameter extends BaseListParameter {
   itemFormat: 'string'
+  default?: string[]
 }
 
 interface NumberListParameter extends BaseListParameter {
   itemFormat: 'number'
+  default?: number[]
 }
 
 interface BooleanListParameter extends BaseListParameter {
   itemFormat: 'boolean'
+  default?: boolean[]
 }
 
 interface DatetimeListParameter extends BaseListParameter {
   itemFormat: 'datetime'
+  default?: string[]
 }
 
 interface IdListParameter extends BaseListParameter {
   itemFormat: 'id'
+  default?: string[]
 }
 
 interface EnumListParameter extends BaseListParameter {
   itemFormat: 'enum'
   itemEnumValues: EnumValue[]
+  default?: EnumValue[]
 }
 
 interface ObjectListParameter extends BaseListParameter {
@@ -211,6 +221,7 @@ interface DiscriminatedListParameter extends BaseListParameter {
 interface BooleanParameter extends BaseParameter {
   format: 'boolean'
   jsonType: 'boolean'
+  default?: boolean | null
 }
 
 interface ObjectParameter extends BaseParameter {
@@ -222,11 +233,13 @@ interface ObjectParameter extends BaseParameter {
 interface DatetimeParameter extends BaseParameter {
   format: 'datetime'
   jsonType: 'string'
+  default?: string | null
 }
 
 interface IdParameter extends BaseParameter {
   format: 'id'
   jsonType: 'string'
+  default?: string | null
 }
 
 export type Parameter =
@@ -876,7 +889,9 @@ const createParameter = (
     path: [...path.split('/'), name],
   })
 
-  const baseParam: BaseParameter = {
+  const baseParam: BaseParameter & {
+    default?: any
+  } = {
     name,
     description: parsedProp.description,
     isRequired: requiredParameters.includes(name),
@@ -886,6 +901,11 @@ const createParameter = (
     undocumentedMessage: parsedProp['x-undocumented'],
     isDraft: parsedProp['x-draft'].length > 0,
     draftMessage: parsedProp['x-draft'],
+    hasDefault: 'default' in parsedProp,
+  }
+
+  if (baseParam.hasDefault) {
+    baseParam.default = parsedProp.default
   }
 
   switch (parsedProp.type) {
