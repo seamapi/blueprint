@@ -1715,11 +1715,7 @@ const createActionAttempts = (
         const nonNullableDefinition = propDefinitions.find((prop) => {
           if (prop == null) return false
 
-          return !(
-            'nullable' in prop &&
-            prop.nullable === true &&
-            Object.keys(prop).length <= 1
-          )
+          return !('nullable' in prop && prop.nullable === true)
         })
 
         mergedProperties[propKey] =
