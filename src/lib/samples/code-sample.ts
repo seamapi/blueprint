@@ -15,11 +15,7 @@ import { createPhpRequest, createPhpResponse } from './php.js'
 import { createPythonRequest, createPythonResponse } from './python.js'
 import { createRubyRequest, createRubyResponse } from './ruby.js'
 import { createSeamCliRequest, createSeamCliResponse } from './seam-cli.js'
-import {
-  CodeSampleSdkSchema,
-  type CodeSampleSyntax,
-  CodeSampleSyntaxSchema,
-} from './syntax.js'
+import { SdkNameSchema, type SyntaxName, SyntaxNameSchema } from './syntax.js'
 
 export const CodeSampleDefinitionSchema = z.object({
   title: z.string().trim().min(1),
@@ -46,13 +42,13 @@ export type CodeSampleDefinitionInput = z.input<
 export type CodeSampleDefinition = z.output<typeof CodeSampleDefinitionSchema>
 
 const CodeSchema = z.record(
-  CodeSampleSdkSchema,
+  SdkNameSchema,
   z.object({
     title: z.string().min(1),
     request: z.string(),
     response: z.string(),
-    request_syntax: CodeSampleSyntaxSchema,
-    response_syntax: CodeSampleSyntaxSchema,
+    request_syntax: SyntaxNameSchema,
+    response_syntax: SyntaxNameSchema,
   }),
 )
 
@@ -66,7 +62,7 @@ export type CodeSample = z.output<typeof CodeSampleSchema>
 
 export interface Context {
   endpoint: Omit<Endpoint, 'codeSamples'>
-  formatCode: (content: string, syntax: CodeSampleSyntax) => Promise<string>
+  formatCode: (content: string, syntax: SyntaxName) => Promise<string>
 }
 
 export const createCodeSample = async (

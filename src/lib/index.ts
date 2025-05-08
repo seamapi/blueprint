@@ -22,7 +22,7 @@ export {
   type CodeSample,
   type CodeSampleDefinitionInput,
   CodeSampleDefinitionSchema,
-  type CodeSampleSdk,
-  type CodeSampleSyntax,
+  type SdkName,
+  type SyntaxName,
 } from './samples/index.js'
 export { type SeamAuthMethod, type SeamWorkspaceScope } from './seam.js'

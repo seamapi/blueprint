@@ -1,6 +1,6 @@
 import { z } from 'zod'
 
-export const CodeSampleSdkSchema = z.enum([
+export const SdkNameSchema = z.enum([
   'javascript',
   'python',
   'php',
@@ -11,7 +11,7 @@ export const CodeSampleSdkSchema = z.enum([
   'csharp',
 ])
 
-export const CodeSampleSyntaxSchema = z.enum([
+export const SyntaxNameSchema = z.enum([
   'javascript',
   'json',
   'python',
@@ -23,6 +23,6 @@ export const CodeSampleSyntaxSchema = z.enum([
   'csharp',
 ])
 
-export type CodeSampleSyntax = z.infer<typeof CodeSampleSyntaxSchema>
+export type SyntaxName = z.infer<typeof SyntaxNameSchema>
 
-export type CodeSampleSdk = z.infer<typeof CodeSampleSdkSchema>
+export type SdkName = z.infer<typeof SdkNameSchema>

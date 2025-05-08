@@ -21,7 +21,7 @@ import {
   type CodeSample,
   type CodeSampleDefinition,
   CodeSampleDefinitionSchema,
-  type CodeSampleSyntax,
+  type SyntaxName,
   createCodeSample,
 } from './samples/index.js'
 import {
@@ -425,7 +425,7 @@ export type TypesModuleInput = z.input<typeof TypesModuleSchema>
 export type TypesModule = z.output<typeof TypesModuleSchema>
 
 export interface BlueprintOptions {
-  formatCode?: (content: string, syntax: CodeSampleSyntax) => Promise<string>
+  formatCode?: (content: string, syntax: SyntaxName) => Promise<string>
 }
 
 export const createBlueprint = async (

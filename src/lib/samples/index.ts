@@ -5,4 +5,4 @@ export {
   CodeSampleDefinitionSchema,
   createCodeSample,
 } from './code-sample.js'
-export { type CodeSampleSdk, type CodeSampleSyntax } from './syntax.js'
+export { type SdkName, type SyntaxName } from './syntax.js'
