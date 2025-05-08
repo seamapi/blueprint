@@ -3,7 +3,6 @@ export {
   type CodeSampleDefinition,
   type CodeSampleDefinitionInput,
   CodeSampleDefinitionSchema,
-  type CodeSampleSdk,
-  type CodeSampleSyntax,
   createCodeSample,
 } from './code-sample.js'
+export { type CodeSampleSdk, type CodeSampleSyntax } from './syntax.js'

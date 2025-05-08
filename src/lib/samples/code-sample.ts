@@ -15,6 +15,11 @@ import { createPhpRequest, createPhpResponse } from './php.js'
 import { createPythonRequest, createPythonResponse } from './python.js'
 import { createRubyRequest, createRubyResponse } from './ruby.js'
 import { createSeamCliRequest, createSeamCliResponse } from './seam-cli.js'
+import {
+  CodeSampleSdkSchema,
+  type CodeSampleSyntax,
+  CodeSampleSyntaxSchema,
+} from './syntax.js'
 
 export const CodeSampleDefinitionSchema = z.object({
   title: z.string().trim().min(1),
@@ -39,33 +44,6 @@ export type CodeSampleDefinitionInput = z.input<
 >
 
 export type CodeSampleDefinition = z.output<typeof CodeSampleDefinitionSchema>
-
-const CodeSampleSdkSchema = z.enum([
-  'javascript',
-  'python',
-  'php',
-  'ruby',
-  'seam_cli',
-  'go',
-  'java',
-  'csharp',
-])
-
-const CodeSampleSyntaxSchema = z.enum([
-  'javascript',
-  'json',
-  'python',
-  'php',
-  'ruby',
-  'bash',
-  'go',
-  'java',
-  'csharp',
-])
-
-export type CodeSampleSyntax = z.infer<typeof CodeSampleSyntaxSchema>
-
-export type CodeSampleSdk = z.infer<typeof CodeSampleSdkSchema>
 
 const CodeSchema = z.record(
   CodeSampleSdkSchema,
