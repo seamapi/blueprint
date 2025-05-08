@@ -21,8 +21,11 @@ import {
   type CodeSample,
   type CodeSampleDefinition,
   CodeSampleDefinitionSchema,
-  type SyntaxName,
   createCodeSample,
+  type ResourceSample,
+  type ResourceSampleDefinition,
+  ResourceSampleDefinitionSchema,
+  type SyntaxName,
 } from './samples/index.js'
 import {
   mapOpenapiToSeamAuthMethod,
@@ -64,6 +67,7 @@ export interface Resource {
   isDraft: boolean
   draftMessage: string
   propertyGroups: Record<string, PropertyGroup>
+  resourceSamples: ResourceSample[]
 }
 
 interface PropertyGroup {
@@ -411,11 +415,15 @@ export type Method = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH'
 
 interface Context extends Required<BlueprintOptions> {
   codeSampleDefinitions: CodeSampleDefinition[]
+  resourceSampleDefinitions: ResourceSampleDefinition[]
   validActionAttemptTypes: string[]
 }
 
 export const TypesModuleSchema = z.object({
   codeSampleDefinitions: z.array(CodeSampleDefinitionSchema).default([]),
+  resourceSampleDefinitions: z
+    .array(ResourceSampleDefinitionSchema)
+    .default([]),
   // TODO: Import and use openapi zod schema here
   openapi: z.any(),
 })
@@ -432,7 +440,8 @@ export const createBlueprint = async (
   typesModule: TypesModuleInput,
   { formatCode = async (content) => content }: BlueprintOptions = {},
 ): Promise<Blueprint> => {
-  const { codeSampleDefinitions } = TypesModuleSchema.parse(typesModule)
+  const { codeSampleDefinitions, resourceSampleDefinitions } =
+    TypesModuleSchema.parse(typesModule)
 
   // TODO: Move openapi to TypesModuleSchema
   const openapi = typesModule.openapi as Openapi
@@ -443,6 +452,7 @@ export const createBlueprint = async (
 
   const context: Context = {
     codeSampleDefinitions,
+    resourceSampleDefinitions,
     formatCode,
     validActionAttemptTypes,
   }
@@ -1123,6 +1133,8 @@ const createResource = (
 
   const propertyGroups = getPropertyGroupsForResource(schema)
 
+  const resourceSamples: ResourceSample[] = []
+
   return {
     resourceType: schemaName,
     properties: createProperties(
@@ -1139,6 +1151,7 @@ const createResource = (
     isDraft: (schema['x-draft'] ?? '').length > 0,
     draftMessage: schema['x-draft'] ?? '',
     propertyGroups,
+    resourceSamples,
   }
 }
 
