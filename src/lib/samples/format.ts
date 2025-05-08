@@ -1,4 +1,5 @@
 import type { Code, Context } from './code-sample.js'
+import type { Resource } from './resource-sample.js'
 
 type CodeEntries = Entries<Code>
 type CodeEntry = NonNullable<CodeEntries[number]>
@@ -32,6 +33,43 @@ const formatCodeEntry = async (
       ...code,
       request,
       response,
+    },
+  ]
+}
+
+type ResourceEntries = Entries<Resource>
+type ResourceEntry = NonNullable<ResourceEntries[number]>
+
+export const formatResourceRecords = async (
+  resource: Resource,
+  context: Context,
+): Promise<Resource> => {
+  const entries = Object.entries(resource) as unknown as ResourceEntries
+  const formattedEntries = await Promise.all(
+    entries.map(async (entry): Promise<ResourceEntry> => {
+      if (entry == null) throw new Error('Unexpected null resource entry')
+      return await formatResourceEntry(entry, context)
+    }),
+  )
+  return Object.fromEntries(formattedEntries)
+}
+
+const formatResourceEntry = async (
+  [key, resource]: ResourceEntry,
+  { formatCode }: Context,
+): Promise<ResourceEntry> => {
+  if (resource == null) {
+    throw new Error(`Unexpected null in resource object for ${key}`)
+  }
+  const resourceData = await formatCode(
+    resource.resource_data,
+    resource.resource_data_syntax,
+  )
+  return [
+    key,
+    {
+      ...resource,
+      resource_data: resourceData,
     },
   ]
 }

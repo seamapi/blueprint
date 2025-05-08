@@ -1,4 +1,5 @@
 import type { CodeSampleDefinition, Context } from './code-sample.js'
+import type { ResourceSampleDefinition } from './resource-sample.js'
 
 export const createJsonResponse = (
   { response, title }: CodeSampleDefinition,
@@ -14,4 +15,11 @@ export const createJsonResponse = (
     throw new Error(`Missing ${responseKey} for '${title}'`)
   }
   return JSON.stringify(data)
+}
+
+export const createJsonResourceData = (
+  { properties }: ResourceSampleDefinition,
+  _context: Context,
+): string => {
+  return JSON.stringify(properties)
 }
