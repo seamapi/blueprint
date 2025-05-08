@@ -1,10 +1,6 @@
 import { z } from 'zod'
 
 import type { Endpoint } from 'lib/blueprint.js'
-import {
-  createSeamCliRequest,
-  createSeamCliResponse,
-} from 'lib/code-sample/seam-cli.js'
 import { JsonSchema } from 'lib/json.js'
 
 import { createCsharpRequest, createCsharpResponse } from './csharp.js'
@@ -18,6 +14,7 @@ import {
 import { createPhpRequest, createPhpResponse } from './php.js'
 import { createPythonRequest, createPythonResponse } from './python.js'
 import { createRubyRequest, createRubyResponse } from './ruby.js'
+import { createSeamCliRequest, createSeamCliResponse } from './seam-cli.js'
 
 export const CodeSampleDefinitionSchema = z.object({
   title: z.string().trim().min(1),

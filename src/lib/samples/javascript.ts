@@ -1,7 +1,7 @@
 import { camelCase } from 'change-case'
 
+import type { CodeSampleDefinition, Context } from './code-sample.js'
 import { createJsonResponse } from './json.js'
-import type { CodeSampleDefinition, Context } from './schema.js'
 
 export const createJavascriptRequest = (
   { request }: CodeSampleDefinition,

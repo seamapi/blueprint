@@ -2,8 +2,8 @@ import { camelCase, pascalCase } from 'change-case'
 
 import type { Json, NonNullJson } from 'lib/json.js'
 
+import type { CodeSampleDefinition, Context } from './code-sample.js'
 import { createJsonResponse } from './json.js'
-import type { CodeSampleDefinition, Context } from './schema.js'
 
 export const createCsharpRequest = (
   { request }: CodeSampleDefinition,

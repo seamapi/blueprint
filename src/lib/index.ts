@@ -24,5 +24,5 @@ export {
   CodeSampleDefinitionSchema,
   type CodeSampleSdk,
   type CodeSampleSyntax,
-} from './code-sample/index.js'
+} from './samples/index.js'
 export { type SeamAuthMethod, type SeamWorkspaceScope } from './seam.js'

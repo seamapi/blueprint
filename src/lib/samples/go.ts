@@ -2,7 +2,7 @@ import { pascalCase } from 'change-case'
 
 import type { Json, NonNullJson } from 'lib/json.js'
 
-import type { CodeSampleDefinition, Context } from './schema.js'
+import type { CodeSampleDefinition, Context } from './code-sample.js'
 
 const defaultGoPackageName = 'api'
 const goPackageBasePath = 'github.com/seamapi/go'

@@ -1,4 +1,4 @@
-import type { CodeSampleDefinition, Context } from './schema.js'
+import type { CodeSampleDefinition, Context } from './code-sample.js'
 
 export const createJsonResponse = (
   { response, title }: CodeSampleDefinition,

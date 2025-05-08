@@ -1,8 +1,9 @@
 export {
   type CodeSample,
+  type CodeSampleDefinition,
   type CodeSampleDefinitionInput,
   CodeSampleDefinitionSchema,
   type CodeSampleSdk,
   type CodeSampleSyntax,
   createCodeSample,
-} from './schema.js'
+} from './code-sample.js'

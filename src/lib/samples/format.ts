@@ -1,4 +1,4 @@
-import type { Code, Context } from './schema.js'
+import type { Code, Context } from './code-sample.js'
 
 type CodeEntries = Entries<Code>
 type CodeEntry = NonNullable<CodeEntries[number]>

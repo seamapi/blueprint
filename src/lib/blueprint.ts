@@ -1,14 +1,5 @@
 import { z } from 'zod'
 
-import {
-  type CodeSample,
-  CodeSampleDefinitionSchema,
-  createCodeSample,
-} from './code-sample/index.js'
-import type {
-  CodeSampleDefinition,
-  CodeSampleSyntax,
-} from './code-sample/schema.js'
 import { findCommonOpenapiSchemaProperties } from './openapi/find-common-openapi-schema-properties.js'
 import { flattenOpenapiSchema } from './openapi/flatten-openapi-schema.js'
 import {
@@ -26,6 +17,13 @@ import type {
   OpenapiPaths,
   OpenapiSchema,
 } from './openapi/types.js'
+import {
+  type CodeSample,
+  type CodeSampleDefinition,
+  CodeSampleDefinitionSchema,
+  type CodeSampleSyntax,
+  createCodeSample,
+} from './samples/index.js'
 import {
   mapOpenapiToSeamAuthMethod,
   type SeamAuthMethod,
