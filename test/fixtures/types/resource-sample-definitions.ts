@@ -1,7 +1,7 @@
 export default [
   {
-    title: 'Get a foo by ID',
-    description: 'This is the way to get a foo',
+    title: 'Normal Foo',
+    description: 'This is a very normal foo.',
     resource_type: 'foo',
     properties: {
       foo_id: '8d7e0b3a-b889-49a7-9164-4b71a0506a33',
