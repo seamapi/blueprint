@@ -1,4 +1,8 @@
+import { writeFile } from 'node:fs/promises'
+import { join } from 'node:path'
+
 import type { Builder, Command, Describe, Handler } from 'landlubber'
+import { mkdirp } from 'mkdirp'
 
 import { createBlueprint, TypesModuleSchema } from '@seamapi/blueprint'
 
@@ -22,4 +26,9 @@ export const handler: Handler<Options> = async ({ moduleName, logger }) => {
   const types = TypesModuleSchema.parse(await import(moduleName))
   const blueprint = await createBlueprint(types)
   logger.info({ blueprint }, 'blueprint')
+  await mkdirp('tmp')
+  await writeFile(
+    join('tmp', 'seam-api-blueprint.json'),
+    JSON.stringify(blueprint),
+  )
 }
