@@ -1120,8 +1120,8 @@ export const createResources = async (
         routes,
         context,
       )
+      continue
     }
-    continue
   }
 
   return resources
