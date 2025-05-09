@@ -1,11 +1,11 @@
 import { camelCase } from 'change-case'
 
+import type { CodeSampleContext, CodeSampleDefinition } from './code-sample.js'
 import { createJsonResponse } from './json.js'
-import type { CodeSampleDefinition, Context } from './schema.js'
 
 export const createJavascriptRequest = (
   { request }: CodeSampleDefinition,
-  _context: Context,
+  _context: CodeSampleContext,
 ): string => {
   const parts = request.path.split('/')
   const isWithoutParams = Object.keys(request.parameters).length === 0

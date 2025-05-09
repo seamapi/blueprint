@@ -1,10 +1,6 @@
 import { z } from 'zod'
 
 import type { Endpoint } from 'lib/blueprint.js'
-import {
-  createSeamCliRequest,
-  createSeamCliResponse,
-} from 'lib/code-sample/seam-cli.js'
 import { JsonSchema } from 'lib/json.js'
 
 import { createCsharpRequest, createCsharpResponse } from './csharp.js'
@@ -18,6 +14,8 @@ import {
 import { createPhpRequest, createPhpResponse } from './php.js'
 import { createPythonRequest, createPythonResponse } from './python.js'
 import { createRubyRequest, createRubyResponse } from './ruby.js'
+import { createSeamCliRequest, createSeamCliResponse } from './seam-cli.js'
+import { SdkNameSchema, type SyntaxName, SyntaxNameSchema } from './syntax.js'
 
 export const CodeSampleDefinitionSchema = z.object({
   title: z.string().trim().min(1),
@@ -43,41 +41,14 @@ export type CodeSampleDefinitionInput = z.input<
 
 export type CodeSampleDefinition = z.output<typeof CodeSampleDefinitionSchema>
 
-const CodeSampleSdkSchema = z.enum([
-  'javascript',
-  'python',
-  'php',
-  'ruby',
-  'seam_cli',
-  'go',
-  'java',
-  'csharp',
-])
-
-const CodeSampleSyntaxSchema = z.enum([
-  'javascript',
-  'json',
-  'python',
-  'php',
-  'ruby',
-  'bash',
-  'go',
-  'java',
-  'csharp',
-])
-
-export type CodeSampleSyntax = z.infer<typeof CodeSampleSyntaxSchema>
-
-export type CodeSampleSdk = z.infer<typeof CodeSampleSdkSchema>
-
 const CodeSchema = z.record(
-  CodeSampleSdkSchema,
+  SdkNameSchema,
   z.object({
     title: z.string().min(1),
     request: z.string(),
     response: z.string(),
-    request_syntax: CodeSampleSyntaxSchema,
-    response_syntax: CodeSampleSyntaxSchema,
+    request_syntax: SyntaxNameSchema,
+    response_syntax: SyntaxNameSchema,
   }),
 )
 
@@ -89,14 +60,14 @@ const CodeSampleSchema = CodeSampleDefinitionSchema.extend({
 
 export type CodeSample = z.output<typeof CodeSampleSchema>
 
-export interface Context {
+export interface CodeSampleContext {
   endpoint: Omit<Endpoint, 'codeSamples'>
-  formatCode: (content: string, syntax: CodeSampleSyntax) => Promise<string>
+  formatCode: (content: string, syntax: SyntaxName) => Promise<string>
 }
 
 export const createCodeSample = async (
   codeSampleDefinition: CodeSampleDefinition,
-  context: Context,
+  context: CodeSampleContext,
 ): Promise<CodeSample> => {
   const isVoidResponse = context.endpoint.response.responseType === 'void'
   const code: Code = {

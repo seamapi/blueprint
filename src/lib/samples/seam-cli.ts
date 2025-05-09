@@ -1,11 +1,11 @@
 import { kebabCase } from 'change-case'
 
-import { createJsonResponse } from './json.js'
-import type { CodeSampleDefinition, Context } from './schema.js'
+import type { CodeSampleContext, CodeSampleDefinition } from './code-sample.js'
+import { createJsonResourceData, createJsonResponse } from './json.js'
 
 export const createSeamCliRequest = (
   { request }: CodeSampleDefinition,
-  _context: Context,
+  _context: CodeSampleContext,
 ): string => {
   const parts = request.path.split('/')
   const requestParams = Object.entries(request.parameters)
@@ -16,3 +16,5 @@ export const createSeamCliRequest = (
 }
 
 export const createSeamCliResponse = createJsonResponse
+
+export const createSeamCliResourceData = createJsonResourceData
