@@ -1,4 +1,4 @@
-import type { CodeSampleContext,CodeSampleDefinition } from './code-sample.js'
+import type { CodeSampleContext, CodeSampleDefinition } from './code-sample.js'
 import type {
   ResourceSampleContext,
   ResourceSampleDefinition,

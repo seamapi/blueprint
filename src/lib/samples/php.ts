@@ -2,7 +2,7 @@ import { snakeCase } from 'change-case'
 
 import type { Json, NonNullJson } from 'lib/json.js'
 
-import type { CodeSampleContext,CodeSampleDefinition } from './code-sample.js'
+import type { CodeSampleContext, CodeSampleDefinition } from './code-sample.js'
 
 export const createPhpRequest = (
   { request }: CodeSampleDefinition,

@@ -2,7 +2,7 @@ import { pascalCase, snakeCase } from 'change-case'
 
 import type { Json, NonNullJson } from 'lib/json.js'
 
-import type { CodeSampleContext,CodeSampleDefinition } from './code-sample.js'
+import type { CodeSampleContext, CodeSampleDefinition } from './code-sample.js'
 
 const responseKeyToPythonResourceNameMap: Readonly<Record<string, string>> = {
   event: 'SeamEvent',
