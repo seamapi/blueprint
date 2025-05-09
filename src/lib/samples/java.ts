@@ -2,7 +2,7 @@ import { camelCase, pascalCase } from 'change-case'
 
 import type { Json, NonNullJson } from 'lib/json.js'
 
-import type { CodeSampleDefinition, Context } from './code-sample.js'
+import type { CodeSampleContext,CodeSampleDefinition } from './code-sample.js'
 import { createJsonResponse } from './json.js'
 
 interface JavaRequestBuilderOptions {
@@ -12,7 +12,7 @@ interface JavaRequestBuilderOptions {
 
 export const createJavaRequest = (
   { request }: CodeSampleDefinition,
-  _context: Context,
+  _context: CodeSampleContext,
 ): string => {
   const pathParts = request.path.split('/').slice(1)
   const requestBuilderOptions: JavaRequestBuilderOptions = {

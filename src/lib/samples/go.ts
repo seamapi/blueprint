@@ -2,14 +2,14 @@ import { pascalCase } from 'change-case'
 
 import type { Json, NonNullJson } from 'lib/json.js'
 
-import type { CodeSampleDefinition, Context } from './code-sample.js'
+import type { CodeSampleContext, CodeSampleDefinition } from './code-sample.js'
 
 const defaultGoPackageName = 'api'
 const goPackageBasePath = 'github.com/seamapi/go'
 
 export const createGoRequest = (
   { request }: CodeSampleDefinition,
-  _context: Context,
+  _context: CodeSampleContext,
 ): string => {
   const isReqWithParams = Object.keys(request.parameters).length !== 0
   const goPackageName = getGoPackageName(request.path)
@@ -196,7 +196,7 @@ const formatGoRequestObjectValue = (
 
 export const createGoResponse = (
   { response, title }: CodeSampleDefinition,
-  context: Context,
+  context: CodeSampleContext,
 ): string => {
   const { endpoint } = context
 

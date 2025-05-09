@@ -1,9 +1,12 @@
-import type { CodeSampleDefinition, Context } from './code-sample.js'
-import type { ResourceSampleDefinition } from './resource-sample.js'
+import type { CodeSampleContext,CodeSampleDefinition } from './code-sample.js'
+import type {
+  ResourceSampleContext,
+  ResourceSampleDefinition,
+} from './resource-sample.js'
 
 export const createJsonResponse = (
   { response, title }: CodeSampleDefinition,
-  context: Context,
+  context: CodeSampleContext,
 ): string => {
   const { endpoint } = context
   if (endpoint.response.responseType === 'void') {
@@ -19,7 +22,7 @@ export const createJsonResponse = (
 
 export const createJsonResourceData = (
   { properties }: ResourceSampleDefinition,
-  _context: Context,
+  _context: ResourceSampleContext,
 ): string => {
   return JSON.stringify(properties)
 }

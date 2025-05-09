@@ -1,12 +1,12 @@
-import type { Code, Context } from './code-sample.js'
-import type { Resource } from './resource-sample.js'
+import type { Code, CodeSampleContext } from './code-sample.js'
+import type { Resource, ResourceSampleContext } from './resource-sample.js'
 
 type CodeEntries = Entries<Code>
 type CodeEntry = NonNullable<CodeEntries[number]>
 
 export const formatCodeRecords = async (
   code: Code,
-  context: Context,
+  context: CodeSampleContext,
 ): Promise<Code> => {
   const entries = Object.entries(code) as unknown as CodeEntries
   const formattedEntries = await Promise.all(
@@ -20,7 +20,7 @@ export const formatCodeRecords = async (
 
 const formatCodeEntry = async (
   [key, code]: CodeEntry,
-  { formatCode }: Context,
+  { formatCode }: CodeSampleContext,
 ): Promise<CodeEntry> => {
   if (code == null) throw new Error(`Unexpected null in code object for ${key}`)
   const [request, response] = await Promise.all([
@@ -42,7 +42,7 @@ type ResourceEntry = NonNullable<ResourceEntries[number]>
 
 export const formatResourceRecords = async (
   resource: Resource,
-  context: Context,
+  context: ResourceSampleContext,
 ): Promise<Resource> => {
   const entries = Object.entries(resource) as unknown as ResourceEntries
   const formattedEntries = await Promise.all(
@@ -56,7 +56,7 @@ export const formatResourceRecords = async (
 
 const formatResourceEntry = async (
   [key, resource]: ResourceEntry,
-  { formatCode }: Context,
+  { formatCode }: ResourceSampleContext,
 ): Promise<ResourceEntry> => {
   if (resource == null) {
     throw new Error(`Unexpected null in resource object for ${key}`)

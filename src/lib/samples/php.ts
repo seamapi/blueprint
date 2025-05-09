@@ -2,11 +2,11 @@ import { snakeCase } from 'change-case'
 
 import type { Json, NonNullJson } from 'lib/json.js'
 
-import type { CodeSampleDefinition, Context } from './code-sample.js'
+import type { CodeSampleContext,CodeSampleDefinition } from './code-sample.js'
 
 export const createPhpRequest = (
   { request }: CodeSampleDefinition,
-  _context: Context,
+  _context: CodeSampleContext,
 ): string => {
   const parts = request.path.split('/')
   const requestParams = Object.entries(request.parameters)
@@ -18,7 +18,7 @@ export const createPhpRequest = (
 
 export const createPhpResponse = (
   { response, title }: CodeSampleDefinition,
-  context: Context,
+  context: CodeSampleContext,
 ): string => {
   const { endpoint } = context
 

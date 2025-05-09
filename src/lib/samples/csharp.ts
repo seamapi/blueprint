@@ -2,12 +2,12 @@ import { camelCase, pascalCase } from 'change-case'
 
 import type { Json, NonNullJson } from 'lib/json.js'
 
-import type { CodeSampleDefinition, Context } from './code-sample.js'
+import type { CodeSampleContext,CodeSampleDefinition } from './code-sample.js'
 import { createJsonResponse } from './json.js'
 
 export const createCsharpRequest = (
   { request }: CodeSampleDefinition,
-  _context: Context,
+  _context: CodeSampleContext,
 ): string => {
   const parts = request.path.split('/').slice(1)
   const requestArgs = formatCsharpArgs(request.parameters)

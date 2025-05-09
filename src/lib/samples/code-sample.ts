@@ -60,14 +60,14 @@ const CodeSampleSchema = CodeSampleDefinitionSchema.extend({
 
 export type CodeSample = z.output<typeof CodeSampleSchema>
 
-export interface Context {
+export interface CodeSampleContext {
   endpoint: Omit<Endpoint, 'codeSamples'>
   formatCode: (content: string, syntax: SyntaxName) => Promise<string>
 }
 
 export const createCodeSample = async (
   codeSampleDefinition: CodeSampleDefinition,
-  context: Context,
+  context: CodeSampleContext,
 ): Promise<CodeSample> => {
   const isVoidResponse = context.endpoint.response.responseType === 'void'
   const code: Code = {

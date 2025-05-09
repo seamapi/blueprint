@@ -22,6 +22,7 @@ import {
   type CodeSampleDefinition,
   CodeSampleDefinitionSchema,
   createCodeSample,
+  createResourceSample,
   type ResourceSample,
   type ResourceSampleDefinition,
   ResourceSampleDefinitionSchema,
@@ -466,10 +467,11 @@ export const createBlueprint = async (
     ),
   )
 
-  const resources = createResources(openapiSchemas, routes)
-  const actionAttempts = createActionAttempts(
+  const resources = await createResources(openapiSchemas, routes, context)
+  const actionAttempts = await createActionAttempts(
     openapi.components.schemas,
     routes,
+    context,
   )
 
   return {
@@ -477,7 +479,7 @@ export const createBlueprint = async (
     routes,
     resources,
     pagination: createPagination(pagination),
-    events: createEvents(openapiSchemas, resources, routes),
+    events: await createEvents(openapiSchemas, resources, routes, context),
     actionAttempts,
   }
 }
@@ -1082,49 +1084,52 @@ const createPagination = (
   }
 }
 
-export const createResources = (
+export const createResources = async (
   schemas: Openapi['components']['schemas'],
   routes: Route[],
-): Record<string, Resource> => {
-  return Object.entries(schemas).reduce<Record<string, Resource>>(
-    (resources, [schemaName, schema]) => {
-      const { success: isValidEventSchema, data: parsedEvent } =
-        EventResourceSchema.safeParse(schema)
-      if (isValidEventSchema) {
-        const commonProperties = findCommonOpenapiSchemaProperties(
-          parsedEvent.oneOf,
-        )
-        const eventSchema: OpenapiSchema = {
-          'x-route-path': parsedEvent['x-route-path'],
-          properties: commonProperties,
-          type: 'object',
-        }
-        return {
-          ...resources,
-          [schemaName]: createResource(schemaName, eventSchema, routes),
-        }
+  context: Context,
+): Promise<Record<string, Resource>> => {
+  const resources: Record<string, Resource> = {}
+  for (const [schemaName, schema] of Object.entries(schemas)) {
+    const { success: isValidEventSchema, data: parsedEvent } =
+      EventResourceSchema.safeParse(schema)
+    if (isValidEventSchema) {
+      const commonProperties = findCommonOpenapiSchemaProperties(
+        parsedEvent.oneOf,
+      )
+      const eventSchema: OpenapiSchema = {
+        'x-route-path': parsedEvent['x-route-path'],
+        properties: commonProperties,
+        type: 'object',
       }
+      resources[schemaName] = await createResource(
+        schemaName,
+        eventSchema,
+        routes,
+        context,
+      )
+    }
 
-      const { success: isValidResourceSchema } =
-        ResourceSchema.safeParse(schema)
-      if (isValidResourceSchema) {
-        return {
-          ...resources,
-          [schemaName]: createResource(schemaName, schema, routes),
-        }
-      }
+    const { success: isValidResourceSchema } = ResourceSchema.safeParse(schema)
+    if (isValidResourceSchema) {
+      resources[schemaName] = await createResource(
+        schemaName,
+        schema,
+        routes,
+        context,
+      )
+    }
+  }
 
-      return resources
-    },
-    {},
-  )
+  return resources
 }
 
-const createResource = (
+const createResource = async (
   schemaName: string,
   schema: OpenapiSchema,
   routes: Route[],
-): Resource => {
+  context: Context,
+): Promise<Resource> => {
   const routePath = validateRoutePath(
     schemaName,
     schema['x-route-path'],
@@ -1132,11 +1137,10 @@ const createResource = (
   )
 
   const propertyGroups = getPropertyGroupsForResource(schema)
+  const resourceType = schemaName
 
-  const resourceSamples: ResourceSample[] = []
-
-  return {
-    resourceType: schemaName,
+  const resource: Omit<Resource, 'resourceSamples'> = {
+    resourceType,
     properties: createProperties(
       schema.properties ?? {},
       [schemaName],
@@ -1151,7 +1155,23 @@ const createResource = (
     isDraft: (schema['x-draft'] ?? '').length > 0,
     draftMessage: schema['x-draft'] ?? '',
     propertyGroups,
-    resourceSamples,
+  }
+
+  return {
+    ...resource,
+    resourceSamples: await Promise.all(
+      context.resourceSampleDefinitions
+        .filter(
+          (resourceSample) => resourceSample.resource_type === resourceType,
+        )
+        .map(
+          async (resourceSampleDefinition) =>
+            await createResourceSample(resourceSampleDefinition, {
+              resource,
+              formatCode: context.formatCode,
+            }),
+        ),
+    ),
   }
 }
 
@@ -1631,11 +1651,12 @@ export const getPreferredMethod = (
   return semanticMethod
 }
 
-const createEvents = (
+const createEvents = async (
   schemas: Openapi['components']['schemas'],
   resources: Record<string, Resource>,
   routes: Route[],
-): EventResource[] => {
+  context: Context,
+): Promise<EventResource[]> => {
   const eventSchema = schemas['event']
   if (
     eventSchema == null ||
@@ -1646,8 +1667,8 @@ const createEvents = (
     return []
   }
 
-  return eventSchema.oneOf
-    .map((schema) => {
+  const events = await Promise.all(
+    eventSchema.oneOf.map(async (schema) => {
       if (
         typeof schema !== 'object' ||
         schema.properties?.['event_type']?.enum?.[0] == null
@@ -1661,18 +1682,21 @@ const createEvents = (
       )
 
       return {
-        ...createResource('event', schema, routes),
+        ...(await createResource('event', schema, routes, context)),
         eventType,
         targetResourceType: targetResourceType ?? null,
       }
-    })
-    .filter((event): event is EventResource => event !== null)
+    }),
+  )
+
+  return events.filter((event): event is EventResource => event !== null)
 }
 
-const createActionAttempts = (
+const createActionAttempts = async (
   schemas: Openapi['components']['schemas'],
   routes: Route[],
-): ActionAttempt[] => {
+  context: Context,
+): Promise<ActionAttempt[]> => {
   const actionAttemptSchema = schemas['action_attempt']
   if (
     actionAttemptSchema == null ||
@@ -1703,62 +1727,65 @@ const createActionAttempts = (
     }
   }
 
-  return Array.from(schemasByActionType.entries()).map(
-    ([actionType, schemas]) => {
-      const mergedProperties: Record<string, OpenapiSchema> = {}
+  return await Promise.all(
+    Array.from(schemasByActionType.entries()).map(
+      async ([actionType, schemas]) => {
+        const mergedProperties: Record<string, OpenapiSchema> = {}
 
-      const allPropertyKeys = new Set<string>()
-      for (const schema of schemas) {
-        if (schema.properties != null) {
-          Object.keys(schema.properties).forEach((key) =>
-            allPropertyKeys.add(key),
-          )
+        const allPropertyKeys = new Set<string>()
+        for (const schema of schemas) {
+          if (schema.properties != null) {
+            Object.keys(schema.properties).forEach((key) =>
+              allPropertyKeys.add(key),
+            )
+          }
         }
-      }
 
-      for (const propKey of allPropertyKeys) {
-        const propDefinitions = schemas
-          .filter((schema) => schema.properties?.[propKey] != null)
-          .map((schema) => schema.properties?.[propKey])
+        for (const propKey of allPropertyKeys) {
+          const propDefinitions = schemas
+            .filter((schema) => schema.properties?.[propKey] != null)
+            .map((schema) => schema.properties?.[propKey])
 
-        if (propDefinitions.length === 0) continue
+          if (propDefinitions.length === 0) continue
 
-        const nonNullableDefinition = propDefinitions.find((prop) => {
-          if (prop == null) return false
+          const nonNullableDefinition = propDefinitions.find((prop) => {
+            if (prop == null) return false
 
-          return !('nullable' in prop && prop.nullable === true)
-        })
+            return !('nullable' in prop && prop.nullable === true)
+          })
 
-        mergedProperties[propKey] =
-          nonNullableDefinition ?? propDefinitions[0] ?? {}
-      }
+          mergedProperties[propKey] =
+            nonNullableDefinition ?? propDefinitions[0] ?? {}
+        }
 
-      // Ensure standard status field
-      mergedProperties['status'] = {
-        ...mergedProperties['status'],
-        type: 'string',
-        enum: ['success', 'pending', 'error'],
-      }
+        // Ensure standard status field
+        mergedProperties['status'] = {
+          ...mergedProperties['status'],
+          type: 'string',
+          enum: ['success', 'pending', 'error'],
+        }
 
-      const schemaWithMergedProperties: OpenapiSchema = {
-        ...(actionAttemptSchema['x-route-path'] != null && {
-          'x-route-path': actionAttemptSchema['x-route-path'],
-        }),
-        ...schemas[0],
-        properties: mergedProperties,
-      }
+        const schemaWithMergedProperties: OpenapiSchema = {
+          ...(actionAttemptSchema['x-route-path'] != null && {
+            'x-route-path': actionAttemptSchema['x-route-path'],
+          }),
+          ...schemas[0],
+          properties: mergedProperties,
+        }
 
-      const resource = createResource(
-        'action_attempt',
-        schemaWithMergedProperties,
-        routes,
-      )
+        const resource = await createResource(
+          'action_attempt',
+          schemaWithMergedProperties,
+          routes,
+          context,
+        )
 
-      return {
-        ...resource,
-        resourceType: 'action_attempt',
-        actionAttemptType: actionType,
-      }
-    },
+        return {
+          ...resource,
+          resourceType: 'action_attempt',
+          actionAttemptType: actionType,
+        }
+      },
+    ),
   )
 }
