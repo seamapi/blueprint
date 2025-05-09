@@ -1093,6 +1093,7 @@ export const createResources = async (
   for (const [schemaName, schema] of Object.entries(schemas)) {
     const { success: isValidEventSchema, data: parsedEvent } =
       EventResourceSchema.safeParse(schema)
+
     if (isValidEventSchema) {
       const commonProperties = findCommonOpenapiSchemaProperties(
         parsedEvent.oneOf,
@@ -1108,6 +1109,7 @@ export const createResources = async (
         routes,
         context,
       )
+      continue
     }
 
     const { success: isValidResourceSchema } = ResourceSchema.safeParse(schema)
@@ -1119,6 +1121,7 @@ export const createResources = async (
         context,
       )
     }
+    continue
   }
 
   return resources
