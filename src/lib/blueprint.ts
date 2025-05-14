@@ -418,6 +418,7 @@ interface Context extends Required<BlueprintOptions> {
   codeSampleDefinitions: CodeSampleDefinition[]
   resourceSampleDefinitions: ResourceSampleDefinition[]
   validActionAttemptTypes: string[]
+  schemas: Record<string, unknown>
 }
 
 export const TypesModuleSchema = z.object({
@@ -427,6 +428,7 @@ export const TypesModuleSchema = z.object({
     .default([]),
   // TODO: Import and use openapi zod schema here
   openapi: z.any(),
+  schemas: z.record(z.string(), z.unknown()).optional().default({}),
 })
 
 export type TypesModuleInput = z.input<typeof TypesModuleSchema>
@@ -441,7 +443,7 @@ export const createBlueprint = async (
   typesModule: TypesModuleInput,
   { formatCode = async (content) => content }: BlueprintOptions = {},
 ): Promise<Blueprint> => {
-  const { codeSampleDefinitions, resourceSampleDefinitions } =
+  const { schemas, codeSampleDefinitions, resourceSampleDefinitions } =
     TypesModuleSchema.parse(typesModule)
 
   // TODO: Move openapi to TypesModuleSchema
@@ -455,6 +457,7 @@ export const createBlueprint = async (
     codeSampleDefinitions,
     resourceSampleDefinitions,
     formatCode,
+    schemas,
     validActionAttemptTypes,
   }
 
@@ -1171,6 +1174,7 @@ const createResource = async (
           async (resourceSampleDefinition) =>
             await createResourceSample(resourceSampleDefinition, {
               resource,
+              schemas: context.schemas,
               formatCode: context.formatCode,
             }),
         ),
