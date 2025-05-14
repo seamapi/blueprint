@@ -1,4 +1,3 @@
-import { schemas } from '@seamapi/types/connect'
 import { z, type ZodSchema } from 'zod'
 
 import type { Resource as BlueprintResource } from 'lib/blueprint.js'
@@ -25,6 +24,7 @@ export type ResourceSampleDefinition = z.output<
 
 export interface ResourceSampleContext {
   resource: Omit<BlueprintResource, 'resourceSamples'>
+  schemas: Record<string, unknown>
   formatCode: (content: string, syntax: SyntaxName) => Promise<string>
 }
 
@@ -50,9 +50,7 @@ export const createResourceSample = async (
   context: ResourceSampleContext,
 ): Promise<ResourceSample> => {
   const resourceType = resourceSampleDefinition.resource_type
-  const schema = toPartialZodSchema(
-    (schemas as Record<string, unknown>)[resourceType],
-  )
+  const schema = toPartialZodSchema(context.schemas[resourceType])
   if (schema != null) {
     schema.parse(resourceSampleDefinition.properties)
   } else {
