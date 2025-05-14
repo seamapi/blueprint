@@ -1,4 +1,5 @@
-import { z } from 'zod'
+import { schemas } from '@seamapi/types/connect'
+import { z, type ZodSchema } from 'zod'
 
 import type { Resource as BlueprintResource } from 'lib/blueprint.js'
 import { JsonSchema } from 'lib/json.js'
@@ -48,6 +49,17 @@ export const createResourceSample = async (
   resourceSampleDefinition: ResourceSampleDefinition,
   context: ResourceSampleContext,
 ): Promise<ResourceSample> => {
+  const resourceType = resourceSampleDefinition.resource_type
+  const schema = toPartialZodSchema(
+    (schemas as Record<string, unknown>)[resourceType],
+  )
+  if (schema != null) {
+    schema.parse(resourceSampleDefinition.properties)
+  } else {
+    // eslint-disable-next-line no-console
+    console.warn(`Missing Zod schema for resource ${resourceType}.`)
+  }
+
   const resource: Resource = {
     seam_cli: {
       title: 'Seam CLI',
@@ -63,4 +75,11 @@ export const createResourceSample = async (
     ...resourceSampleDefinition,
     resource: await formatResourceRecords(resource, context),
   }
+}
+
+const toPartialZodSchema = (input: unknown): ZodSchema | null => {
+  if (typeof input !== 'object') return null
+  if (input == null) return null
+  if ('deepPartial' in input) return input as unknown as ZodSchema
+  return null
 }
