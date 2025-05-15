@@ -85,7 +85,6 @@ export interface Pagination {
 interface EventResource extends Resource {
   resourceType: 'event'
   eventType: string
-  targetResourceType: string | null
 }
 
 export interface ActionAttempt extends Resource {
@@ -482,7 +481,7 @@ export const createBlueprint = async (
     routes,
     resources,
     pagination: createPagination(pagination),
-    events: await createEvents(openapiSchemas, resources, routes, context),
+    events: await createEvents(openapiSchemas, routes, context),
     actionAttempts,
   }
 }
@@ -1660,7 +1659,6 @@ export const getPreferredMethod = (
 
 const createEvents = async (
   schemas: Openapi['components']['schemas'],
-  resources: Record<string, Resource>,
   routes: Route[],
   context: Context,
 ): Promise<EventResource[]> => {
@@ -1684,14 +1682,14 @@ const createEvents = async (
       }
 
       const eventType = schema.properties['event_type'].enum[0]
-      const targetResourceType = Object.keys(resources).find((resourceName) =>
-        eventType.split('.').includes(resourceName),
-      )
+
+      if (!('x-route-path' in schema && schema['x-route-path'].length > 0)) {
+        throw new Error(`Missing route_path for event type ${eventType}`)
+      }
 
       return {
         ...(await createResource('event', schema, routes, context)),
         eventType,
-        targetResourceType: targetResourceType ?? null,
       }
     }),
   )
