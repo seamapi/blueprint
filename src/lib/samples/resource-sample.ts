@@ -52,7 +52,9 @@ export const createResourceSample = async (
   const resourceType = resourceSampleDefinition.resource_type
   const schema = toPartialZodSchema(context.schemas[resourceType])
   if (schema != null) {
-    const { success, error } = schema.safeParse(resourceSampleDefinition.properties)
+    const { success, error } = schema.safeParse(
+      resourceSampleDefinition.properties,
+    )
     if (!success) {
       throw new Error(
         `Invalid properties for resource sample definition of type '${resourceType}': ${error.message}`,
