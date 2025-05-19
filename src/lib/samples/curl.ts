@@ -19,7 +19,6 @@ export const createCurlRequest = (
   if (hasParams) {
     curlCommand += `  -H "Content-Type: application/json" \\\n`
     curlCommand += `  -d '${JSON.stringify(params)}'`
-    console.log('🚀 ~ JSON.stringify(params):', JSON.stringify(params))
   } else {
     // Remove trailing backslash and newline if no params/data
     curlCommand = curlCommand.trimEnd().slice(0, -1).trimEnd()
