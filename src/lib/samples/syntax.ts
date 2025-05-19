@@ -9,6 +9,7 @@ export const SdkNameSchema = z.enum([
   'go',
   'java',
   'csharp',
+  'curl',
 ])
 
 export const SyntaxNameSchema = z.enum([
