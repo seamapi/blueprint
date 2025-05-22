@@ -27,8 +27,5 @@ export const handler: Handler<Options> = async ({ moduleName, logger }) => {
   const blueprint = await createBlueprint(types)
   logger.info({ blueprint }, 'blueprint')
   await mkdirp('tmp')
-  await writeFile(
-    join('tmp', 'seam-api-blueprint.json'),
-    JSON.stringify(blueprint),
-  )
+  await writeFile(join('tmp', 'blueprint.json'), JSON.stringify(blueprint))
 }
