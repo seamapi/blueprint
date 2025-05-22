@@ -9,7 +9,7 @@ export const createCurlRequest = (
   const method = 'POST'
   const url = `${BASE_URL}${request.path}`
 
-  let curlCommand = `curl --request ${method} "${url}" \\\n`
+  let curlCommand = `curl --include --request ${method} "${url}" \\\n`
   curlCommand += '  --header "Authorization: Bearer $SEAM_API_KEY"'
 
   const params = request.parameters
