@@ -1,5 +1,4 @@
 import type { CodeSampleContext, CodeSampleDefinition } from './code-sample.js'
-import { createJsonResponse } from './json.js'
 
 const BASE_URL = 'https://connect.getseam.com'
 
@@ -27,4 +26,18 @@ export const createCurlRequest = (
   return curlCommand
 }
 
-export const createCurlResponse = createJsonResponse
+export const createCurlResponse = (
+  { response, title }: CodeSampleDefinition,
+  context: CodeSampleContext,
+): string => {
+  const { endpoint } = context
+  if (endpoint.response.responseType === 'void') {
+    return JSON.stringify({})
+  }
+  const { responseKey } = endpoint.response
+  const data = response?.body?.[responseKey]
+  if (data == null) {
+    throw new Error(`Missing ${responseKey} for '${title}'`)
+  }
+  return JSON.stringify({ responseKey: data })
+}
