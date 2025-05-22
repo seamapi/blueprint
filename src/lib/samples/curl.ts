@@ -9,18 +9,17 @@ export const createCurlRequest = (
   const method = 'POST'
   const url = `${BASE_URL}${request.path}`
 
-  let curlCommand = `curl -X ${method} "${url}" \\\n`
-  curlCommand += `  -H "Authorization: Bearer $SEAM_API_KEY" \\\n`
+  let curlCommand = `curl --include --request ${method} "${url}" \\\n`
+  curlCommand += '  --header "Authorization: Bearer $SEAM_API_KEY"'
 
   const params = request.parameters
   const hasParams = Object.keys(params).length > 0
 
   if (hasParams) {
-    curlCommand += `  -H "Content-Type: application/json" \\\n`
-    curlCommand += `  -d '${JSON.stringify(params)}'`
-  } else {
-    // Remove trailing backslash and newline if no params
-    curlCommand = curlCommand.trimEnd().slice(0, -1).trimEnd()
+    curlCommand += ' \\\n'
+    curlCommand += '  --json @- << EOF\n'
+    curlCommand += JSON.stringify(request.parameters, null, 2)
+    curlCommand += '\nEOF'
   }
 
   return curlCommand
