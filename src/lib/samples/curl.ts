@@ -39,5 +39,5 @@ export const createCurlResponse = (
   if (data == null) {
     throw new Error(`Missing ${responseKey} for '${title}'`)
   }
-  return JSON.stringify({ responseKey: data })
+  return JSON.stringify({ [responseKey]: data })
 }
