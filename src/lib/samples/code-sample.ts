@@ -4,6 +4,7 @@ import type { Endpoint } from 'lib/blueprint.js'
 import { JsonSchema } from 'lib/json.js'
 
 import { createCsharpRequest, createCsharpResponse } from './csharp.js'
+import { createCurlRequest, createCurlResponse } from './curl.js'
 import { formatCodeRecords } from './format.js'
 import { createGoRequest, createGoResponse } from './go.js'
 import { createJavaRequest, createJavaResponse } from './java.js'
@@ -127,6 +128,13 @@ export const createCodeSample = async (
       request: createCsharpRequest(codeSampleDefinition, context),
       response: createCsharpResponse(codeSampleDefinition, context),
       request_syntax: 'csharp',
+      response_syntax: 'json',
+    },
+    curl: {
+      title: 'cURL',
+      request: createCurlRequest(codeSampleDefinition, context),
+      response: createCurlResponse(codeSampleDefinition, context),
+      request_syntax: 'bash',
       response_syntax: 'json',
     },
   }
