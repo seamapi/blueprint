@@ -22,6 +22,9 @@ export {
   type CodeSample,
   type CodeSampleDefinitionInput,
   CodeSampleDefinitionSchema,
+  type ResourceSample,
+  type ResourceSampleDefinitionInput,
+  ResourceSampleDefinitionSchema,
   type SdkName,
   type SyntaxName,
 } from './samples/index.js'
