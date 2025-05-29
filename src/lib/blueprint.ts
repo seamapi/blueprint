@@ -276,7 +276,7 @@ interface ResourceResponse extends BaseResponse {
   responseType: 'resource'
   responseKey: string
   resourceType: string
-  actionAttemptType?: string
+  actionAttemptType: string | null
 }
 
 interface ResourceListResponse extends BaseResponse {
@@ -1304,22 +1304,24 @@ const createResponse = (
       )
     }
 
-    const actionAttemptType = validateActionAttemptType(
-      parsedOperation['x-action-attempt-type'],
-      responseKey,
-      path,
-      context.validActionAttemptTypes,
-    )
     const refKey = responseKey
-
     if (refKey != null && properties[refKey] != null) {
       const props = schema.properties[refKey]
       const refString = props?.$ref ?? props?.items?.$ref
+      const resourceType = refString?.split('/').at(-1) ?? 'unknown'
+
+      const actionAttemptType = validateActionAttemptType(
+        parsedOperation['x-action-attempt-type'] ?? null,
+        responseKey,
+        path,
+        resourceType,
+        context.validActionAttemptTypes,
+      )
 
       return {
         responseType: props?.type === 'array' ? 'resource_list' : 'resource',
         responseKey: refKey,
-        resourceType: refString?.split('/').at(-1) ?? 'unknown',
+        resourceType,
         description,
         hasPagination:
           (paginationResponseKey in properties &&
@@ -1327,7 +1329,7 @@ const createResponse = (
               `/${paginationResponseKey}`,
             )) ??
           false,
-        ...(actionAttemptType != null && { actionAttemptType }),
+        ...(actionAttemptType != null ? { actionAttemptType } : {}),
       }
     }
   }
@@ -1340,13 +1342,18 @@ const createResponse = (
 }
 
 const validateActionAttemptType = (
-  actionAttemptType: string | undefined,
+  actionAttemptType: string | null,
   responseKey: string,
   path: string,
+  resourceType: string,
   validActionAttemptTypes: string[],
-): string | undefined => {
+): string | null => {
   const excludedPaths = ['/action_attempts']
   const isPathExcluded = excludedPaths.some((p) => path.startsWith(p))
+
+  if (resourceType !== 'action_attempt') {
+    return null
+  }
 
   if (
     actionAttemptType == null &&
