@@ -1329,7 +1329,7 @@ const createResponse = (
               `/${paginationResponseKey}`,
             )) ??
           false,
-        ...(actionAttemptType != null ? { actionAttemptType } : {}),
+        actionAttemptType,
       }
     }
   }
