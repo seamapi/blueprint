@@ -1412,7 +1412,7 @@ const createProperty = (
   name: string,
   prop: OpenapiSchema,
   parentPaths: string[],
-  propertyGroups: Record<string, PropertyGroup> | null,
+  propertyGroups: Record<string, PropertyGroup>,
 ): Property => {
   const parsedProp = PropertySchema.parse(prop, {
     path: [...parentPaths, name],
@@ -1479,6 +1479,7 @@ const createProperty = (
           ...baseProperty,
           format: 'object',
           jsonType: 'object',
+          propertyGroups: nestedPropertyGroups,
           properties: createProperties(
             prop.properties,
             [...parentPaths, name],
