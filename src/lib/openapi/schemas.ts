@@ -91,6 +91,15 @@ export const EnumValueSchema = z.object({
   draft: z.string().default(''),
 })
 
+const PropertyGroupSchema = z
+  .record(
+    z.string(),
+    z.object({
+      name: z.string(),
+    }),
+  )
+  .default({})
+
 const commonPropertyFields = {
   description: z.string().default(''),
   deprecated: z.boolean().default(false),
@@ -99,7 +108,9 @@ const commonPropertyFields = {
   'x-deprecated': z.string().default(''),
   'x-draft': z.string().default(''),
   'x-property-group-key': z.string().default(''),
+  'x-property-groups': PropertyGroupSchema,
 }
+
 export const PropertySchema: z.ZodSchema<any> = z.union([
   z.object({
     type: z.enum(['string', 'number', 'integer', 'boolean', 'array', 'object']),
@@ -131,16 +142,8 @@ export const ResourceSchema = z.object({
   'x-undocumented': z.string().default(''),
   'x-deprecated': z.string().default(''),
   'x-draft': z.string().default(''),
+  'x-property-groups': PropertyGroupSchema,
 })
-
-export const PropertyGroupSchema = z
-  .record(
-    z.string(),
-    z.object({
-      name: z.string(),
-    }),
-  )
-  .default({})
 
 export const EventResourceSchema = z.object({
   'x-route-path': z.string().default(''),
