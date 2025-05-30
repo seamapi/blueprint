@@ -35,6 +35,9 @@ export const flattenAllOfSchema = (schema: AllOfSchema): OpenapiSchema => {
     properties: {},
     required: [],
     ...(schema?.description != null && { description: schema.description }),
+    ...(schema['x-property-groups'] != null && {
+      'x-property-groups': schema['x-property-groups'],
+    }),
   }
 
   const flattenedSubschemas = schema.allOf.map(flattenOpenapiSchema)
