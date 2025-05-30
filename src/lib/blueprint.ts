@@ -1517,7 +1517,7 @@ const validatePropertyGroupKey = (
   const validGroupKeys = Object.keys(resourcePropertyGroups)
   if (validGroupKeys.length === 0) {
     throw new Error(
-      `The "${propertyName}" has property group ${propertyGroupKey} but ${resourceName} does not define any property groups`,
+      `The "${propertyName}" has property group ${propertyGroupKey} but ${parentPaths.join('.')} does not define any property groups.`,
     )
   }
 
