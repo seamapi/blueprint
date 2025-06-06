@@ -49,7 +49,8 @@ export interface Route {
   name: string
   namespace: Namespace | null
   endpoints: Endpoint[]
-  subroutes: Route[]
+  subroutePaths: string[]
+  parentPath: string | null
   isUndocumented: boolean
   isDeprecated: boolean
   isDraft: boolean
@@ -515,7 +516,6 @@ const createRoutes = async (
   context: Context,
 ): Promise<Route[]> => {
   const routeMap = new Map<string, Route>()
-
   const pathEntries = Object.entries(paths)
 
   for (const [path, pathItem] of pathEntries) {
@@ -539,6 +539,7 @@ const createRoutes = async (
     .map(addIsUndocumentedToRoute)
     .map(addIsDraftToRoute)
     .map(addNamespaceStatusToRoute)
+    .map(addSubroutePathsToRoute)
 }
 
 const getNamespace = (path: string, paths: OpenapiPaths): string | null => {
@@ -590,6 +591,11 @@ const createRoute = async (
 
   const endpoint = await createEndpoint(path, pathItem, context)
 
+  const parentPath =
+    routePath.split('/').length === 2
+      ? null
+      : routePath.split('/').slice(0, -1).join('/')
+
   return {
     path: routePath,
     name,
@@ -603,7 +609,8 @@ const createRoute = async (
           }
         : null,
     endpoints: endpoint != null ? [endpoint] : [],
-    subroutes: [],
+    subroutePaths: [],
+    parentPath,
     isUndocumented: false,
     isDeprecated: false,
     isDraft: false,
@@ -624,6 +631,20 @@ const addIsDraftToRoute = (route: Route): Route => ({
   ...route,
   isDraft: route.endpoints.every((endpoint) => endpoint.isDraft),
 })
+
+const addSubroutePathsToRoute = (
+  route: Route,
+  _idx: number,
+  routes: Route[],
+): Route => {
+  const subroutePaths = routes
+    .filter(({ path }) => path.startsWith(`${route.path}/`))
+    .map(({ path }) => path)
+  return {
+    ...route,
+    subroutePaths,
+  }
+}
 
 const addNamespaceStatusToRoute = (
   route: Route,

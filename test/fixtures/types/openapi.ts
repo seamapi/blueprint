@@ -446,6 +446,39 @@ export default {
         'x-title': 'List foos',
       },
     },
+    '/foos/advanced/get': {
+      get: {
+        operationId: 'foosAdvancedGetGet',
+        responses: {
+          200: {
+            content: {
+              'application/json': {
+                schema: {
+                  properties: {
+                    ok: { type: 'boolean' },
+                    foo: { $ref: '#/components/schemas/foo' },
+                  },
+                  required: ['foo', 'ok'],
+                  type: 'object',
+                },
+              },
+            },
+            description: 'Get a foo by ID.',
+          },
+          400: { description: 'Bad Request' },
+          401: { description: 'Unauthorized' },
+        },
+        security: [
+          {
+            api_key: [],
+          },
+        ],
+        summary: '/foos/advanced/get',
+        tags: ['/foos/advanced'],
+        'x-response-key': 'foo',
+        'x-title': 'Get a foo',
+      },
+    },
     '/transport/air/planes/list': {
       get: {
         operationId: 'planesListGet',
