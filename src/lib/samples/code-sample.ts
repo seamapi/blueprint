@@ -46,6 +46,7 @@ const CodeSchema = z.record(
   SdkNameSchema,
   z.object({
     title: z.string().min(1),
+    sdkName: SdkNameSchema,
     request: z.string(),
     response: z.string(),
     request_syntax: SyntaxNameSchema,
@@ -74,6 +75,7 @@ export const createCodeSample = async (
   const code: Code = {
     javascript: {
       title: 'JavaScript',
+      sdkName: 'javascript',
       request: createJavascriptRequest(codeSampleDefinition, context),
       response: isVoidResponse
         ? '// void'
@@ -83,6 +85,7 @@ export const createCodeSample = async (
     },
     python: {
       title: 'Python',
+      sdkName: 'python',
       request: createPythonRequest(codeSampleDefinition, context),
       response: createPythonResponse(codeSampleDefinition, context),
       request_syntax: 'python',
@@ -90,6 +93,7 @@ export const createCodeSample = async (
     },
     ruby: {
       title: 'Ruby',
+      sdkName: 'ruby',
       request: createRubyRequest(codeSampleDefinition, context),
       response: createRubyResponse(codeSampleDefinition, context),
       request_syntax: 'ruby',
@@ -97,6 +101,7 @@ export const createCodeSample = async (
     },
     php: {
       title: 'PHP',
+      sdkName: 'php',
       request: createPhpRequest(codeSampleDefinition, context),
       response: createPhpResponse(codeSampleDefinition, context),
       request_syntax: 'php',
@@ -104,6 +109,7 @@ export const createCodeSample = async (
     },
     seam_cli: {
       title: 'Seam CLI',
+      sdkName: 'seam_cli',
       request: createSeamCliRequest(codeSampleDefinition, context),
       response: createSeamCliResponse(codeSampleDefinition, context),
       request_syntax: 'bash',
@@ -111,6 +117,7 @@ export const createCodeSample = async (
     },
     go: {
       title: 'Go',
+      sdkName: 'go',
       request: createGoRequest(codeSampleDefinition, context),
       response: createGoResponse(codeSampleDefinition, context),
       request_syntax: 'go',
@@ -118,6 +125,7 @@ export const createCodeSample = async (
     },
     java: {
       title: 'Java',
+      sdkName: 'java',
       request: createJavaRequest(codeSampleDefinition, context),
       response: createJavaResponse(codeSampleDefinition, context),
       request_syntax: 'java',
@@ -125,6 +133,7 @@ export const createCodeSample = async (
     },
     csharp: {
       title: 'C#',
+      sdkName: 'csharp',
       request: createCsharpRequest(codeSampleDefinition, context),
       response: createCsharpResponse(codeSampleDefinition, context),
       request_syntax: 'csharp',
@@ -132,6 +141,7 @@ export const createCodeSample = async (
     },
     curl: {
       title: 'cURL',
+      sdkName: 'curl',
       request: createCurlRequest(codeSampleDefinition, context),
       response: createCurlResponse(codeSampleDefinition, context),
       request_syntax: 'bash',
