@@ -94,6 +94,7 @@ export interface ActionAttempt extends Resource {
 
 export interface Namespace {
   path: string
+  parentPath: string | null
   isDeprecated: boolean
   isUndocumented: boolean
   isDraft: boolean
@@ -103,6 +104,7 @@ export interface Endpoint {
   title: string
   path: string
   name: string
+  parentPath: string | null
   description: string
   isDeprecated: boolean
   deprecationMessage: string
@@ -591,17 +593,12 @@ const createRoute = async (
 
   const endpoint = await createEndpoint(path, pathItem, context)
 
-  const parentPath =
-    routePath.split('/').length === 2
-      ? null
-      : routePath.split('/').slice(0, -1).join('/')
-
   return {
     path: routePath,
     name,
     namespacePath,
     endpoints: endpoint != null ? [endpoint] : [],
-    parentPath,
+    parentPath: getParentPath(routePath),
     isUndocumented: false,
     isDeprecated: false,
     isDraft: false,
@@ -639,6 +636,7 @@ const createNamespaces = (routes: Route[]): Namespace[] => {
 
     return {
       path,
+      parentPath: getParentPath(path),
       isDeprecated,
       isUndocumented,
       isDraft,
@@ -734,6 +732,7 @@ const createEndpointFromOperation = async (
     title,
     name,
     path: endpointPath,
+    parentPath: getParentPath(endpointPath),
     description,
     isDeprecated,
     deprecationMessage,
@@ -1801,3 +1800,6 @@ const createActionAttempts = async (
     ),
   )
 }
+
+const getParentPath = (path: string): string | null =>
+  path.split('/').length === 2 ? null : path.split('/').slice(0, -1).join('/')
