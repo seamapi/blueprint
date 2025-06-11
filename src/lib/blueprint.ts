@@ -38,6 +38,7 @@ const paginationResponseKey = 'pagination'
 export interface Blueprint {
   title: string
   routes: Route[]
+  namespaces: Namespace[]
   resources: Record<string, Resource>
   pagination: Pagination | null
   events: EventResource[]
@@ -47,7 +48,7 @@ export interface Blueprint {
 export interface Route {
   path: string
   name: string
-  namespace: Namespace | null
+  namespacePath: string | null
   endpoints: Endpoint[]
   subroutePaths: string[]
   parentPath: string | null
@@ -462,6 +463,7 @@ export const createBlueprint = async (
   }
 
   const routes = await createRoutes(openapi.paths, context)
+  const namespaces = createNamespaces(routes)
 
   const pagination = openapi.components.schemas[paginationResponseKey]
   const openapiSchemas = Object.fromEntries(
@@ -480,6 +482,7 @@ export const createBlueprint = async (
   return {
     title: openapi.info.title,
     routes,
+    namespaces,
     resources,
     pagination: createPagination(pagination),
     events: await createEvents(openapiSchemas, routes, context),
@@ -519,9 +522,9 @@ const createRoutes = async (
   const pathEntries = Object.entries(paths)
 
   for (const [path, pathItem] of pathEntries) {
-    const namespace = getNamespace(path, paths)
+    const namespacePath = getNamespacePath(path, paths)
 
-    const route = await createRoute(namespace, path, pathItem, context)
+    const route = await createRoute(namespacePath, path, pathItem, context)
 
     const existingRoute = routeMap.get(route.path)
     if (existingRoute != null) {
@@ -538,11 +541,10 @@ const createRoutes = async (
     .map(addIsDeprecatedToRoute)
     .map(addIsUndocumentedToRoute)
     .map(addIsDraftToRoute)
-    .map(addNamespaceStatusToRoute)
     .map(addSubroutePathsToRoute)
 }
 
-const getNamespace = (path: string, paths: OpenapiPaths): string | null => {
+const getNamespacePath = (path: string, paths: OpenapiPaths): string | null => {
   // Hold namespace in array to allow nested namespaces
   // e.g. namespace for `/foo/bar/baz/get` = `/foo/bar`
   const namespace: string[] = []
@@ -577,7 +579,7 @@ const getNamespace = (path: string, paths: OpenapiPaths): string | null => {
 }
 
 const createRoute = async (
-  namespace: string | null,
+  namespacePath: string | null,
   path: string,
   pathItem: OpenapiPathItem,
   context: Context,
@@ -599,15 +601,7 @@ const createRoute = async (
   return {
     path: routePath,
     name,
-    namespace:
-      namespace != null
-        ? {
-            path: namespace,
-            isDeprecated: false,
-            isUndocumented: false,
-            isDraft: false,
-          }
-        : null,
+    namespacePath,
     endpoints: endpoint != null ? [endpoint] : [],
     subroutePaths: [],
     parentPath,
@@ -646,29 +640,27 @@ const addSubroutePathsToRoute = (
   }
 }
 
-const addNamespaceStatusToRoute = (
-  route: Route,
-  _idx: number,
-  routes: Route[],
-): Route => {
-  if (route.namespace == null) return route
+const createNamespaces = (routes: Route[]): Namespace[] => {
+  const namespacePaths = [
+    ...new Set(
+      routes.flatMap((r) => (r.namespacePath == null ? [] : [r.namespacePath])),
+    ),
+  ]
 
-  const namespaceRoutes = routes.filter(
-    (r) => r.namespace?.path === route.namespace?.path,
-  )
-  const isNamespaceDeprecated = namespaceRoutes.every((r) => r.isDeprecated)
-  const isNamespaceUndocumented = namespaceRoutes.every((r) => r.isUndocumented)
-  const isNamespaceDraft = namespaceRoutes.every((r) => r.isDraft)
+  return namespacePaths.map((path) => {
+    const namespaceRoutes = routes.filter((r) => r.namespacePath === path)
 
-  return {
-    ...route,
-    namespace: {
-      ...route.namespace,
-      isDeprecated: isNamespaceDeprecated,
-      isUndocumented: isNamespaceUndocumented,
-      isDraft: isNamespaceDraft,
-    },
-  }
+    const isDeprecated = namespaceRoutes.every((r) => r.isDeprecated)
+    const isUndocumented = namespaceRoutes.every((r) => r.isUndocumented)
+    const isDraft = namespaceRoutes.every((r) => r.isDraft)
+
+    return {
+      path,
+      isDeprecated,
+      isUndocumented,
+      isDraft,
+    }
+  })
 }
 
 const createEndpoint = async (
