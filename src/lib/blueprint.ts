@@ -632,7 +632,7 @@ const createNamespaces = (routes: Route[]): Namespace[] => {
     const namespaceRoutes = routes.filter((r) => r.namespacePath === path)
 
     const pathParts = path.split('/')
-    const name = pathParts.at(-2)
+    const name = pathParts.at(-1)
     if (name == null) {
       throw new Error(`Could not resolve name for route at ${path}`)
     }
