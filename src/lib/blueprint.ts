@@ -39,7 +39,7 @@ export interface Blueprint {
   title: string
   routes: Route[]
   namespaces: Namespace[]
-  resources: Record<string, Resource>
+  resources: Resource[]
   pagination: Pagination | null
   events: EventResource[]
   actionAttempts: ActionAttempt[]
@@ -1087,8 +1087,8 @@ export const createResources = async (
   schemas: Openapi['components']['schemas'],
   routes: Route[],
   context: Context,
-): Promise<Record<string, Resource>> => {
-  const resources: Record<string, Resource> = {}
+): Promise<Resource[]> => {
+  const resources: Resource[] = []
   for (const [schemaName, schema] of Object.entries(schemas)) {
     const { success: isValidEventSchema, data: parsedEvent } =
       EventResourceSchema.safeParse(schema)
@@ -1102,23 +1102,20 @@ export const createResources = async (
         properties: commonProperties,
         type: 'object',
       }
-      resources[schemaName] = await createResource(
+      const resource = await createResource(
         schemaName,
         eventSchema,
         routes,
         context,
       )
+      resources.push(resource)
       continue
     }
 
     const { success: isValidResourceSchema } = ResourceSchema.safeParse(schema)
     if (isValidResourceSchema) {
-      resources[schemaName] = await createResource(
-        schemaName,
-        schema,
-        routes,
-        context,
-      )
+      const resource = await createResource(schemaName, schema, routes, context)
+      resources.push(resource)
       continue
     }
   }
