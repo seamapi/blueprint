@@ -93,6 +93,7 @@ export interface ActionAttempt extends Resource {
 }
 
 export interface Namespace {
+  name: string
   path: string
   parentPath: string | null
   isDeprecated: boolean
@@ -630,11 +631,18 @@ const createNamespaces = (routes: Route[]): Namespace[] => {
   return namespacePaths.map((path) => {
     const namespaceRoutes = routes.filter((r) => r.namespacePath === path)
 
+    const pathParts = path.split('/')
+    const name = pathParts.at(-1)
+    if (name == null) {
+      throw new Error(`Could not resolve name for route at ${path}`)
+    }
+
     const isDeprecated = namespaceRoutes.every((r) => r.isDeprecated)
     const isUndocumented = namespaceRoutes.every((r) => r.isUndocumented)
     const isDraft = namespaceRoutes.every((r) => r.isDraft)
 
     return {
+      name,
       path,
       parentPath: getParentPath(path),
       isDeprecated,
