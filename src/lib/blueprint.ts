@@ -383,7 +383,7 @@ export interface DiscriminatedListProperty extends BaseListProperty {
   discriminator: string
   variantGroups: VariantGroup[]
   variants: Array<{
-    variantGroupKey: string
+    variantGroupKey: string | null
     properties: Property[]
     description: BaseProperty['description']
   }>
@@ -1521,12 +1521,12 @@ const createProperty = (
 }
 
 const validateGroupKey = (
-  groupKey: string,
+  groupKey: string | null,
   propertyName: string,
   parentPaths: string[],
   groups: PropertyGroup[] | VariantGroup[],
 ): void => {
-  if (groupKey.length === 0) return
+  if (groupKey == null || groupKey.length === 0) return
 
   const resourceName = parentPaths.at(0)
   if (resourceName == null) {
@@ -1595,7 +1595,7 @@ const createArrayProperty = (
       {
         discriminator: prop.items.discriminator.propertyName,
         variants: prop.items.oneOf.map((schema) => {
-          const variantGroupKey = schema['x-variant-group-key'] ?? ''
+          const variantGroupKey = schema['x-variant-group-key'] ?? null
           validateGroupKey(
             variantGroupKey,
             baseProperty.name,
