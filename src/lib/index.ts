@@ -10,6 +10,7 @@ export {
   type Pagination,
   type Parameter,
   type Property,
+  type PropertyGroup,
   type Request,
   type Resource,
   type Response,
