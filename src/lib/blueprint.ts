@@ -76,6 +76,11 @@ export interface PropertyGroup {
   propertyGroupKey: string
 }
 
+export interface VariantGroup {
+  name: string
+  variantGroupKey: string
+}
+
 export interface Pagination {
   properties: Property[]
   description: string
@@ -376,7 +381,9 @@ interface RecordListProperty extends BaseListProperty {
 export interface DiscriminatedListProperty extends BaseListProperty {
   itemFormat: 'discriminated_object'
   discriminator: string
+  variantGroups: VariantGroup[]
   variants: Array<{
+    variantGroupKey: string
     properties: Property[]
     description: BaseProperty['description']
   }>
@@ -1213,6 +1220,21 @@ const getPropertyGroups = (schema: OpenapiSchema): PropertyGroup[] => {
   return Object.values(propertyGroups)
 }
 
+const getVariantGroups = (schema: OpenapiSchema): VariantGroup[] => {
+  const rawVariantGroups = schema['x-variant-groups'] ?? {}
+
+  const variantGroups: Record<string, VariantGroup> = {}
+
+  for (const [key, group] of Object.entries(rawVariantGroups)) {
+    variantGroups[key] = {
+      name: group.name,
+      variantGroupKey: key,
+    }
+  }
+
+  return Object.values(variantGroups)
+}
+
 const createResponse = (
   operation: OpenapiOperation,
   path: string,
@@ -1417,7 +1439,7 @@ const createProperty = (
   })
 
   const propertyGroupKey = parsedProp['x-property-group-key'] as string
-  validatePropertyGroupKey(propertyGroupKey, name, parentPaths, propertyGroups)
+  validateGroupKey(propertyGroupKey, name, parentPaths, propertyGroups)
 
   const baseProperty = {
     name,
@@ -1498,13 +1520,13 @@ const createProperty = (
   }
 }
 
-const validatePropertyGroupKey = (
-  propertyGroupKey: string,
+const validateGroupKey = (
+  groupKey: string,
   propertyName: string,
   parentPaths: string[],
-  propertyGroups: PropertyGroup[],
+  groups: PropertyGroup[] | VariantGroup[],
 ): void => {
-  if (propertyGroupKey.length === 0) return
+  if (groupKey.length === 0) return
 
   const resourceName = parentPaths.at(0)
   if (resourceName == null) {
@@ -1513,18 +1535,20 @@ const validatePropertyGroupKey = (
     )
   }
 
-  const validGroupKeys = propertyGroups.map(
-    ({ propertyGroupKey }) => propertyGroupKey,
-  )
+  const validGroupKeys = groups.map((g) => {
+    if ('propertyGroupKey' in g) return g.propertyGroupKey
+    if ('variantGroupKey' in g) return g.variantGroupKey
+    throw new Error('Expected propertyGroupKey or variantGroupKey')
+  })
   if (validGroupKeys.length === 0) {
     throw new Error(
-      `The "${propertyName}" has property group ${propertyGroupKey} but ${parentPaths.join('.')} does not define any property groups.`,
+      `The "${propertyName}" has property group ${groupKey} but ${parentPaths.join('.')} does not define any property groups.`,
     )
   }
 
-  if (!validGroupKeys.includes(propertyGroupKey)) {
+  if (!validGroupKeys.includes(groupKey)) {
     throw new Error(
-      `Invalid property group "${propertyGroupKey}" for property "${propertyName}" in resource "${resourceName}". Valid groups are: ${validGroupKeys.join(', ')}`,
+      `Invalid property group "${groupKey}" for property "${propertyName}" in resource "${resourceName}". Valid groups are: ${validGroupKeys.join(', ')}`,
     )
   }
 }
@@ -1564,18 +1588,30 @@ const createArrayProperty = (
       )
     }
 
+    const variantGroups = getVariantGroups(prop)
+
     return createListProperty<DiscriminatedListProperty>(
       'discriminated_object',
       {
         discriminator: prop.items.discriminator.propertyName,
-        variants: prop.items.oneOf.map((schema) => ({
-          properties: createProperties(
-            schema.properties ?? {},
-            [...parentPaths, baseProperty.name],
-            [],
-          ),
-          description: schema.description ?? '',
-        })),
+        variants: prop.items.oneOf.map((schema) => {
+          const variantGroupKey = schema['x-variant-group-key'] ?? ''
+          validateGroupKey(
+            variantGroupKey,
+            baseProperty.name,
+            parentPaths,
+            variantGroups,
+          )
+          return {
+            variantGroupKey,
+            properties: createProperties(
+              schema.properties ?? {},
+              [...parentPaths, baseProperty.name],
+              [],
+            ),
+            description: schema.description ?? '',
+          }
+        }),
       },
     )
   }

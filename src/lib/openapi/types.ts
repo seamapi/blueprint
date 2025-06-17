@@ -84,6 +84,7 @@ export interface OpenapiSchema {
   'x-draft'?: string
   'x-undocumented'?: string
   'x-route-path'?: string
+  'x-variant-group-key'?: string
   'x-enums'?: Record<
     string,
     {
@@ -100,6 +101,7 @@ export interface OpenapiSchema {
     propertyName: string
   }
   'x-property-groups'?: Record<string, { name: string }>
+  'x-variant-groups'?: Record<string, { name: string }>
 }
 
 export interface OpenapiComponents {

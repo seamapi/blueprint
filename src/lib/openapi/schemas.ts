@@ -100,6 +100,8 @@ const PropertyGroupSchema = z
   )
   .default({})
 
+const VariantGroupSchema = PropertyGroupSchema
+
 const commonPropertyFields = {
   description: z.string().default(''),
   deprecated: z.boolean().default(false),
@@ -109,6 +111,7 @@ const commonPropertyFields = {
   'x-draft': z.string().default(''),
   'x-property-group-key': z.string().default(''),
   'x-property-groups': PropertyGroupSchema,
+  'x-variant-groups': VariantGroupSchema,
 }
 
 export const PropertySchema: z.ZodSchema<any> = z.union([
@@ -143,6 +146,7 @@ export const ResourceSchema = z.object({
   'x-deprecated': z.string().default(''),
   'x-draft': z.string().default(''),
   'x-property-groups': PropertyGroupSchema,
+  'x-variant-groups': VariantGroupSchema,
 })
 
 export const EventResourceSchema = z.object({
