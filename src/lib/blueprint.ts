@@ -71,7 +71,7 @@ export interface Resource {
   resourceSamples: ResourceSample[]
 }
 
-interface PropertyGroup {
+export interface PropertyGroup {
   name: string
   propertyGroupKey: string
 }
