@@ -67,11 +67,11 @@ export interface Resource {
   undocumentedMessage: string
   isDraft: boolean
   draftMessage: string
-  propertyGroups: Record<string, PropertyGroup>
+  propertyGroups: PropertyGroup[]
   resourceSamples: ResourceSample[]
 }
 
-interface PropertyGroup {
+export interface PropertyGroup {
   name: string
   propertyGroupKey: string
 }
@@ -402,7 +402,7 @@ interface ObjectProperty extends BaseProperty {
   format: 'object'
   jsonType: 'object'
   properties: Property[]
-  propertyGroups: Record<string, PropertyGroup>
+  propertyGroups: PropertyGroup[]
 }
 
 interface DatetimeProperty extends BaseProperty {
@@ -1086,7 +1086,7 @@ const createPagination = (
     properties: createProperties(
       schema.properties ?? {},
       [paginationResponseKey],
-      {},
+      [],
     ),
   }
 }
@@ -1198,9 +1198,7 @@ const validateRoutePath = (
   return routePath
 }
 
-const getPropertyGroups = (
-  schema: OpenapiSchema,
-): Record<string, PropertyGroup> => {
+const getPropertyGroups = (schema: OpenapiSchema): PropertyGroup[] => {
   const rawPropertyGroups = schema['x-property-groups'] ?? {}
 
   const propertyGroups: Record<string, PropertyGroup> = {}
@@ -1212,7 +1210,7 @@ const getPropertyGroups = (
     }
   }
 
-  return propertyGroups
+  return Object.values(propertyGroups)
 }
 
 const createResponse = (
@@ -1378,7 +1376,7 @@ const validateActionAttemptType = (
 export const createProperties = (
   properties: Record<string, OpenapiSchema>,
   parentPaths: string[],
-  propertyGroups: Record<string, PropertyGroup>,
+  propertyGroups: PropertyGroup[],
 ): Property[] => {
   return Object.entries(properties)
     .map(([name, property]) => {
@@ -1412,7 +1410,7 @@ const createProperty = (
   name: string,
   prop: OpenapiSchema,
   parentPaths: string[],
-  propertyGroups: Record<string, PropertyGroup>,
+  propertyGroups: PropertyGroup[],
 ): Property => {
   const parsedProp = PropertySchema.parse(prop, {
     path: [...parentPaths, name],
@@ -1504,7 +1502,7 @@ const validatePropertyGroupKey = (
   propertyGroupKey: string,
   propertyName: string,
   parentPaths: string[],
-  propertyGroups: Record<string, PropertyGroup>,
+  propertyGroups: PropertyGroup[],
 ): void => {
   if (propertyGroupKey.length === 0) return
 
@@ -1515,7 +1513,9 @@ const validatePropertyGroupKey = (
     )
   }
 
-  const validGroupKeys = Object.keys(propertyGroups)
+  const validGroupKeys = propertyGroups.map(
+    ({ propertyGroupKey }) => propertyGroupKey,
+  )
   if (validGroupKeys.length === 0) {
     throw new Error(
       `The "${propertyName}" has property group ${propertyGroupKey} but ${parentPaths.join('.')} does not define any property groups.`,
@@ -1572,7 +1572,7 @@ const createArrayProperty = (
           properties: createProperties(
             schema.properties ?? {},
             [...parentPaths, baseProperty.name],
-            {},
+            [],
           ),
           description: schema.description ?? '',
         })),
@@ -1584,7 +1584,7 @@ const createArrayProperty = (
     'item',
     prop.items,
     [...parentPaths, baseProperty.name],
-    {},
+    [],
   )
 
   switch (itemProperty.format) {
