@@ -675,10 +675,10 @@ const createEndpoint = async (
     ([method]) => method.toUpperCase() as Method,
   )
 
-  const validOperation = validOperations[0]
+  const validOperation = validOperations.find(([m]) => m === 'post')
   if (validOperation == null) {
     // eslint-disable-next-line no-console
-    console.warn(`No valid operations found for ${path}`)
+    console.warn(`No valid post operation found for ${path}`)
 
     return null
   }
@@ -811,7 +811,7 @@ export const getWorkspaceScope = (
   return 'none'
 }
 
-export const createRequest = (
+const createRequest = (
   methods: Method[],
   operation: OpenapiOperation,
   path: string,
