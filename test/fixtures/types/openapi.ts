@@ -335,7 +335,11 @@ export default {
           400: { description: 'Bad Request' },
           401: { description: 'Unauthorized' },
         },
-        security: [],
+        security: [
+          {
+            api_key: [],
+          },
+        ],
         summary: '/foos/get',
         tags: ['/foos'],
         'x-response-key': 'foo',
@@ -428,6 +432,9 @@ export default {
                       items: { $ref: '#/components/schemas/foo' },
                       type: 'array',
                     },
+                    pagination: {
+                      $ref: '#/components/schemas/pagination',
+                    },
                   },
                   required: ['foos', 'ok'],
                   type: 'object',
@@ -439,7 +446,14 @@ export default {
           400: { description: 'Bad Request' },
           401: { description: 'Unauthorized' },
         },
-        security: [],
+        security: [
+          {
+            api_key: [],
+          },
+          {
+            client_session: [],
+          },
+        ],
         summary: '/foos/list',
         tags: ['/foos'],
         'x-response-key': 'foos',
@@ -449,6 +463,37 @@ export default {
     '/foos/advanced/get': {
       get: {
         operationId: 'foosAdvancedGetGet',
+        responses: {
+          200: {
+            content: {
+              'application/json': {
+                schema: {
+                  properties: {
+                    ok: { type: 'boolean' },
+                    foo: { $ref: '#/components/schemas/foo' },
+                  },
+                  required: ['foo', 'ok'],
+                  type: 'object',
+                },
+              },
+            },
+            description: 'Get a foo by ID.',
+          },
+          400: { description: 'Bad Request' },
+          401: { description: 'Unauthorized' },
+        },
+        security: [
+          {
+            api_key: [],
+          },
+        ],
+        summary: '/foos/advanced/get',
+        tags: ['/foos/advanced'],
+        'x-response-key': 'foo',
+        'x-title': 'Get a foo',
+      },
+      post: {
+        operationId: 'foosAdvancedGetPost',
         responses: {
           200: {
             content: {
@@ -510,6 +555,36 @@ export default {
         'x-response-key': 'planes',
         'x-title': 'List planes',
       },
+      post: {
+        operationId: 'planesListPost',
+        responses: {
+          200: {
+            content: {
+              'application/json': {
+                schema: {
+                  properties: {
+                    ok: { type: 'boolean' },
+                    planes: {
+                      items: { $ref: '#/components/schemas/plane' },
+                      type: 'array',
+                    },
+                  },
+                  required: ['planes', 'ok'],
+                  type: 'object',
+                },
+              },
+            },
+            description: 'List all planes.',
+          },
+          400: { description: 'Bad Request' },
+          401: { description: 'Unauthorized' },
+        },
+        security: [],
+        summary: '/transport/air/planes/list',
+        tags: ['/transport/air/planes'],
+        'x-response-key': 'planes',
+        'x-title': 'List planes',
+      },
     },
     '/deprecated/undocumented/endpoint': {
       get: {
@@ -538,10 +613,61 @@ export default {
         'x-undocumented': 'true',
         'x-title': 'Deprecated and undocumented endpoint',
       },
+      post: {
+        operationId: 'deprecatedUndocumentedEndpointPost',
+        deprecated: true,
+        responses: {
+          200: {
+            content: {
+              'application/json': {
+                schema: {
+                  properties: {
+                    ok: { type: 'boolean' },
+                  },
+                  required: ['ok'],
+                  type: 'object',
+                },
+              },
+            },
+            description: 'Deprecated and undocumented endpoint',
+          },
+        },
+        security: [],
+        summary: '/deprecated/undocumented/endpoint',
+        tags: ['/deprecated/undocumented'],
+        'x-response-key': null,
+        'x-undocumented': 'true',
+        'x-title': 'Deprecated and undocumented endpoint',
+      },
     },
     '/draft/endpoint': {
       get: {
         operationId: 'draftEndpointGet',
+        responses: {
+          200: {
+            content: {
+              'application/json': {
+                schema: {
+                  properties: {
+                    ok: { type: 'boolean' },
+                  },
+                  required: ['ok'],
+                  type: 'object',
+                },
+              },
+            },
+            description: 'Draft endpoint',
+          },
+        },
+        security: [],
+        summary: '/draft/endpoint',
+        tags: ['/draft'],
+        'x-response-key': null,
+        'x-draft': 'true',
+        'x-title': 'Draft endpoint',
+      },
+      post: {
+        operationId: 'draftEndpointPost',
         responses: {
           200: {
             content: {
