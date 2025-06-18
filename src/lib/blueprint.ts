@@ -1594,6 +1594,7 @@ const createArrayProperty = (
       'discriminated_object',
       {
         discriminator: prop.items.discriminator.propertyName,
+        variantGroups,
         variants: prop.items.oneOf.map((schema) => {
           const variantGroupKey = schema['x-variant-group-key'] ?? null
           validateGroupKey(
