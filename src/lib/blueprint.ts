@@ -1542,7 +1542,7 @@ const validateGroupKey = (
   })
   if (validGroupKeys.length === 0) {
     throw new Error(
-      `The "${propertyName}" has property group ${groupKey} but ${parentPaths.join('.')} does not define any property groups.`,
+      `The "${propertyName}" has group ${groupKey} but ${parentPaths.join('.')} does not define any groups.`,
     )
   }
 
