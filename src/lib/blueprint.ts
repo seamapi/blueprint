@@ -915,7 +915,7 @@ const createParameter = (
     default?: any
   } = {
     name,
-    description: normalizeDescription(parsedProp.description),
+    description: normalizeDescription(String(parsedProp.description)),
     isRequired: requiredParameters.includes(name),
     isDeprecated: parsedProp['x-deprecated'].length > 0,
     deprecationMessage: parsedProp['x-deprecated'],
@@ -946,7 +946,9 @@ const createParameter = (
             }
             return {
               name: String(value),
-              description: normalizeDescription(enumValue?.description ?? ''),
+              description: normalizeDescription(
+                String(enumValue?.description ?? ''),
+              ),
               isDeprecated: Boolean(enumValue?.deprecated?.length ?? 0),
               deprecationMessage: enumValue?.deprecated ?? '',
               isUndocumented: Boolean(enumValue?.undocumented?.length ?? 0),
@@ -1443,7 +1445,7 @@ const createProperty = (
 
   const baseProperty = {
     name,
-    description: normalizeDescription(parsedProp.description),
+    description: normalizeDescription(String(parsedProp.description ?? '')),
     isDeprecated: parsedProp['x-deprecated'].length > 0,
     deprecationMessage: parsedProp['x-deprecated'],
     isUndocumented: parsedProp['x-undocumented'].length > 0,
@@ -1469,7 +1471,9 @@ const createProperty = (
             }
             return {
               name: String(value),
-              description: normalizeDescription(enumValue?.description ?? ''),
+              description: normalizeDescription(
+                String(enumValue?.description) ?? '',
+              ),
               isDeprecated: Boolean(enumValue?.deprecated?.length ?? 0),
               deprecationMessage: enumValue?.deprecated ?? '',
               isUndocumented: Boolean(enumValue?.undocumented?.length ?? 0),
