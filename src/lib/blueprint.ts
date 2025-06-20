@@ -1472,7 +1472,7 @@ const createProperty = (
             return {
               name: String(value),
               description: normalizeDescription(
-                String(enumValue?.description) ?? '',
+                String(enumValue?.description ?? ''),
               ),
               isDeprecated: Boolean(enumValue?.deprecated?.length ?? 0),
               deprecationMessage: enumValue?.deprecated ?? '',
