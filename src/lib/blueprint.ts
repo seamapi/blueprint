@@ -915,7 +915,7 @@ const createParameter = (
     default?: any
   } = {
     name,
-    description: normalizeDescription(String(parsedProp.description)),
+    description: normalizeDescription(String(parsedProp.description ?? '')),
     isRequired: requiredParameters.includes(name),
     isDeprecated: parsedProp['x-deprecated'].length > 0,
     deprecationMessage: parsedProp['x-deprecated'],
