@@ -713,7 +713,7 @@ const createEndpointFromOperation = async (
 
   const title = parsedOperation['x-title']
 
-  const description = parsedOperation.description
+  const description = normalizeDescription(parsedOperation.description)
 
   const isUndocumented = parsedOperation['x-undocumented'].length > 0
   const undocumentedMessage = parsedOperation['x-undocumented']
@@ -915,7 +915,7 @@ const createParameter = (
     default?: any
   } = {
     name,
-    description: parsedProp.description,
+    description: normalizeDescription(String(parsedProp.description ?? '')),
     isRequired: requiredParameters.includes(name),
     isDeprecated: parsedProp['x-deprecated'].length > 0,
     deprecationMessage: parsedProp['x-deprecated'],
@@ -946,7 +946,9 @@ const createParameter = (
             }
             return {
               name: String(value),
-              description: enumValue?.description ?? '',
+              description: normalizeDescription(
+                String(enumValue?.description ?? ''),
+              ),
               isDeprecated: Boolean(enumValue?.deprecated?.length ?? 0),
               deprecationMessage: enumValue?.deprecated ?? '',
               isUndocumented: Boolean(enumValue?.undocumented?.length ?? 0),
@@ -1041,7 +1043,7 @@ const createArrayParameter = (
             path,
             schema.required ?? [],
           ),
-          description: schema.description ?? '',
+          description: normalizeDescription(schema.description ?? ''),
         })),
       },
     )
@@ -1089,7 +1091,7 @@ const createPagination = (
   if (schema == null) return null
   return {
     responseKey: paginationResponseKey,
-    description: schema.description ?? '',
+    description: normalizeDescription(schema.description ?? ''),
     properties: createProperties(
       schema.properties ?? {},
       [paginationResponseKey],
@@ -1160,7 +1162,7 @@ const createResource = async (
       [schemaName],
       propertyGroups,
     ),
-    description: schema.description ?? '',
+    description: normalizeDescription(schema.description ?? ''),
     isDeprecated: schema.deprecated ?? false,
     routePath,
     deprecationMessage: schema['x-deprecated'] ?? '',
@@ -1256,12 +1258,12 @@ const createResponse = (
   if (typeof okResponse !== 'object' || okResponse == null) {
     return {
       responseType: 'void',
-      description: 'Unknown',
+      description: normalizeDescription('Unknown'),
       hasPagination: false,
     }
   }
 
-  const description = okResponse.description ?? ''
+  const description = normalizeDescription(okResponse.description ?? '')
 
   if (!('x-response-key' in parsedOperation)) {
     throw new Error(`Missing responseKey for ${path}`)
@@ -1356,7 +1358,7 @@ const createResponse = (
 
   return {
     responseType: 'void',
-    description: 'Unknown',
+    description: normalizeDescription('Unknown'),
     hasPagination: false,
   }
 }
@@ -1443,7 +1445,7 @@ const createProperty = (
 
   const baseProperty = {
     name,
-    description: parsedProp.description,
+    description: normalizeDescription(String(parsedProp.description ?? '')),
     isDeprecated: parsedProp['x-deprecated'].length > 0,
     deprecationMessage: parsedProp['x-deprecated'],
     isUndocumented: parsedProp['x-undocumented'].length > 0,
@@ -1469,7 +1471,9 @@ const createProperty = (
             }
             return {
               name: String(value),
-              description: enumValue?.description ?? '',
+              description: normalizeDescription(
+                String(enumValue?.description ?? ''),
+              ),
               isDeprecated: Boolean(enumValue?.deprecated?.length ?? 0),
               deprecationMessage: enumValue?.deprecated ?? '',
               isUndocumented: Boolean(enumValue?.undocumented?.length ?? 0),
@@ -1610,7 +1614,7 @@ const createArrayProperty = (
               [...parentPaths, baseProperty.name],
               [],
             ),
-            description: schema.description ?? '',
+            description: normalizeDescription(schema.description ?? ''),
           }
         }),
       },
@@ -1845,3 +1849,9 @@ const createActionAttempts = async (
 
 const getParentPath = (path: string): string | null =>
   path.split('/').length === 2 ? null : path.split('/').slice(0, -1).join('/')
+
+const normalizeDescription = (content: string): string =>
+  content
+    .split('\n\n')
+    .map((s) => s.trim())
+    .join('\n\n')
