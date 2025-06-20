@@ -1,17 +1,18 @@
 import test from 'ava'
 
+import type {
+  OpenapiAuthMethod,
+  OpenapiOperation,
+  OpenapiSchema,
+} from 'lib/openapi/types.js'
+
 import {
   createProperties,
   getPreferredMethod,
   getSemanticMethod,
   getWorkspaceScope,
   type Method,
-} from 'lib/blueprint.js'
-import type {
-  OpenapiAuthMethod,
-  OpenapiOperation,
-  OpenapiSchema,
-} from 'lib/openapi/types.js'
+} from './blueprint.js'
 
 test('createProperties: assigns appropriate default values', (t) => {
   const minimalProperties = {

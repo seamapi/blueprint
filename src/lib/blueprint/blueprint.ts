@@ -1,13 +1,13 @@
 import { z } from 'zod'
 
-import { findCommonOpenapiSchemaProperties } from './openapi/find-common-openapi-schema-properties.js'
-import { flattenOpenapiSchema } from './openapi/flatten-openapi-schema.js'
+import { findCommonOpenapiSchemaProperties } from 'lib/openapi/find-common-openapi-schema-properties.js'
+import { flattenOpenapiSchema } from 'lib/openapi/flatten-openapi-schema.js'
 import {
   EventResourceSchema,
   OpenapiOperationSchema,
   PropertySchema,
   ResourceSchema,
-} from './openapi/schemas.js'
+} from 'lib/openapi/schemas.js'
 import type {
   Openapi,
   OpenapiAuthMethod,
@@ -15,7 +15,7 @@ import type {
   OpenapiPathItem,
   OpenapiPaths,
   OpenapiSchema,
-} from './openapi/types.js'
+} from 'lib/openapi/types.js'
 import {
   type CodeSample,
   type CodeSampleDefinition,
@@ -26,12 +26,12 @@ import {
   type ResourceSampleDefinition,
   ResourceSampleDefinitionSchema,
   type SyntaxName,
-} from './samples/index.js'
+} from 'lib/samples/index.js'
 import {
   mapOpenapiToSeamAuthMethod,
   type SeamAuthMethod,
   type SeamWorkspaceScope,
-} from './seam.js'
+} from 'lib/seam.js'
 
 const paginationResponseKey = 'pagination'
 
@@ -451,7 +451,7 @@ export interface BlueprintOptions {
 
 export const createBlueprint = async (
   typesModule: TypesModuleInput,
-  { formatCode = async (content) => content }: BlueprintOptions = {},
+  { formatCode = async (content, _syntax) => content }: BlueprintOptions = {},
 ): Promise<Blueprint> => {
   const { schemas, codeSampleDefinitions, resourceSampleDefinitions } =
     TypesModuleSchema.parse(typesModule)

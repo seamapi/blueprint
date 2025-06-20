@@ -1,6 +1,6 @@
 import { z, type ZodSchema } from 'zod'
 
-import type { Resource as BlueprintResource } from 'lib/blueprint.js'
+import type { Resource as BlueprintResource } from 'lib/index.js'
 import { JsonSchema } from 'lib/json.js'
 
 import { formatResourceRecords } from './format.js'

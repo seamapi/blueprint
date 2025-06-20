@@ -1,6 +1,6 @@
 import { z } from 'zod'
 
-import type { Endpoint } from 'lib/blueprint.js'
+import type { Endpoint } from 'lib/index.js'
 import { JsonSchema } from 'lib/json.js'
 
 import { createCsharpRequest, createCsharpResponse } from './csharp.js'

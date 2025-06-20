@@ -18,7 +18,7 @@ export {
   type TypesModule,
   type TypesModuleInput,
   TypesModuleSchema,
-} from './blueprint.js'
+} from './blueprint/index.js'
 export {
   type CodeSample,
   type CodeSampleDefinitionInput,
