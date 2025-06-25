@@ -6,6 +6,7 @@ export {
   type DiscriminatedListProperty,
   type Endpoint,
   type EnumProperty,
+  type EventResource,
   type Namespace,
   type Pagination,
   type Parameter,

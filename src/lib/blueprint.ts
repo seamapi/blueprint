@@ -87,7 +87,7 @@ export interface Pagination {
   responseKey: string
 }
 
-interface EventResource extends Resource {
+export interface EventResource extends Resource {
   resourceType: 'event'
   eventType: string
 }
