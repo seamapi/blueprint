@@ -1841,6 +1841,10 @@ const createActionAttempts = async (
           ...resource,
           resourceType: 'action_attempt',
           actionAttemptType: actionType,
+          resourceSamples: resource.resourceSamples.filter(
+            (resourceSample) =>
+              resourceSample.properties['action_type'] === actionType,
+          ),
         }
       },
     ),
