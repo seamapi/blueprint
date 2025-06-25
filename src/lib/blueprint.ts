@@ -1739,9 +1739,14 @@ const createEvents = async (
         throw new Error(`Missing route_path for event type ${eventType}`)
       }
 
+      const resource = await createResource('event', schema, routes, context)
       return {
-        ...(await createResource('event', schema, routes, context)),
+        ...resource,
         eventType,
+        resourceSamples: resource.resourceSamples.filter(
+          (resourceSample) =>
+            resourceSample.properties['event_type'] === eventType,
+        ),
       }
     }),
   )
