@@ -818,17 +818,18 @@ const createRequest = (
 ): Request => {
   if (methods.length === 0) {
     // eslint-disable-next-line no-console
-    console.warn('At least one HTTP method should be specified')
+    console.warn(`At least one HTTP method should be specified for ${path}`)
   }
 
   if (methods.length > 2) {
     // eslint-disable-next-line no-console
-    console.warn('More than two methods detected. Was this intended?')
+    console.warn(
+      `More than two methods detected for ${path}. Was this intended?`,
+    )
   }
 
   if (!methods.includes('POST')) {
-    // eslint-disable-next-line no-console
-    console.warn(`POST method is missing for ${path}`)
+    throw new Error(`POST method is missing for ${path}`)
   }
 
   const semanticMethod = getSemanticMethod(methods)

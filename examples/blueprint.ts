@@ -25,7 +25,8 @@ export const builder: Builder = {
 export const handler: Handler<Options> = async ({ moduleName, logger }) => {
   const types = TypesModuleSchema.parse(await import(moduleName))
   const blueprint = await createBlueprint(types)
-  logger.info({ blueprint }, 'blueprint')
+  const blueprintPath = join('tmp', 'blueprint.json')
+  logger.info({ blueprint: blueprintPath }, 'blueprint')
   await mkdirp('tmp')
-  await writeFile(join('tmp', 'blueprint.json'), JSON.stringify(blueprint))
+  await writeFile(blueprintPath, JSON.stringify(blueprint))
 }
