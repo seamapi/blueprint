@@ -677,10 +677,7 @@ const createEndpoint = async (
 
   const validOperation = validOperations.find(([m]) => m === 'post')
   if (validOperation == null) {
-    // eslint-disable-next-line no-console
-    console.warn(`No valid post operation found for ${path}`)
-
-    return null
+    throw new Error(`POST method is missing for ${path}`)
   }
 
   const [_, operation] = validOperation
@@ -827,8 +824,7 @@ const createRequest = (
   }
 
   if (!methods.includes('POST')) {
-    // eslint-disable-next-line no-console
-    console.warn(`POST method is missing for ${path}`)
+    throw new Error(`POST method is missing for ${path}`)
   }
 
   const semanticMethod = getSemanticMethod(methods)
