@@ -677,10 +677,7 @@ const createEndpoint = async (
 
   const validOperation = validOperations.find(([m]) => m === 'post')
   if (validOperation == null) {
-    // eslint-disable-next-line no-console
-    console.warn(`No valid post operation found for ${path}`)
-
-    return null
+    throw new Error(`No valid post operation found for ${path}`)
   }
 
   const [_, operation] = validOperation
