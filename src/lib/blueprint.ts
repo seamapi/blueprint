@@ -677,7 +677,10 @@ const createEndpoint = async (
 
   const validOperation = validOperations.find(([m]) => m === 'post')
   if (validOperation == null) {
-    throw new Error(`POST method is missing for ${path}`)
+    // eslint-disable-next-line no-console
+    console.warn(`No valid post operation found for ${path}`)
+
+    return null
   }
 
   const [_, operation] = validOperation
@@ -815,12 +818,14 @@ const createRequest = (
 ): Request => {
   if (methods.length === 0) {
     // eslint-disable-next-line no-console
-    console.warn('At least one HTTP method should be specified')
+    console.warn(`At least one HTTP method should be specified for ${path}`)
   }
 
   if (methods.length > 2) {
     // eslint-disable-next-line no-console
-    console.warn('More than two methods detected. Was this intended?')
+    console.warn(
+      `More than two methods detected for ${path}. Was this intended?`,
+    )
   }
 
   if (!methods.includes('POST')) {
