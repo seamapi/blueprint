@@ -19,6 +19,7 @@ export const mapOpenapiToSeamAuthMethod = (
     console_session_token_with_workspace: 'console_session_token',
     console_session_token_without_workspace: 'console_session_token',
     client_session: 'client_session_token',
+    client_session_with_customer: 'client_session_token',
     publishable_key: 'publishable_key',
   } as const
 
