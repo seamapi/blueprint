@@ -785,6 +785,7 @@ export const getWorkspaceScope = (
   const workspaceScopedAuthMethods: OpenapiAuthMethod[] = [
     'api_key',
     'client_session',
+    'client_session_with_customer',
     'console_session_token_with_workspace',
     'pat_with_workspace',
     'publishable_key',
