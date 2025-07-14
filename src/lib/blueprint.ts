@@ -734,9 +734,15 @@ const createEndpointFromOperation = async (
       return authMethod as OpenapiAuthMethod
     },
   )
-  const endpointAuthMethods = operationAuthMethods
-    .map(mapOpenapiToSeamAuthMethod)
-    .filter((authMethod): authMethod is SeamAuthMethod => authMethod != null)
+  const endpointAuthMethods = [
+    ...new Set(
+      operationAuthMethods
+        .map(mapOpenapiToSeamAuthMethod)
+        .filter(
+          (authMethod): authMethod is SeamAuthMethod => authMethod != null,
+        ),
+    ),
+  ]
 
   const workspaceScope = getWorkspaceScope(operationAuthMethods)
 
