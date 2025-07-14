@@ -61,8 +61,11 @@ export const createResourceSample = async (
       )
     }
   } else {
-    // eslint-disable-next-line no-console
-    console.warn(`Missing Zod schema for resource ${resourceType}.`)
+    // TODO: Skip event and action_attempt warning until support is added.
+    if (!['event', 'action_attempt'].includes(resourceType)) {
+      // eslint-disable-next-line no-console
+      console.warn(`Missing Zod schema for resource ${resourceType}.`)
+    }
   }
 
   const resource: Resource = {
