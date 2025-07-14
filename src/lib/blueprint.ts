@@ -1445,6 +1445,12 @@ const createProperty = (
     path: [...parentPaths, name],
   })
 
+  if (name.startsWith('ext_')) {
+    throw new Error(
+      `Property cannot start with ext_ : ${parentPaths.join('.')}.${name}`,
+    )
+  }
+
   const propertyGroupKey = parsedProp['x-property-group-key'] as string
   validateGroupKey(propertyGroupKey, name, parentPaths, propertyGroups)
 
