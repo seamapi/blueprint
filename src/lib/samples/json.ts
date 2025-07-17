@@ -23,6 +23,4 @@ export const createJsonResponse = (
 export const createJsonResourceData = (
   { properties }: ResourceSampleDefinition,
   _context: ResourceSampleContext,
-): string => {
-  return JSON.stringify(properties)
-}
+): string => JSON.stringify(properties)
