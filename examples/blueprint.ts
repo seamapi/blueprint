@@ -1,10 +1,9 @@
 import { writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 
+import { createBlueprint, TypesModuleSchema } from '@seamapi/blueprint'
 import type { Builder, Command, Describe, Handler } from 'landlubber'
 import { mkdirp } from 'mkdirp'
-
-import { createBlueprint, TypesModuleSchema } from '@seamapi/blueprint'
 
 interface Options {
   moduleName: string
