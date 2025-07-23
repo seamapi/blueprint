@@ -570,7 +570,9 @@ const getNamespacePath = (path: string, paths: OpenapiPaths): string | null => {
 
     // An endpoint is a route that ends without further paths. i.e., ends in
     // a letter (not slash).
-    const endpoints = pathKeys.filter((key) => new RegExp(`^/${[...namespace, part].join('/')}/\\w+$`).test(key))
+    const endpoints = pathKeys.filter((key) =>
+      new RegExp(`^/${[...namespace, part].join('/')}/\\w+$`).test(key),
+    )
 
     if (endpoints.length === 0) {
       namespace.push(part)
@@ -855,7 +857,7 @@ const createRequestBody = (
     return []
   }
 
-  const {requestBody} = operation
+  const { requestBody } = operation
   const jsonSchema = requestBody.content?.['application/json']?.schema
   if (jsonSchema == null) return []
 
@@ -875,7 +877,8 @@ const createParameters = (
   properties: Record<string, OpenapiSchema>,
   path: string,
   requiredParameters: string[] = [],
-): Parameter[] => Object.entries(properties)
+): Parameter[] =>
+  Object.entries(properties)
     .map(([name, property]) => {
       // Don't flatten discriminated arrays as they are handled separately in createParameter
       if (
@@ -1319,7 +1322,7 @@ const createResponse = (
     typeof schema.properties === 'object' &&
     schema.properties !== null
   ) {
-    const {properties} = schema
+    const { properties } = schema
 
     if (!(responseKey in properties)) {
       throw new Error(
@@ -1402,7 +1405,8 @@ export const createProperties = (
   properties: Record<string, OpenapiSchema>,
   parentPaths: string[],
   propertyGroups: PropertyGroup[],
-): Property[] => Object.entries(properties)
+): Property[] =>
+  Object.entries(properties)
     .map(([name, property]) => {
       // Don't flatten discriminated arrays as they are handled separately in createProperty
       if (

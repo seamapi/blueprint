@@ -113,12 +113,15 @@ const formatGoRequestArgValue = (
   context: GoContext,
 ): string => {
   if (value == null) return 'nil'
-  if (typeof value === 'string')
+  if (typeof value === 'string') {
     return `${defaultGoPackageName}.String("${value}")`
-  if (typeof value === 'boolean')
+  }
+  if (typeof value === 'boolean') {
     return `${defaultGoPackageName}.Bool(${value})`
-  if (typeof value === 'number')
+  }
+  if (typeof value === 'number') {
     return `${defaultGoPackageName}.Float64(${value})`
+  }
 
   if (Array.isArray(value)) {
     return formatGoRequestArrayValue(key, value, context)
