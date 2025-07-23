@@ -56,11 +56,11 @@ const CodeSchema = z.record(
 
 export type Code = z.infer<typeof CodeSchema>
 
-const CodeSampleSchema = CodeSampleDefinitionSchema.extend({
+const _CodeSampleSchema = CodeSampleDefinitionSchema.extend({
   code: CodeSchema,
 })
 
-export type CodeSample = z.output<typeof CodeSampleSchema>
+export type CodeSample = z.output<typeof _CodeSampleSchema>
 
 export interface CodeSampleContext {
   endpoint: Omit<Endpoint, 'codeSamples'>

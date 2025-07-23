@@ -39,11 +39,11 @@ const ResourceSchema = z.record(
 
 export type Resource = z.infer<typeof ResourceSchema>
 
-const ResourceSampleSchema = ResourceSampleDefinitionSchema.extend({
+const _ResourceSampleSchema = ResourceSampleDefinitionSchema.extend({
   resource: ResourceSchema,
 })
 
-export type ResourceSample = z.output<typeof ResourceSampleSchema>
+export type ResourceSample = z.output<typeof _ResourceSampleSchema>
 
 export const createResourceSample = async (
   resourceSampleDefinition: ResourceSampleDefinition,
