@@ -270,7 +270,7 @@ export interface Request {
   parameters: Parameter[]
 }
 
-export type Response = VoidResponse | ResourceResponse | ResourceListResponse
+export type Response = VoidResponse | ResourceResponse | ResourceListResponse | BatchResponse
 
 interface BaseResponse {
   description: string
@@ -291,6 +291,13 @@ interface ResourceListResponse extends BaseResponse {
   responseType: 'resource_list'
   responseKey: string
   resourceType: string
+}
+
+interface BatchResponse extends BaseResponse {
+  responseType: 'batch'
+  responseKey: string // 'batch'
+  resourceType: string // 'batch'
+  batchResourceTypes: Array<{ batchKey: string, resourceType: string }
 }
 
 interface BaseProperty {
