@@ -723,8 +723,6 @@ const createEndpointFromOperation = async (
   const isDraft = parsedOperation['x-draft'].length > 0
   const draftMessage = parsedOperation['x-draft']
 
-  const batchKeys = parsedOperation['x-batch-keys']
-
   const request = createRequest(methods, operation, path)
   const { hasPagination, ...response } = createResponse(
     operation,
