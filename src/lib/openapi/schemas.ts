@@ -78,6 +78,7 @@ export const OpenapiOperationSchema = z.object({
     .default([]),
   deprecated: z.boolean().default(false),
   'x-response-key': z.string().nullable().optional(),
+  'x-batch-keys': z.array(z.string()).optional(),
   'x-title': z.string().default(''),
   'x-undocumented': z.string().default(''),
   'x-deprecated': z.string().default(''),
