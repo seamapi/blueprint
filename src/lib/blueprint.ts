@@ -285,14 +285,14 @@ interface ResourceResponse extends BaseResponse {
   responseKey: string
   resourceType: string
   actionAttemptType: string | null
-  batchKeys?: string[]
+  batchKeys: string[] | null
 }
 
 interface ResourceListResponse extends BaseResponse {
   responseType: 'resource_list'
   responseKey: string
   resourceType: string
-  batchKeys?: string[]
+  batchKeys: string[] | null
 }
 
 interface BaseProperty {
@@ -1360,7 +1360,7 @@ const createResponse = (
             )) ??
           false,
         actionAttemptType,
-        batchKeys,
+        batchKeys: batchKeys ?? null,
       }
     }
   }
