@@ -121,7 +121,6 @@ export interface Endpoint {
   request: Request
   response: Response
   hasPagination: boolean
-  batchKeys?: string[]
   codeSamples: CodeSample[]
   authMethods: SeamAuthMethod[]
   workspaceScope: SeamWorkspaceScope
@@ -286,12 +285,14 @@ interface ResourceResponse extends BaseResponse {
   responseKey: string
   resourceType: string
   actionAttemptType: string | null
+  batchKeys?: string[]
 }
 
 interface ResourceListResponse extends BaseResponse {
   responseType: 'resource_list'
   responseKey: string
   resourceType: string
+  batchKeys?: string[]
 }
 
 interface BaseProperty {
@@ -764,7 +765,6 @@ const createEndpointFromOperation = async (
     response,
     request,
     hasPagination,
-    batchKeys,
     authMethods: endpointAuthMethods,
     workspaceScope,
   }
@@ -1348,6 +1348,8 @@ const createResponse = (
         context.validActionAttemptTypes,
       )
 
+      const batchKeys = parsedOperation['x-batch-keys']
+
       return {
         responseType: props?.type === 'array' ? 'resource_list' : 'resource',
         responseKey: refKey,
@@ -1360,6 +1362,7 @@ const createResponse = (
             )) ??
           false,
         actionAttemptType,
+        batchKeys,
       }
     }
   }
