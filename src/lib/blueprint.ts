@@ -285,14 +285,13 @@ interface ResourceResponse extends BaseResponse {
   responseKey: string
   resourceType: string
   actionAttemptType: string | null
-  batchKeys: string[] | null
+  batchResourceTypes: string[] | null
 }
 
 interface ResourceListResponse extends BaseResponse {
   responseType: 'resource_list'
   responseKey: string
   resourceType: string
-  batchKeys: string[] | null
 }
 
 interface BaseProperty {
@@ -1348,6 +1347,43 @@ const createResponse = (
 
       const batchKeys = parsedOperation['x-batch-keys']
 
+      const batchKeyToResourceTypeMap: Record<string, string> = {
+        user_identities: 'user_identity',
+        workspaces: 'workspace',
+        spaces: 'space',
+        devices: 'device',
+        connected_accounts: 'connected_account',
+        acs_entrances: 'acs_entrance',
+        acs_systems: 'acs_system',
+        acs_users: 'acs_user',
+        acs_access_groups: 'acs_access_group',
+        acs_encoders: 'acs_encoder',
+        acs_credentials: 'acs_credential',
+        unmanaged_acs_credentials: 'unmanaged_acs_credential',
+        action_attempts: 'action_attempt',
+        client_sessions: 'client_session',
+        unmanaged_acs_users: 'unmanaged_acs_user',
+        unmanaged_acs_access_groups: 'unmanaged_acs_access_group',
+        unmanaged_devices: 'unmanaged_device',
+        connect_webviews: 'connect_webview',
+        access_methods: 'access_method',
+        access_grants: 'access_grant',
+        events: 'seam_event',
+        instant_keys: 'instant_key',
+        access_codes: 'access_code',
+        unmanaged_access_codes: 'unmanaged_access_code',
+        thermostat_daily_programs: 'thermostat_daily_program',
+        thermostat_schedules: 'thermostat_schedule',
+        noise_thresholds: 'noise_threshold',
+        customization_profiles: 'customization_profile',
+      }
+
+      const batchResourceTypes = batchKeys
+        ? batchKeys
+            .map((key) => batchKeyToResourceTypeMap[key] ?? null)
+            .filter((type): type is string => type !== null)
+        : null
+
       return {
         responseType: props?.type === 'array' ? 'resource_list' : 'resource',
         responseKey: refKey,
@@ -1360,7 +1396,7 @@ const createResponse = (
             )) ??
           false,
         actionAttemptType,
-        batchKeys: batchKeys ?? null,
+        batchResourceTypes: batchResourceTypes ?? null,
       }
     }
   }
