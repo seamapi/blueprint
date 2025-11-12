@@ -1354,6 +1354,7 @@ const createResponse = (
                 return null
               }
 
+              // get last part of $ref. e.g. { '$ref': '#/components/schemas/space' }
               const batchResourceType = resourceRef.split('/').at(-1)
               if (batchResourceType == null) {
                 return null
