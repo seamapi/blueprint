@@ -285,6 +285,7 @@ interface ResourceResponse extends BaseResponse {
   responseKey: string
   resourceType: string
   actionAttemptType: string | null
+  batchResourceTypes: Array<{ batchKey: string; resourceType: string }> | null
 }
 
 interface ResourceListResponse extends BaseResponse {
@@ -428,6 +429,7 @@ interface Context extends Required<BlueprintOptions> {
   codeSampleDefinitions: CodeSampleDefinition[]
   resourceSampleDefinitions: ResourceSampleDefinition[]
   validActionAttemptTypes: string[]
+  validResourceTypes: string[]
   schemas: Record<string, unknown>
 }
 
@@ -462,6 +464,9 @@ export const createBlueprint = async (
   const validActionAttemptTypes = extractValidActionAttemptTypes(
     openapi.components.schemas,
   )
+  const validResourceTypes = extractValidResourceTypes(
+    openapi.components.schemas,
+  )
 
   const context: Context = {
     codeSampleDefinitions,
@@ -469,6 +474,7 @@ export const createBlueprint = async (
     formatCode,
     schemas,
     validActionAttemptTypes,
+    validResourceTypes,
   }
 
   const routes = await createRoutes(openapi.paths, context)
@@ -521,6 +527,12 @@ const extractValidActionAttemptTypes = (
   })
 
   return Array.from(processedActionAttemptTypes)
+}
+
+const extractValidResourceTypes = (
+  schemas: Openapi['components']['schemas'],
+): string[] => {
+  return Object.keys(schemas)
 }
 
 const createRoutes = async (
@@ -1344,6 +1356,35 @@ const createResponse = (
         context.validActionAttemptTypes,
       )
 
+      const batchKeys = parsedOperation['x-batch-keys']
+      const batchResourceTypes = batchKeys
+        ? batchKeys.flatMap((key) => {
+            const resourceRef = props?.properties?.[key]?.items?.$ref
+            if (resourceRef == null) {
+              return []
+            }
+
+            // get last part of $ref. e.g. { '$ref': '#/components/schemas/space' }
+            const batchResourceType = resourceRef.split('/').at(-1)
+            if (batchResourceType == null) {
+              return []
+            }
+
+            if (!context.validResourceTypes.includes(batchResourceType)) {
+              throw new Error(
+                `Unknown batch resource type '${batchResourceType}' referenced by ${path}`,
+              )
+            }
+
+            return [
+              {
+                batchKey: key,
+                resourceType: batchResourceType,
+              },
+            ]
+          })
+        : null
+
       return {
         responseType: props?.type === 'array' ? 'resource_list' : 'resource',
         responseKey: refKey,
@@ -1356,6 +1397,7 @@ const createResponse = (
             )) ??
           false,
         actionAttemptType,
+        batchResourceTypes: batchResourceTypes ?? null,
       }
     }
   }
