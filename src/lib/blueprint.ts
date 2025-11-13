@@ -429,6 +429,7 @@ interface Context extends Required<BlueprintOptions> {
   codeSampleDefinitions: CodeSampleDefinition[]
   resourceSampleDefinitions: ResourceSampleDefinition[]
   validActionAttemptTypes: string[]
+  validResourceTypes: string[]
   schemas: Record<string, unknown>
 }
 
@@ -463,6 +464,9 @@ export const createBlueprint = async (
   const validActionAttemptTypes = extractValidActionAttemptTypes(
     openapi.components.schemas,
   )
+  const validResourceTypes = extractValidResourceTypes(
+    openapi.components.schemas,
+  )
 
   const context: Context = {
     codeSampleDefinitions,
@@ -470,6 +474,7 @@ export const createBlueprint = async (
     formatCode,
     schemas,
     validActionAttemptTypes,
+    validResourceTypes,
   }
 
   const routes = await createRoutes(openapi.paths, context)
@@ -522,6 +527,12 @@ const extractValidActionAttemptTypes = (
   })
 
   return Array.from(processedActionAttemptTypes)
+}
+
+const extractValidResourceTypes = (
+  schemas: Openapi['components']['schemas'],
+): string[] => {
+  return Object.keys(schemas)
 }
 
 const createRoutes = async (
@@ -1357,6 +1368,12 @@ const createResponse = (
             const batchResourceType = resourceRef.split('/').at(-1)
             if (batchResourceType == null) {
               return []
+            }
+
+            if (!context.validResourceTypes.includes(batchResourceType)) {
+              throw new Error(
+                `Unknown batch resource type '${batchResourceType}' referenced by ${path}`,
+              )
             }
 
             return [
