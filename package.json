@@ -70,6 +70,7 @@
     "npm": ">=10.1.0"
   },
   "dependencies": {
+    "@seamapi/blueprint": "^0.52.1",
     "change-case": "^5.4.4",
     "zod": "^3.23.8"
   },
