@@ -1123,12 +1123,6 @@ export const createResources = async (
 ): Promise<Resource[]> => {
   const resources: Resource[] = []
   for (const [schemaName, schema] of Object.entries(schemas)) {
-    // TODO: TEMP fix to just get types generated because currently
-    // batch does NOT pass validation
-    if (schemaName === 'batch') {
-      continue
-    }
-
     const { success: isValidEventSchema, data: parsedEvent } =
       EventResourceSchema.safeParse(schema)
 
