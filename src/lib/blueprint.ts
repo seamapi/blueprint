@@ -1475,6 +1475,11 @@ export const createProperties = (
         )
         return false
       }
+      // TODO: TEMP fix to just get types generated because currently
+      // batch does NOT pass validation
+      if (name === 'batch') {
+        return false
+      }
       return true
     })
     .map(([name, prop]) =>
