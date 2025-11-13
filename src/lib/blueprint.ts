@@ -1347,28 +1347,25 @@ const createResponse = (
 
       const batchKeys = parsedOperation['x-batch-keys']
       const batchResourceTypes = batchKeys
-        ? batchKeys
-            .map((key) => {
-              const resourceRef = props?.properties?.[key]?.items?.$ref
-              if (resourceRef == null) {
-                return null
-              }
+        ? batchKeys.flatMap((key) => {
+            const resourceRef = props?.properties?.[key]?.items?.$ref
+            if (resourceRef == null) {
+              return []
+            }
 
-              // get last part of $ref. e.g. { '$ref': '#/components/schemas/space' }
-              const batchResourceType = resourceRef.split('/').at(-1)
-              if (batchResourceType == null) {
-                return null
-              }
+            // get last part of $ref. e.g. { '$ref': '#/components/schemas/space' }
+            const batchResourceType = resourceRef.split('/').at(-1)
+            if (batchResourceType == null) {
+              return []
+            }
 
-              return {
+            return [
+              {
                 batchKey: key,
                 resourceType: batchResourceType,
-              }
-            })
-            .filter(
-              (type): type is { batchKey: string; resourceType: string } =>
-                type !== null,
-            )
+              },
+            ]
+          })
         : null
 
       return {
