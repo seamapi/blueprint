@@ -727,8 +727,8 @@ const createEndpointFromOperation = async (
   const isUndocumented = parsedOperation['x-undocumented'].length > 0
   const undocumentedMessage = parsedOperation['x-undocumented']
 
-  const isDeprecated = parsedOperation.deprecated
   const deprecationMessage = parsedOperation['x-deprecated']
+  const isDeprecated = deprecationMessage.length > 0
 
   const isDraft = parsedOperation['x-draft'].length > 0
   const draftMessage = parsedOperation['x-draft']
