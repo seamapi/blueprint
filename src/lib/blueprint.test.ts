@@ -20,10 +20,21 @@ test('createProperties: assigns appropriate default values', (t) => {
     },
   }
 
+  const mockContext = {
+    codeSampleDefinitions: [],
+    resourceSampleDefinitions: [],
+    validActionAttemptTypes: [],
+    validResourceTypes: [],
+    schemas: {},
+    formatCode: false,
+    openapiSchemas: {}
+  } as any
+  
   const properties = createProperties(
     minimalProperties as Record<string, OpenapiSchema>,
     ['foo'],
     [],
+    mockContext,
   )
 
   t.is(properties.length, 1, 'Should create one property')
@@ -44,6 +55,16 @@ test('createProperties: assigns appropriate default values', (t) => {
 })
 
 test('createProperties: uses provided values', (t) => {
+  const mockContext = {
+    codeSampleDefinitions: [],
+    resourceSampleDefinitions: [],
+    validActionAttemptTypes: [],
+    validResourceTypes: [],
+    schemas: {},
+    formatCode: false,
+    openapiSchemas: {}
+  } as any
+
   const fullProperties = {
     fullProperty: {
       type: 'string',
@@ -59,6 +80,7 @@ test('createProperties: uses provided values', (t) => {
     fullProperties as Record<string, OpenapiSchema>,
     ['foo'],
     [],
+    mockContext,
   )
 
   t.is(properties.length, 1, 'Should create one property')
