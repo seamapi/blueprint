@@ -367,8 +367,8 @@ interface IdListProperty extends BaseListProperty {
 }
 
 interface BatchResourceProperty extends BaseProperty {
-  format: 'list'
-  jsonType: 'array'
+  format: 'record'
+  jsonType: 'object'
   resourceType: string
 }
 
@@ -1530,8 +1530,8 @@ const createProperty = (
     if (resourceType) {
       const batchResourceProperty: BatchResourceProperty = {
         ...baseProperty,
-        format: 'list',
-        jsonType: 'array',
+        format: 'record',
+        jsonType: 'object',
         resourceType,
       }
 
