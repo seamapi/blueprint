@@ -1519,6 +1519,27 @@ const createProperty = (
     propertyGroupKey: propertyGroupKey === '' ? null : propertyGroupKey,
   }
 
+  // Handle batch properties as BatchResourceProperty
+  if (
+    parentPaths.includes('batch') &&
+    prop.type === 'array' &&
+    prop.items?.$ref
+  ) {
+    const refPath = prop.items.$ref
+    const resourceType = refPath.split('/').pop()
+
+    if (resourceType) {
+      const batchResourceProperty: BatchResourceProperty = {
+        ...baseProperty,
+        format: 'object',
+        jsonType: 'object',
+        resourceType,
+      }
+
+      return batchResourceProperty
+    }
+  }
+
   switch (parsedProp.type) {
     case 'string':
       if (parsedProp.enum !== undefined) {
@@ -1628,17 +1649,29 @@ const parsePropertySchema = (
   parentPaths: string[],
   schemas: Openapi['components']['schemas'],
 ): z.infer<typeof PropertySchema> => {
-  const parsedProp = PropertySchema.parse(prop, {
-    path: [...parentPaths, name],
-  })
-
-  if (!('$ref' in prop)) {
-    return parsedProp
+  if (parentPaths.includes('batch')) {
+    return parseBatchPropertySchema(name, prop, parentPaths, schemas)
   }
 
-  const refPath = prop.$ref
+  return PropertySchema.parse(prop, {
+    path: [...parentPaths, name],
+  })
+}
+
+/**
+ * Parses the correct schema for a batch property. Batch properties have the following path:
+ * `batch.some_resources` where the correct schema should be for `some_resource`. Try to
+ * extract the schema name from the $ref path and parse it from global openapi schemas.
+ */
+const parseBatchPropertySchema = (
+  name: string,
+  prop: OpenapiSchema,
+  parentPaths: string[],
+  schemas: Openapi['components']['schemas'],
+): z.infer<typeof PropertySchema> => {
+  const refPath = prop.items?.$ref
   // Extract schema name from ref like '#/components/schemas/access_code' -> 'access_code'
-  const schemaName = refPath.split('/').pop()
+  const schemaName = refPath?.split('/').pop()
 
   if (schemaName == null || schemas[schemaName] == null) {
     throw new Error(
@@ -1646,7 +1679,9 @@ const parsePropertySchema = (
     )
   }
 
-  return PropertySchema.parse(schemas[schemaName], {
+  const referencedSchema = schemas[schemaName]
+
+  return PropertySchema.parse(referencedSchema, {
     path: [...parentPaths, name],
   })
 }
@@ -1746,8 +1781,13 @@ const createArrayProperty = (
       return createListProperty<EnumListProperty>('enum', {
         itemEnumValues: itemProperty.values,
       })
-
     case 'object':
+      if (!('properties' in itemProperty)) {
+        throw new Error(
+          `Missing properties for object in ${parentPaths.join('.')}`,
+        )
+      }
+
       return createListProperty<ObjectListProperty>('object', {
         itemProperties: itemProperty.properties,
       })
