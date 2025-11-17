@@ -316,6 +316,7 @@ export type Property =
   | BooleanProperty
   | DatetimeProperty
   | IdProperty
+  | BatchResourceProperty
 
 interface StringProperty extends BaseProperty {
   format: 'string'
@@ -423,6 +424,12 @@ interface IdProperty extends BaseProperty {
   jsonType: 'string'
 }
 
+interface BatchResourceProperty extends BaseProperty {
+  format: 'object'
+  jsonType: 'object'
+  resourceType: string
+}
+
 export type Method = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH'
 
 interface Context extends Required<BlueprintOptions> {
@@ -499,7 +506,7 @@ export const createBlueprint = async (
     routes,
     namespaces,
     resources,
-    pagination: createPagination(pagination),
+    pagination: createPagination(pagination, openapi.components.schemas),
     events: await createEvents(openapiSchemas, routes, context),
     actionAttempts,
   }
@@ -1103,6 +1110,7 @@ const createArrayParameter = (
 
 const createPagination = (
   schema: Openapi['components']['schemas'][number] | undefined,
+  schemas: Openapi['components']['schemas'],
 ): Pagination | null => {
   if (schema == null) return null
   return {
@@ -1111,6 +1119,7 @@ const createPagination = (
     properties: createProperties(
       schema.properties ?? {},
       [paginationResponseKey],
+      schemas,
       [],
     ),
   }
@@ -1123,12 +1132,6 @@ export const createResources = async (
 ): Promise<Resource[]> => {
   const resources: Resource[] = []
   for (const [schemaName, schema] of Object.entries(schemas)) {
-    // TODO: TEMP fix to just get types generated because currently
-    // batch does NOT pass validation
-    if (schemaName === 'batch') {
-      continue
-    }
-
     const { success: isValidEventSchema, data: parsedEvent } =
       EventResourceSchema.safeParse(schema)
 
@@ -1144,6 +1147,7 @@ export const createResources = async (
       const resource = await createResource(
         schemaName,
         eventSchema,
+        schemas,
         routes,
         context,
       )
@@ -1153,7 +1157,13 @@ export const createResources = async (
 
     const { success: isValidResourceSchema } = ResourceSchema.safeParse(schema)
     if (isValidResourceSchema) {
-      const resource = await createResource(schemaName, schema, routes, context)
+      const resource = await createResource(
+        schemaName,
+        schema,
+        schemas,
+        routes,
+        context,
+      )
       resources.push(resource)
       continue
     }
@@ -1165,6 +1175,7 @@ export const createResources = async (
 const createResource = async (
   schemaName: string,
   schema: OpenapiSchema,
+  schemas: Openapi['components']['schemas'],
   routes: Route[],
   context: Context,
 ): Promise<Resource> => {
@@ -1182,6 +1193,7 @@ const createResource = async (
     properties: createProperties(
       schema.properties ?? {},
       [schemaName],
+      schemas,
       propertyGroups,
     ),
     description: normalizeDescription(schema.description ?? ''),
@@ -1452,6 +1464,7 @@ const validateActionAttemptType = (
 export const createProperties = (
   properties: Record<string, OpenapiSchema>,
   parentPaths: string[],
+  schemas: Record<string, OpenapiSchema>,
   propertyGroups: PropertyGroup[],
 ): Property[] =>
   Object.entries(properties)
@@ -1475,15 +1488,11 @@ export const createProperties = (
         )
         return false
       }
-      // TODO: TEMP fix to just get types generated because currently
-      // batch does NOT pass validation
-      if (name === 'batch') {
-        return false
-      }
+
       return true
     })
     .map(([name, prop]) =>
-      createProperty(name, prop, parentPaths, propertyGroups),
+      createProperty(name, prop, parentPaths, propertyGroups, schemas),
     )
 
 const createProperty = (
@@ -1491,10 +1500,9 @@ const createProperty = (
   prop: OpenapiSchema,
   parentPaths: string[],
   propertyGroups: PropertyGroup[],
+  schemas: Openapi['components']['schemas'],
 ): Property => {
-  const parsedProp = PropertySchema.parse(prop, {
-    path: [...parentPaths, name],
-  })
+  const parsedProp = parsePropertySchema(name, prop, parentPaths, schemas)
 
   const propertyGroupKey = parsedProp['x-property-group-key'] as string
   validateGroupKey(propertyGroupKey, name, parentPaths, propertyGroups)
@@ -1550,7 +1558,7 @@ const createProperty = (
     case 'boolean':
       return { ...baseProperty, format: 'boolean', jsonType: 'boolean' }
     case 'array': {
-      return createArrayProperty(baseProperty, prop, parentPaths)
+      return createArrayProperty(baseProperty, prop, parentPaths, schemas)
     }
     case 'object':
       if (prop.properties !== undefined) {
@@ -1563,6 +1571,7 @@ const createProperty = (
           properties: createProperties(
             prop.properties,
             [...parentPaths, name],
+            schemas,
             nestedPropertyGroups,
           ),
         }
@@ -1613,10 +1622,40 @@ const validateGroupKey = (
   }
 }
 
+const parsePropertySchema = (
+  name: string,
+  prop: OpenapiSchema,
+  parentPaths: string[],
+  schemas: Openapi['components']['schemas'],
+): z.infer<typeof PropertySchema> => {
+  const parsedProp = PropertySchema.parse(prop, {
+    path: [...parentPaths, name],
+  })
+
+  if (!('$ref' in prop)) {
+    return parsedProp
+  }
+
+  const refPath = prop.$ref
+  // Extract schema name from ref like '#/components/schemas/access_code' -> 'access_code'
+  const schemaName = refPath.split('/').pop()
+
+  if (schemaName == null || schemas[schemaName] == null) {
+    throw new Error(
+      `Invalid $ref schema "${schemaName}" for property "${name}" in resource "${parentPaths.join('.')}"`,
+    )
+  }
+
+  return PropertySchema.parse(schemas[schemaName], {
+    path: [...parentPaths, name],
+  })
+}
+
 const createArrayProperty = (
   baseProperty: BaseProperty,
   prop: OpenapiSchema,
   parentPaths: string[],
+  schemas: Openapi['components']['schemas'],
 ): Property => {
   function createListProperty<T extends ListProperty>(
     format: string,
@@ -1668,9 +1707,11 @@ const createArrayProperty = (
             properties: createProperties(
               schema.properties ?? {},
               [...parentPaths, baseProperty.name],
+              schemas,
               [],
             ),
             description: normalizeDescription(schema.description ?? ''),
+            schemas,
           }
         }),
       },
@@ -1682,6 +1723,7 @@ const createArrayProperty = (
     prop.items,
     [...parentPaths, baseProperty.name],
     [],
+    schemas,
   )
 
   switch (itemProperty.format) {
@@ -1795,7 +1837,13 @@ const createEvents = async (
         throw new Error(`Missing route_path for event type ${eventType}`)
       }
 
-      const resource = await createResource('event', schema, routes, context)
+      const resource = await createResource(
+        'event',
+        schema,
+        schemas,
+        routes,
+        context,
+      )
       return {
         ...resource,
         eventType,
@@ -1847,11 +1895,11 @@ const createActionAttempts = async (
 
   return await Promise.all(
     Array.from(schemasByActionType.entries()).map(
-      async ([actionType, schemas]) => {
+      async ([actionType, actionTypeSchemas]) => {
         const mergedProperties: Record<string, OpenapiSchema> = {}
 
         const allPropertyKeys = new Set<string>()
-        for (const schema of schemas) {
+        for (const schema of actionTypeSchemas) {
           if (schema.properties != null) {
             Object.keys(schema.properties).forEach((key) =>
               allPropertyKeys.add(key),
@@ -1860,7 +1908,7 @@ const createActionAttempts = async (
         }
 
         for (const propKey of allPropertyKeys) {
-          const propDefinitions = schemas
+          const propDefinitions = actionTypeSchemas
             .filter((schema) => schema.properties?.[propKey] != null)
             .map((schema) => schema.properties?.[propKey])
 
@@ -1887,13 +1935,14 @@ const createActionAttempts = async (
           ...(actionAttemptSchema['x-route-path'] != null && {
             'x-route-path': actionAttemptSchema['x-route-path'],
           }),
-          ...schemas[0],
+          ...actionTypeSchemas[0],
           properties: mergedProperties,
         }
 
         const resource = await createResource(
           'action_attempt',
           schemaWithMergedProperties,
+          schemas,
           routes,
           context,
         )
