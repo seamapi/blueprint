@@ -1530,8 +1530,8 @@ const createProperty = (
     if (resourceType) {
       const batchResourceProperty: BatchResourceProperty = {
         ...baseProperty,
-        format: 'object',
-        jsonType: 'object',
+        format: 'list',
+        jsonType: 'array',
         resourceType,
       }
 
