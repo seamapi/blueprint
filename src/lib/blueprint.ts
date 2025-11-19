@@ -367,7 +367,7 @@ interface IdListProperty extends BaseListProperty {
 }
 
 interface BatchResourceProperty extends BaseProperty {
-  format: 'record'
+  format: 'resource'
   jsonType: 'object'
   resourceType: string
 }
