@@ -24,6 +24,7 @@ test('createProperties: assigns appropriate default values', (t) => {
     minimalProperties as Record<string, OpenapiSchema>,
     ['foo'],
     [],
+    {},
   )
 
   t.is(properties.length, 1, 'Should create one property')
@@ -59,6 +60,7 @@ test('createProperties: uses provided values', (t) => {
     fullProperties as Record<string, OpenapiSchema>,
     ['foo'],
     [],
+    {},
   )
 
   t.is(properties.length, 1, 'Should create one property')
