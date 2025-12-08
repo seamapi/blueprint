@@ -78,6 +78,7 @@ export const OpenapiOperationSchema = z.object({
     .default([]),
   deprecated: z.boolean().default(false),
   'x-response-key': z.string().nullable().optional(),
+  'x-batch-keys': z.array(z.string()).optional(),
   'x-title': z.string().default(''),
   'x-undocumented': z.string().default(''),
   'x-deprecated': z.string().default(''),
@@ -115,7 +116,7 @@ const commonPropertyFields = {
   'x-variant-groups': VariantGroupSchema,
 }
 
-export const PropertySchema: z.ZodSchema<any> = z.union([
+export const PropertySchema: z.ZodSchema = z.union([
   z.object({
     type: z.enum(['string', 'number', 'integer', 'boolean', 'array', 'object']),
     ...commonPropertyFields,

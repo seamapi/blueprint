@@ -285,6 +285,7 @@ interface ResourceResponse extends BaseResponse {
   responseKey: string
   resourceType: string
   actionAttemptType: string | null
+  batchResourceTypes: Array<{ batchKey: string; resourceType: string }> | null
 }
 
 interface ResourceListResponse extends BaseResponse {
@@ -315,6 +316,7 @@ export type Property =
   | BooleanProperty
   | DatetimeProperty
   | IdProperty
+  | BatchResourceProperty
 
 interface StringProperty extends BaseProperty {
   format: 'string'
@@ -362,6 +364,12 @@ interface DatetimeListProperty extends BaseListProperty {
 
 interface IdListProperty extends BaseListProperty {
   itemFormat: 'id'
+}
+
+interface BatchResourceProperty extends BaseProperty {
+  format: 'record'
+  jsonType: 'object'
+  resourceType: string
 }
 
 interface EnumListProperty extends BaseListProperty {
@@ -428,6 +436,7 @@ interface Context extends Required<BlueprintOptions> {
   codeSampleDefinitions: CodeSampleDefinition[]
   resourceSampleDefinitions: ResourceSampleDefinition[]
   validActionAttemptTypes: string[]
+  validResourceTypes: string[]
   schemas: Record<string, unknown>
 }
 
@@ -462,6 +471,9 @@ export const createBlueprint = async (
   const validActionAttemptTypes = extractValidActionAttemptTypes(
     openapi.components.schemas,
   )
+  const validResourceTypes = extractValidResourceTypes(
+    openapi.components.schemas,
+  )
 
   const context: Context = {
     codeSampleDefinitions,
@@ -469,6 +481,7 @@ export const createBlueprint = async (
     formatCode,
     schemas,
     validActionAttemptTypes,
+    validResourceTypes,
   }
 
   const routes = await createRoutes(openapi.paths, context)
@@ -493,7 +506,7 @@ export const createBlueprint = async (
     routes,
     namespaces,
     resources,
-    pagination: createPagination(pagination),
+    pagination: createPagination(pagination, openapiSchemas),
     events: await createEvents(openapiSchemas, routes, context),
     actionAttempts,
   }
@@ -521,6 +534,12 @@ const extractValidActionAttemptTypes = (
   })
 
   return Array.from(processedActionAttemptTypes)
+}
+
+const extractValidResourceTypes = (
+  schemas: Openapi['components']['schemas'],
+): string[] => {
+  return Object.keys(schemas)
 }
 
 const createRoutes = async (
@@ -570,9 +589,9 @@ const getNamespacePath = (path: string, paths: OpenapiPaths): string | null => {
 
     // An endpoint is a route that ends without further paths. i.e., ends in
     // a letter (not slash).
-    const endpoints = pathKeys.filter((key) => {
-      return new RegExp(`^/${[...namespace, part].join('/')}/\\w+$`).test(key)
-    })
+    const endpoints = pathKeys.filter((key) =>
+      new RegExp(`^/${[...namespace, part].join('/')}/\\w+$`).test(key),
+    )
 
     if (endpoints.length === 0) {
       namespace.push(part)
@@ -715,8 +734,8 @@ const createEndpointFromOperation = async (
   const isUndocumented = parsedOperation['x-undocumented'].length > 0
   const undocumentedMessage = parsedOperation['x-undocumented']
 
-  const isDeprecated = parsedOperation.deprecated
   const deprecationMessage = parsedOperation['x-deprecated']
+  const isDeprecated = deprecationMessage.length > 0
 
   const isDraft = parsedOperation['x-draft'].length > 0
   const draftMessage = parsedOperation['x-draft']
@@ -857,7 +876,7 @@ const createRequestBody = (
     return []
   }
 
-  const requestBody = operation.requestBody
+  const { requestBody } = operation
   const jsonSchema = requestBody.content?.['application/json']?.schema
   if (jsonSchema == null) return []
 
@@ -877,8 +896,8 @@ const createParameters = (
   properties: Record<string, OpenapiSchema>,
   path: string,
   requiredParameters: string[] = [],
-): Parameter[] => {
-  return Object.entries(properties)
+): Parameter[] =>
+  Object.entries(properties)
     .map(([name, property]) => {
       // Don't flatten discriminated arrays as they are handled separately in createParameter
       if (
@@ -904,7 +923,6 @@ const createParameters = (
     .map(([name, property]) =>
       createParameter(name, property, path, requiredParameters),
     )
-}
 
 const createParameter = (
   name: string,
@@ -1092,6 +1110,7 @@ const createArrayParameter = (
 
 const createPagination = (
   schema: Openapi['components']['schemas'][number] | undefined,
+  schemas: Openapi['components']['schemas'],
 ): Pagination | null => {
   if (schema == null) return null
   return {
@@ -1101,6 +1120,7 @@ const createPagination = (
       schema.properties ?? {},
       [paginationResponseKey],
       [],
+      schemas,
     ),
   }
 }
@@ -1127,6 +1147,7 @@ export const createResources = async (
       const resource = await createResource(
         schemaName,
         eventSchema,
+        schemas,
         routes,
         context,
       )
@@ -1136,7 +1157,13 @@ export const createResources = async (
 
     const { success: isValidResourceSchema } = ResourceSchema.safeParse(schema)
     if (isValidResourceSchema) {
-      const resource = await createResource(schemaName, schema, routes, context)
+      const resource = await createResource(
+        schemaName,
+        schema,
+        schemas,
+        routes,
+        context,
+      )
       resources.push(resource)
       continue
     }
@@ -1148,6 +1175,7 @@ export const createResources = async (
 const createResource = async (
   schemaName: string,
   schema: OpenapiSchema,
+  schemas: Openapi['components']['schemas'],
   routes: Route[],
   context: Context,
 ): Promise<Resource> => {
@@ -1166,6 +1194,7 @@ const createResource = async (
       schema.properties ?? {},
       [schemaName],
       propertyGroups,
+      schemas,
     ),
     description: normalizeDescription(schema.description ?? ''),
     isDeprecated: schema.deprecated ?? false,
@@ -1323,7 +1352,7 @@ const createResponse = (
     typeof schema.properties === 'object' &&
     schema.properties !== null
   ) {
-    const properties = schema.properties
+    const { properties } = schema
 
     if (!(responseKey in properties)) {
       throw new Error(
@@ -1345,6 +1374,35 @@ const createResponse = (
         context.validActionAttemptTypes,
       )
 
+      const batchKeys = parsedOperation['x-batch-keys']
+      const batchResourceTypes = batchKeys
+        ? batchKeys.flatMap((key) => {
+            const resourceRef = props?.properties?.[key]?.items?.$ref
+            if (resourceRef == null) {
+              return []
+            }
+
+            // get last part of $ref. e.g. { '$ref': '#/components/schemas/space' }
+            const batchResourceType = resourceRef.split('/').at(-1)
+            if (batchResourceType == null) {
+              return []
+            }
+
+            if (!context.validResourceTypes.includes(batchResourceType)) {
+              throw new Error(
+                `Unknown batch resource type '${batchResourceType}' referenced by ${path}`,
+              )
+            }
+
+            return [
+              {
+                batchKey: key,
+                resourceType: batchResourceType,
+              },
+            ]
+          })
+        : null
+
       return {
         responseType: props?.type === 'array' ? 'resource_list' : 'resource',
         responseKey: refKey,
@@ -1357,6 +1415,7 @@ const createResponse = (
             )) ??
           false,
         actionAttemptType,
+        batchResourceTypes: batchResourceTypes ?? null,
       }
     }
   }
@@ -1406,8 +1465,9 @@ export const createProperties = (
   properties: Record<string, OpenapiSchema>,
   parentPaths: string[],
   propertyGroups: PropertyGroup[],
-): Property[] => {
-  return Object.entries(properties)
+  schemas: Openapi['components']['schemas'],
+): Property[] =>
+  Object.entries(properties)
     .map(([name, property]) => {
       // Don't flatten discriminated arrays as they are handled separately in createProperty
       if (
@@ -1428,22 +1488,21 @@ export const createProperties = (
         )
         return false
       }
+
       return true
     })
     .map(([name, prop]) =>
-      createProperty(name, prop, parentPaths, propertyGroups),
+      createProperty(name, prop, parentPaths, propertyGroups, schemas),
     )
-}
 
 const createProperty = (
   name: string,
   prop: OpenapiSchema,
   parentPaths: string[],
   propertyGroups: PropertyGroup[],
+  schemas: Openapi['components']['schemas'],
 ): Property => {
-  const parsedProp = PropertySchema.parse(prop, {
-    path: [...parentPaths, name],
-  })
+  const parsedProp = parsePropertySchema(name, prop, parentPaths, schemas)
 
   if (name.startsWith('ext_')) {
     throw new Error(
@@ -1464,6 +1523,26 @@ const createProperty = (
     isDraft: parsedProp['x-draft'].length > 0,
     draftMessage: parsedProp['x-draft'],
     propertyGroupKey: propertyGroupKey === '' ? null : propertyGroupKey,
+  }
+
+  if (
+    parentPaths.includes('batch') &&
+    prop.type === 'array' &&
+    prop.items?.$ref
+  ) {
+    const refPath = prop.items.$ref
+    const resourceType = refPath.split('/').pop()
+
+    if (resourceType) {
+      const batchResourceProperty: BatchResourceProperty = {
+        ...baseProperty,
+        format: 'record',
+        jsonType: 'object',
+        resourceType,
+      }
+
+      return batchResourceProperty
+    }
   }
 
   switch (parsedProp.type) {
@@ -1505,7 +1584,7 @@ const createProperty = (
     case 'boolean':
       return { ...baseProperty, format: 'boolean', jsonType: 'boolean' }
     case 'array': {
-      return createArrayProperty(baseProperty, prop, parentPaths)
+      return createArrayProperty(baseProperty, prop, parentPaths, schemas)
     }
     case 'object':
       if (prop.properties !== undefined) {
@@ -1519,6 +1598,7 @@ const createProperty = (
             prop.properties,
             [...parentPaths, name],
             nestedPropertyGroups,
+            schemas,
           ),
         }
       }
@@ -1572,6 +1652,7 @@ const createArrayProperty = (
   baseProperty: BaseProperty,
   prop: OpenapiSchema,
   parentPaths: string[],
+  schemas: Openapi['components']['schemas'],
 ): Property => {
   function createListProperty<T extends ListProperty>(
     format: string,
@@ -1624,6 +1705,7 @@ const createArrayProperty = (
               schema.properties ?? {},
               [...parentPaths, baseProperty.name],
               [],
+              schemas,
             ),
             description: normalizeDescription(schema.description ?? ''),
           }
@@ -1637,6 +1719,7 @@ const createArrayProperty = (
     prop.items,
     [...parentPaths, baseProperty.name],
     [],
+    schemas,
   )
 
   switch (itemProperty.format) {
@@ -1661,6 +1744,12 @@ const createArrayProperty = (
       })
 
     case 'object':
+      if (!('properties' in itemProperty)) {
+        throw new Error(
+          `Missing properties for object in ${parentPaths.join('.')}`,
+        )
+      }
+
       return createListProperty<ObjectListProperty>('object', {
         itemProperties: itemProperty.properties,
       })
@@ -1671,6 +1760,49 @@ const createArrayProperty = (
     default:
       return fallbackListProperty
   }
+}
+
+const parsePropertySchema = (
+  name: string,
+  prop: OpenapiSchema,
+  parentPaths: string[],
+  schemas: Openapi['components']['schemas'],
+): z.infer<typeof PropertySchema> => {
+  if (parentPaths.includes('batch')) {
+    return parseBatchPropertySchema(name, prop, parentPaths, schemas)
+  }
+
+  return PropertySchema.parse(prop, {
+    path: [...parentPaths, name],
+  })
+}
+
+/**
+ * Parses the correct schema for a batch property. Batch properties have the following path:
+ * `batch.some_resources` where the correct schema should be for `some_resource`. Try to
+ * extract the schema name from the $ref path and parse it from global openapi schemas.
+ */
+const parseBatchPropertySchema = (
+  name: string,
+  prop: OpenapiSchema,
+  parentPaths: string[],
+  schemas: Openapi['components']['schemas'],
+): z.infer<typeof PropertySchema> => {
+  const refPath = prop.items?.$ref
+  // Extract schema name from ref like '#/components/schemas/access_code' -> 'access_code'
+  const schemaName = refPath?.split('/').pop()
+
+  if (schemaName == null || schemas[schemaName] == null) {
+    throw new Error(
+      `Missing $ref schema "${schemaName}" for property "batch.${name}"`,
+    )
+  }
+
+  const referencedSchema = schemas[schemaName]
+
+  return PropertySchema.parse(referencedSchema, {
+    path: [...parentPaths, name],
+  })
 }
 
 export const getSemanticMethod = (methods: Method[]): Method => {
@@ -1750,7 +1882,13 @@ const createEvents = async (
         throw new Error(`Missing route_path for event type ${eventType}`)
       }
 
-      const resource = await createResource('event', schema, routes, context)
+      const resource = await createResource(
+        'event',
+        schema,
+        schemas,
+        routes,
+        context,
+      )
       return {
         ...resource,
         eventType,
@@ -1802,11 +1940,11 @@ const createActionAttempts = async (
 
   return await Promise.all(
     Array.from(schemasByActionType.entries()).map(
-      async ([actionType, schemas]) => {
+      async ([actionType, actionAttemptSchemas]) => {
         const mergedProperties: Record<string, OpenapiSchema> = {}
 
         const allPropertyKeys = new Set<string>()
-        for (const schema of schemas) {
+        for (const schema of actionAttemptSchemas) {
           if (schema.properties != null) {
             Object.keys(schema.properties).forEach((key) =>
               allPropertyKeys.add(key),
@@ -1815,7 +1953,7 @@ const createActionAttempts = async (
         }
 
         for (const propKey of allPropertyKeys) {
-          const propDefinitions = schemas
+          const propDefinitions = actionAttemptSchemas
             .filter((schema) => schema.properties?.[propKey] != null)
             .map((schema) => schema.properties?.[propKey])
 
@@ -1842,13 +1980,14 @@ const createActionAttempts = async (
           ...(actionAttemptSchema['x-route-path'] != null && {
             'x-route-path': actionAttemptSchema['x-route-path'],
           }),
-          ...schemas[0],
+          ...actionAttemptSchemas[0],
           properties: mergedProperties,
         }
 
         const resource = await createResource(
           'action_attempt',
           schemaWithMergedProperties,
+          schemas,
           routes,
           context,
         )

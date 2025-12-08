@@ -1,6 +1,5 @@
-import test from 'ava'
-
 import { createBlueprint, TypesModuleSchema } from '@seamapi/blueprint'
+import test from 'ava'
 
 import * as types from './fixtures/types/index.js'
 
