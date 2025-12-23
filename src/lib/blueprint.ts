@@ -501,7 +501,11 @@ const processResponseBody = (
     if (typeof value === 'string' && resourceSampleMap.has(value)) {
       // Replace resource type string with array containing the sample
       processed[key] = [resourceSampleMap.get(value)]
-    } else if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+    } else if (
+      typeof value === 'object' &&
+      value !== null &&
+      !Array.isArray(value)
+    ) {
       // Recursively process nested objects
       processed[key] = processResponseBody(
         value as Record<string, unknown>,
