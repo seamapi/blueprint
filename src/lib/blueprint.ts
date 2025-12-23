@@ -316,7 +316,6 @@ export type Property =
   | BooleanProperty
   | DatetimeProperty
   | IdProperty
-  | BatchResourceProperty
 
 interface StringProperty extends BaseProperty {
   format: 'string'
@@ -364,12 +363,6 @@ interface DatetimeListProperty extends BaseListProperty {
 
 interface IdListProperty extends BaseListProperty {
   itemFormat: 'id'
-}
-
-interface BatchResourceProperty extends BaseProperty {
-  format: 'record'
-  jsonType: 'object'
-  resourceType: string
 }
 
 interface EnumListProperty extends BaseListProperty {
@@ -458,6 +451,71 @@ export interface BlueprintOptions {
   formatCode?: (content: string, syntax: SyntaxName) => Promise<string>
 }
 
+/**
+ * Injects resource sample data into code sample definitions.
+ * Replaces string values that match resource types with actual resource sample properties.
+ */
+const injectResourceSamplesIntoCodeSamples = (
+  codeSampleDefinitions: CodeSampleDefinition[],
+  resourceSampleDefinitions: ResourceSampleDefinition[],
+): CodeSampleDefinition[] => {
+  // Create a map of resource type to sample properties
+  const resourceSampleMap = new Map<string, unknown>()
+  for (const resourceSample of resourceSampleDefinitions) {
+    resourceSampleMap.set(
+      resourceSample.resource_type,
+      resourceSample.properties,
+    )
+  }
+
+  return codeSampleDefinitions.map((codeSample) => {
+    if (codeSample.response.body == null) {
+      return codeSample
+    }
+
+    const processedBody = processResponseBody(
+      codeSample.response.body,
+      resourceSampleMap,
+    )
+
+    return {
+      ...codeSample,
+      response: {
+        ...codeSample.response,
+        body: processedBody,
+      },
+    }
+  })
+}
+
+/**
+ * Recursively processes response body to replace resource type strings with sample data.
+ */
+const processResponseBody = (
+  body: Record<string, unknown>,
+  resourceSampleMap: Map<string, unknown>,
+): Record<string, unknown> => {
+  const processed: Record<string, unknown> = {}
+
+  for (const [key, value] of Object.entries(body)) {
+    if (typeof value === 'string' && resourceSampleMap.has(value)) {
+      // Replace resource type string with array containing the sample
+      processed[key] = [resourceSampleMap.get(value)]
+    } else if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+      // Recursively process nested objects
+      processed[key] = processResponseBody(
+        value as Record<string, unknown>,
+        resourceSampleMap,
+      )
+    } else {
+      // Keep other values as-is
+      processed[key] = value
+    }
+  }
+
+  return processed
+}
+
 export const createBlueprint = async (
   typesModule: TypesModuleInput,
   { formatCode = async (content) => content }: BlueprintOptions = {},
@@ -475,8 +533,14 @@ export const createBlueprint = async (
     openapi.components.schemas,
   )
 
-  const context: Context = {
+  // Inject resource samples into code sample definitions before creating blueprint
+  const processedCodeSampleDefinitions = injectResourceSamplesIntoCodeSamples(
     codeSampleDefinitions,
+    resourceSampleDefinitions,
+  )
+
+  const context: Context = {
+    codeSampleDefinitions: processedCodeSampleDefinitions,
     resourceSampleDefinitions,
     formatCode,
     schemas,
@@ -1132,6 +1196,11 @@ export const createResources = async (
 ): Promise<Resource[]> => {
   const resources: Resource[] = []
   for (const [schemaName, schema] of Object.entries(schemas)) {
+    // Skip batch resource - it's handled via code samples
+    if (schemaName === 'batch') {
+      continue
+    }
+
     const { success: isValidEventSchema, data: parsedEvent } =
       EventResourceSchema.safeParse(schema)
 
@@ -1517,26 +1586,6 @@ const createProperty = (
     isDraft: parsedProp['x-draft'].length > 0,
     draftMessage: parsedProp['x-draft'],
     propertyGroupKey: propertyGroupKey === '' ? null : propertyGroupKey,
-  }
-
-  if (
-    parentPaths.includes('batch') &&
-    prop.type === 'array' &&
-    prop.items?.$ref
-  ) {
-    const refPath = prop.items.$ref
-    const resourceType = refPath.split('/').pop()
-
-    if (resourceType) {
-      const batchResourceProperty: BatchResourceProperty = {
-        ...baseProperty,
-        format: 'record',
-        jsonType: 'object',
-        resourceType,
-      }
-
-      return batchResourceProperty
-    }
   }
 
   switch (parsedProp.type) {

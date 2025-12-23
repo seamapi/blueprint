@@ -460,6 +460,48 @@ export default {
         'x-title': 'List foos',
       },
     },
+    '/foos/get_batch': {
+      post: {
+        operationId: 'foosGetBatchPost',
+        responses: {
+          200: {
+            content: {
+              'application/json': {
+                schema: {
+                  properties: {
+                    ok: { type: 'boolean' },
+                    batch: {
+                      type: 'object',
+                      properties: {
+                        foos: {
+                          items: { $ref: '#/components/schemas/foo' },
+                          type: 'array',
+                        },
+                      },
+                    },
+                  },
+                  required: ['batch', 'ok'],
+                  type: 'object',
+                },
+              },
+            },
+            description: 'Get batch of foos.',
+          },
+          400: { description: 'Bad Request' },
+          401: { description: 'Unauthorized' },
+        },
+        security: [
+          {
+            api_key: [],
+          },
+        ],
+        summary: '/foos/get_batch',
+        tags: ['/foos'],
+        'x-response-key': 'batch',
+        'x-batch-keys': ['foos'],
+        'x-title': 'Get batch of foos',
+      },
+    },
     '/foos/advanced/get': {
       get: {
         operationId: 'foosAdvancedGetGet',

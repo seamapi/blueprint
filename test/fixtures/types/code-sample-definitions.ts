@@ -55,6 +55,21 @@ export default [
     },
   },
   {
+    title: 'Get batch with resource injection',
+    description: 'Test batch resource injection',
+    request: {
+      path: '/foos/get_batch',
+      parameters: {},
+    },
+    response: {
+      body: {
+        batch: {
+          foos: 'foo',
+        },
+      },
+    },
+  },
+  {
     title: 'List planes',
     description: 'This is the wya to get all plans',
     request: {
