@@ -16,3 +16,40 @@ test('createBlueprint: with formatCode', async (t) => {
   })
   t.snapshot(blueprint, 'blueprint')
 })
+
+test('createBlueprint: throws when a /seam entry is documented', async (t) => {
+  const typesModule = TypesModuleSchema.parse(types)
+  const openapi = structuredClone(typesModule.openapi)
+
+  openapi.paths['/seam/widgets/get'] = {
+    post: {
+      operationId: 'seamWidgetsGetPost',
+      responses: {
+        200: {
+          content: {
+            'application/json': {
+              schema: {
+                properties: {
+                  ok: { type: 'boolean' },
+                },
+                required: ['ok'],
+                type: 'object',
+              },
+            },
+          },
+          description: 'OK',
+        },
+      },
+      security: [],
+      summary: '/seam/widgets/get',
+      tags: ['/seam/widgets'],
+      'x-response-key': null,
+      'x-title': 'Get seam widgets',
+    },
+  }
+
+  await t.throwsAsync(() => createBlueprint({ ...typesModule, openapi }), {
+    message:
+      /All \/seam entries must be marked undocumented\. Found: .*\/seam\/widgets\/get/,
+  })
+})

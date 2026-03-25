@@ -500,6 +500,15 @@ export const createBlueprint = async (
     routes,
     context,
   )
+  const events = await createEvents(openapiSchemas, routes, context)
+
+  assertSeamPathsAreUndocumented({
+    routes,
+    namespaces,
+    resources,
+    events,
+    actionAttempts,
+  })
 
   return {
     title: openapi.info.title,
@@ -507,8 +516,64 @@ export const createBlueprint = async (
     namespaces,
     resources,
     pagination: createPagination(pagination, openapiSchemas),
-    events: await createEvents(openapiSchemas, routes, context),
+    events,
     actionAttempts,
+  }
+}
+
+const isSeamPath = (path: string): boolean =>
+  path === '/seam' || path.startsWith('/seam/')
+
+const assertSeamPathsAreUndocumented = ({
+  routes,
+  namespaces,
+  resources,
+  events,
+  actionAttempts,
+}: Pick<
+  Blueprint,
+  'routes' | 'namespaces' | 'resources' | 'events' | 'actionAttempts'
+>): void => {
+  const offenders = [
+    ...routes.flatMap((route) => {
+      const routeOffenders =
+        isSeamPath(route.path) && !route.isUndocumented
+          ? [`route ${route.path}`]
+          : []
+      const endpointOffenders = route.endpoints.flatMap((endpoint) =>
+        isSeamPath(endpoint.path) && !endpoint.isUndocumented
+          ? [`endpoint ${endpoint.path}`]
+          : [],
+      )
+
+      return [...routeOffenders, ...endpointOffenders]
+    }),
+    ...namespaces.flatMap((namespace) =>
+      isSeamPath(namespace.path) && !namespace.isUndocumented
+        ? [`namespace ${namespace.path}`]
+        : [],
+    ),
+    ...resources.flatMap((resource) =>
+      isSeamPath(resource.routePath) && !resource.isUndocumented
+        ? [`resource ${resource.routePath}`]
+        : [],
+    ),
+    ...events.flatMap((event) =>
+      isSeamPath(event.routePath) && !event.isUndocumented
+        ? [`event ${event.routePath}`]
+        : [],
+    ),
+    ...actionAttempts.flatMap((actionAttempt) =>
+      isSeamPath(actionAttempt.routePath) && !actionAttempt.isUndocumented
+        ? [`action_attempt ${actionAttempt.routePath}`]
+        : [],
+    ),
+  ]
+
+  if (offenders.length > 0) {
+    throw new Error(
+      `All /seam entries must be marked undocumented. Found: ${offenders.join(', ')}`,
+    )
   }
 }
 
@@ -1946,9 +2011,9 @@ const createActionAttempts = async (
         const allPropertyKeys = new Set<string>()
         for (const schema of actionAttemptSchemas) {
           if (schema.properties != null) {
-            Object.keys(schema.properties).forEach((key) =>
-              allPropertyKeys.add(key),
-            )
+            Object.keys(schema.properties).forEach((key) => {
+              allPropertyKeys.add(key)
+            })
           }
         }
 
