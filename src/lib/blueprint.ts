@@ -510,6 +510,11 @@ export const createBlueprint = async (
     actionAttempts,
   })
 
+  assertDocumentedEndpointsDontReferenceUndocumentedResources({
+    routes,
+    resources,
+  })
+
   return {
     title: openapi.info.title,
     routes,
@@ -573,6 +578,38 @@ const assertSeamPathsAreUndocumented = ({
   if (offenders.length > 0) {
     throw new Error(
       `All /seam entries must be marked undocumented. Found: ${offenders.join(', ')}`,
+    )
+  }
+}
+
+const assertDocumentedEndpointsDontReferenceUndocumentedResources = ({
+  routes,
+  resources,
+}: Pick<Blueprint, 'routes' | 'resources'>): void => {
+  const undocumentedResourceTypes = new Set(
+    resources.filter((r) => r.isUndocumented).map((r) => r.resourceType),
+  )
+
+  const offenders: string[] = []
+
+  for (const route of routes) {
+    for (const endpoint of route.endpoints) {
+      if (endpoint.isUndocumented) continue
+      if (endpoint.response.responseType === 'void') continue
+      if (!('resourceType' in endpoint.response)) continue
+
+      const { resourceType } = endpoint.response
+      if (undocumentedResourceTypes.has(resourceType)) {
+        offenders.push(
+          `${endpoint.path} references undocumented resource '${resourceType}'`,
+        )
+      }
+    }
+  }
+
+  if (offenders.length > 0) {
+    throw new Error(
+      `Documented endpoints must not reference undocumented resources. Found:\n${offenders.join('\n')}`,
     )
   }
 }
