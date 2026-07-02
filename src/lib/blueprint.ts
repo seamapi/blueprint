@@ -391,6 +391,7 @@ export interface DiscriminatedListProperty extends BaseListProperty {
   discriminator: string
   variantGroups: VariantGroup[]
   variants: Array<{
+    resourceType: string | null
     variantGroupKey: string | null
     properties: Property[]
     description: BaseProperty['description']
@@ -1807,6 +1808,7 @@ const createArrayProperty = (
             throw new Error(`Missing resource_type for error code ${errorCode}`)
           }
 
+          const resourceType = schema['x-resource-type'] ?? null
           const variantGroupKey = schema['x-variant-group-key'] ?? null
           validateGroupKey(
             variantGroupKey,
@@ -1815,6 +1817,7 @@ const createArrayProperty = (
             variantGroups,
           )
           return {
+            resourceType,
             variantGroupKey,
             properties: createProperties(
               schema.properties ?? {},
