@@ -84,6 +84,7 @@ export interface OpenapiSchema {
   'x-draft'?: string
   'x-undocumented'?: string
   'x-route-path'?: string
+  'x-resource-type'?: string
   'x-variant-group-key'?: string
   'x-enums'?: Record<
     string,

@@ -1794,6 +1794,19 @@ const createArrayProperty = (
         discriminator: prop.items.discriminator.propertyName,
         variantGroups,
         variants: prop.items.oneOf.map((schema) => {
+          const errorCode = schema.properties?.['error_code']?.enum?.[0]
+
+          if (
+            errorCode != null &&
+            !(
+              'x-resource-type' in schema &&
+              schema['x-resource-type'] != null &&
+              schema['x-resource-type'].length > 0
+            )
+          ) {
+            throw new Error(`Missing resource_type for error code ${errorCode}`)
+          }
+
           const variantGroupKey = schema['x-variant-group-key'] ?? null
           validateGroupKey(
             variantGroupKey,
