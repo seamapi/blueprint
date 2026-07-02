@@ -105,3 +105,40 @@ test('createBlueprint: throws when a documented endpoint references an undocumen
       /Documented endpoints must not reference undocumented resources\. Found:\n.*\/widgets\/get.*secret_widget/,
   })
 })
+
+test('createBlueprint: throws when an error code is missing resource_type', async (t) => {
+  const typesModule = TypesModuleSchema.parse(types)
+  const openapi = structuredClone(typesModule.openapi)
+
+  const fooSchema = openapi.components.schemas['foo']
+  if (fooSchema?.properties == null) {
+    t.fail('Expected foo schema to have properties')
+    return
+  }
+
+  fooSchema.properties['errors'] = {
+    type: 'array',
+    items: {
+      discriminator: { propertyName: 'error_code' },
+      oneOf: [
+        {
+          type: 'object',
+          properties: {
+            error_code: {
+              type: 'string',
+              enum: ['foo_error'],
+            },
+            message: {
+              type: 'string',
+            },
+          },
+          required: ['error_code', 'message'],
+        },
+      ],
+    },
+  }
+
+  await t.throwsAsync(() => createBlueprint({ ...typesModule, openapi }), {
+    message: /Missing resource_type for error code foo_error/,
+  })
+})
