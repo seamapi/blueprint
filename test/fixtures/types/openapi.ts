@@ -80,6 +80,16 @@ export default {
             type: 'array',
             items: { type: 'string' },
           },
+          number_array_prop: {
+            description: 'This prop is a list of numbers',
+            type: 'array',
+            items: { type: 'number', format: 'float' },
+          },
+          integer_array_prop: {
+            description: 'This prop is a list of integers',
+            type: 'array',
+            items: { type: 'integer' },
+          },
         },
         required: ['foo_id', 'name'],
         'x-route-path': '/foos',

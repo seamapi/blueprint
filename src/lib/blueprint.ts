@@ -187,6 +187,7 @@ interface StringListParameter extends BaseListParameter {
 
 interface NumberListParameter extends BaseListParameter {
   itemFormat: 'number'
+  isItemInt: boolean
   default?: number[]
 }
 
@@ -354,6 +355,7 @@ interface StringListProperty extends BaseListProperty {
 
 interface NumberListProperty extends BaseListProperty {
   itemFormat: 'number'
+  isItemInt: boolean
 }
 
 interface BooleanListProperty extends BaseListProperty {
@@ -1185,7 +1187,9 @@ const createArrayParameter = (
       return createListParameter<StringListParameter>('string')
 
     case 'number':
-      return createListParameter<NumberListParameter>('number')
+      return createListParameter<NumberListParameter>('number', {
+        isItemInt: itemParameter.isInt,
+      })
 
     case 'boolean':
       return createListParameter<BooleanListParameter>('boolean')
@@ -1849,7 +1853,9 @@ const createArrayProperty = (
       return createListProperty<StringListProperty>('string')
 
     case 'number':
-      return createListProperty<NumberListProperty>('number')
+      return createListProperty<NumberListProperty>('number', {
+        isItemInt: itemProperty.isInt,
+      })
 
     case 'boolean':
       return createListProperty<BooleanListProperty>('boolean')

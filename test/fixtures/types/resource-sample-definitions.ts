@@ -16,6 +16,8 @@ export default [
         },
       },
       array_prop: ['foo', 'bar'],
+      number_array_prop: [3.14, 2.72],
+      integer_array_prop: [1, 2, 3],
     },
   },
 ]
