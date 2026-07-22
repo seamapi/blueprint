@@ -18,6 +18,8 @@ export interface Routes {
         integer_prop?: number
         object_prop?: Record<string, string>
         array_prop?: string[]
+        number_array_prop?: number[]
+        integer_array_prop?: number[]
       }
     }
   }
@@ -40,6 +42,8 @@ export interface Routes {
         integer_prop?: number
         object_prop?: Record<string, string>
         array_prop?: string[]
+        number_array_prop?: number[]
+        integer_array_prop?: number[]
       }
       pagination: {
         has_next_page: boolean

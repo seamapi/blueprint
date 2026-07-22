@@ -11,6 +11,8 @@ export const foo = z.object({
   integer_prop: z.number().int().optional(),
   object_prop: z.record(z.string(), z.any()).optional(),
   array_prop: z.array(z.string()).optional(),
+  number_array_prop: z.array(z.number()).optional(),
+  integer_array_prop: z.array(z.number().int()).optional(),
 })
 
 export const plane = z.object({
