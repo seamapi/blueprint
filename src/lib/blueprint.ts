@@ -327,6 +327,7 @@ interface StringProperty extends BaseProperty {
 interface NumberProperty extends BaseProperty {
   format: 'number'
   jsonType: 'number'
+  isInt: boolean
 }
 
 export interface EnumProperty extends BaseProperty {
@@ -1714,6 +1715,7 @@ const createProperty = (
         ...baseProperty,
         format: 'number',
         jsonType: 'number',
+        isInt: parsedProp.type === 'integer',
       }
     default:
       throw new Error(`Unsupported property type: ${parsedProp.type}`)
