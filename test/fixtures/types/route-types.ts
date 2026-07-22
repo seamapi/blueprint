@@ -15,6 +15,7 @@ export interface Routes {
         draft_prop?: string
         nullable_prop?: string
         number_prop?: number
+        integer_prop?: number
         object_prop?: Record<string, string>
         array_prop?: string[]
       }
@@ -36,6 +37,7 @@ export interface Routes {
         draft_prop?: string
         nullable_prop?: string
         number_prop?: number
+        integer_prop?: number
         object_prop?: Record<string, string>
         array_prop?: string[]
       }

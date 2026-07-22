@@ -8,6 +8,7 @@ export const foo = z.object({
   draft_prop: z.string().optional(),
   nullable_prop: z.string().optional().nullable(),
   number_prop: z.number().optional(),
+  integer_prop: z.number().int().optional(),
   object_prop: z.record(z.string(), z.any()).optional(),
   array_prop: z.array(z.string()).optional(),
 })
