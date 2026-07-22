@@ -68,6 +68,10 @@ export default {
             type: 'number',
             format: 'float',
           },
+          integer_prop: {
+            description: 'This prop is an integer',
+            type: 'integer',
+          },
           object_prop: {
             type: 'object',
             properties: { foo: { type: 'string' } },

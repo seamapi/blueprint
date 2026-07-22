@@ -8,6 +8,7 @@ export default [
       name: 'Best foo',
       nullable_prop: null,
       number_prop: 10,
+      integer_prop: 7,
       object_prop: {
         foo: 'bar',
         nested_object_prop: {

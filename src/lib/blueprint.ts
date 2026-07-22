@@ -148,6 +148,7 @@ interface StringParameter extends BaseParameter {
 interface NumberParameter extends BaseParameter {
   format: 'number'
   jsonType: 'number'
+  isInt: boolean
   default?: number | null
 }
 
@@ -1113,6 +1114,7 @@ const createParameter = (
         ...baseParam,
         format: 'number',
         jsonType: 'number',
+        isInt: parsedProp.type === 'integer',
       }
     default:
       throw new Error(`Unsupported property type: ${parsedProp.type}`)
