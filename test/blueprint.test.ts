@@ -9,6 +9,52 @@ test('createBlueprint', async (t) => {
   t.snapshot(blueprint, 'blueprint')
 })
 
+test('createBlueprint: with omitUndocumented', async (t) => {
+  const typesModule = TypesModuleSchema.parse(types)
+  const blueprint = await createBlueprint(typesModule, {
+    omitUndocumented: true,
+  })
+
+  t.false(
+    blueprint.routes.some((route) => route.isUndocumented),
+    'Undocumented routes should be omitted',
+  )
+  t.false(
+    blueprint.routes.some((route) =>
+      route.endpoints.some((endpoint) => endpoint.isUndocumented),
+    ),
+    'Undocumented endpoints should be omitted',
+  )
+  t.false(
+    blueprint.namespaces.some((namespace) => namespace.isUndocumented),
+    'Undocumented namespaces should be omitted',
+  )
+  t.false(
+    blueprint.resources.some((resource) => resource.isUndocumented),
+    'Undocumented resources should be omitted',
+  )
+  t.false(
+    blueprint.events.some((event) => event.isUndocumented),
+    'Undocumented events should be omitted',
+  )
+  t.false(
+    blueprint.actionAttempts.some(
+      (actionAttempt) => actionAttempt.isUndocumented,
+    ),
+    'Undocumented action attempts should be omitted',
+  )
+
+  const fooResource = blueprint.resources.find(
+    (resource) => resource.resourceType === 'foo',
+  )
+  t.false(
+    fooResource?.properties.some((property) => property.isUndocumented),
+    'Undocumented resource properties should be omitted',
+  )
+
+  t.snapshot(blueprint, 'blueprint')
+})
+
 test('createBlueprint: with formatCode', async (t) => {
   const typesModule = TypesModuleSchema.parse(types)
   const blueprint = await createBlueprint(typesModule, {
