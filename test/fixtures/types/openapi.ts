@@ -135,7 +135,7 @@ export default {
         required: ['deprecated_resource_id'],
         deprecated: true,
         'x-deprecated': 'This resource is deprecated',
-        'x-route-path': '/deprecated/undocumented',
+        'x-route-path': '/foos',
       },
       draft_resource: {
         type: 'object',

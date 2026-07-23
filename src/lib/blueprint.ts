@@ -1,5 +1,6 @@
 import { z } from 'zod'
 
+import { omitUndocumentedFromBlueprint } from './omit-undocumented.js'
 import { findCommonOpenapiSchemaProperties } from './openapi/find-common-openapi-schema-properties.js'
 import { flattenOpenapiSchema } from './openapi/flatten-openapi-schema.js'
 import {
@@ -32,6 +33,11 @@ import {
   type SeamAuthMethod,
   type SeamWorkspaceScope,
 } from './seam.js'
+import {
+  assertDocumentedEndpointsDontReferenceUndocumentedResources,
+  assertDocumentedResourcesDontReferenceUndocumentedRoutes,
+  assertSeamPathsAreUndocumented,
+} from './validate-undocumented.js'
 
 const paginationResponseKey = 'pagination'
 
@@ -463,11 +469,15 @@ export type TypesModule = z.output<typeof TypesModuleSchema>
 
 export interface BlueprintOptions {
   formatCode?: (content: string, syntax: SyntaxName) => Promise<string>
+  omitUndocumented?: boolean
 }
 
 export const createBlueprint = async (
   typesModule: TypesModuleInput,
-  { formatCode = async (content) => content }: BlueprintOptions = {},
+  {
+    formatCode = async (content) => content,
+    omitUndocumented = false,
+  }: BlueprintOptions = {},
 ): Promise<Blueprint> => {
   const { schemas, codeSampleDefinitions, resourceSampleDefinitions } =
     TypesModuleSchema.parse(typesModule)
@@ -486,6 +496,7 @@ export const createBlueprint = async (
     codeSampleDefinitions,
     resourceSampleDefinitions,
     formatCode,
+    omitUndocumented,
     schemas,
     validActionAttemptTypes,
     validResourceTypes,
@@ -522,7 +533,14 @@ export const createBlueprint = async (
     resources,
   })
 
-  return {
+  assertDocumentedResourcesDontReferenceUndocumentedRoutes({
+    routes,
+    resources,
+    events,
+    actionAttempts,
+  })
+
+  const blueprint: Blueprint = {
     title: openapi.info.title,
     routes,
     namespaces,
@@ -531,94 +549,8 @@ export const createBlueprint = async (
     events,
     actionAttempts,
   }
-}
 
-const isSeamPath = (path: string): boolean =>
-  path === '/seam' || path.startsWith('/seam/')
-
-const assertSeamPathsAreUndocumented = ({
-  routes,
-  namespaces,
-  resources,
-  events,
-  actionAttempts,
-}: Pick<
-  Blueprint,
-  'routes' | 'namespaces' | 'resources' | 'events' | 'actionAttempts'
->): void => {
-  const offenders = [
-    ...routes.flatMap((route) => {
-      const routeOffenders =
-        isSeamPath(route.path) && !route.isUndocumented
-          ? [`route ${route.path}`]
-          : []
-      const endpointOffenders = route.endpoints.flatMap((endpoint) =>
-        isSeamPath(endpoint.path) && !endpoint.isUndocumented
-          ? [`endpoint ${endpoint.path}`]
-          : [],
-      )
-
-      return [...routeOffenders, ...endpointOffenders]
-    }),
-    ...namespaces.flatMap((namespace) =>
-      isSeamPath(namespace.path) && !namespace.isUndocumented
-        ? [`namespace ${namespace.path}`]
-        : [],
-    ),
-    ...resources.flatMap((resource) =>
-      isSeamPath(resource.routePath) && !resource.isUndocumented
-        ? [`resource ${resource.routePath}`]
-        : [],
-    ),
-    ...events.flatMap((event) =>
-      isSeamPath(event.routePath) && !event.isUndocumented
-        ? [`event ${event.routePath}`]
-        : [],
-    ),
-    ...actionAttempts.flatMap((actionAttempt) =>
-      isSeamPath(actionAttempt.routePath) && !actionAttempt.isUndocumented
-        ? [`action_attempt ${actionAttempt.routePath}`]
-        : [],
-    ),
-  ]
-
-  if (offenders.length > 0) {
-    throw new Error(
-      `All /seam entries must be marked undocumented. Found: ${offenders.join(', ')}`,
-    )
-  }
-}
-
-const assertDocumentedEndpointsDontReferenceUndocumentedResources = ({
-  routes,
-  resources,
-}: Pick<Blueprint, 'routes' | 'resources'>): void => {
-  const undocumentedResourceTypes = new Set(
-    resources.filter((r) => r.isUndocumented).map((r) => r.resourceType),
-  )
-
-  const offenders: string[] = []
-
-  for (const route of routes) {
-    for (const endpoint of route.endpoints) {
-      if (endpoint.isUndocumented) continue
-      if (endpoint.response.responseType === 'void') continue
-      if (!('resourceType' in endpoint.response)) continue
-
-      const { resourceType } = endpoint.response
-      if (undocumentedResourceTypes.has(resourceType)) {
-        offenders.push(
-          `${endpoint.path} references undocumented resource '${resourceType}'`,
-        )
-      }
-    }
-  }
-
-  if (offenders.length > 0) {
-    throw new Error(
-      `Documented endpoints must not reference undocumented resources. Found:\n${offenders.join('\n')}`,
-    )
-  }
+  return omitUndocumented ? omitUndocumentedFromBlueprint(blueprint) : blueprint
 }
 
 const extractValidActionAttemptTypes = (
