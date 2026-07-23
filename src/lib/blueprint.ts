@@ -1063,6 +1063,10 @@ const createParameter = (
   switch (parsedProp.type) {
     case 'string':
       if (parsedProp.enum !== undefined) {
+        throwOnDuplicateValues(
+          parsedProp.enum.map((value: string | boolean) => String(value)),
+          `enum values for parameter '${name}' in ${path}`,
+        )
         return {
           ...baseParam,
           format: 'enum',
@@ -1163,6 +1167,18 @@ const createArrayParameter = (
         `Missing discriminator property name for ${baseParam.name} in ${path}`,
       )
     }
+
+    const discriminatorPropertyName = property.items.discriminator.propertyName
+    throwOnDuplicateValues(
+      property.items.oneOf
+        .map(
+          (schema: OpenapiSchema) =>
+            schema.properties?.[discriminatorPropertyName]?.enum?.[0],
+        )
+        .filter((value): value is string => value != null)
+        .map((value) => String(value)),
+      `${discriminatorPropertyName} values for parameter '${baseParam.name}' in ${path}`,
+    )
 
     return createListParameter<DiscriminatedListParameter>(
       'discriminated_object',
@@ -1658,6 +1674,10 @@ const createProperty = (
   switch (parsedProp.type) {
     case 'string':
       if (parsedProp.enum !== undefined) {
+        throwOnDuplicateValues(
+          parsedProp.enum.map((value: string | boolean) => String(value)),
+          `enum values for property '${[...parentPaths, name].join('.')}'`,
+        )
         return {
           ...baseProperty,
           format: 'enum',
@@ -1794,6 +1814,17 @@ const createArrayProperty = (
         `Missing discriminator property name for ${baseProperty.name} in ${parentPaths.join('.')}`,
       )
     }
+
+    const discriminatorPropertyName = prop.items.discriminator.propertyName
+    throwOnDuplicateValues(
+      prop.items.oneOf
+        .map(
+          (schema) => schema.properties?.[discriminatorPropertyName]?.enum?.[0],
+        )
+        .filter((value): value is string => value != null)
+        .map((value) => String(value)),
+      `${discriminatorPropertyName} values for '${[...parentPaths, baseProperty.name].join('.')}'`,
+    )
 
     const variantGroups = getVariantGroups(prop)
 
@@ -2028,7 +2059,16 @@ const createEvents = async (
     }),
   )
 
-  return events.filter((event): event is EventResource => event !== null)
+  const definedEvents = events.filter(
+    (event): event is EventResource => event !== null,
+  )
+
+  throwOnDuplicateValues(
+    definedEvents.map((event) => event.eventType),
+    'event_type values in the event schema',
+  )
+
+  return definedEvents
 }
 
 const createActionAttempts = async (
@@ -2136,6 +2176,27 @@ const createActionAttempts = async (
 
 const getParentPath = (path: string): string | null =>
   path.split('/').length === 2 ? null : path.split('/').slice(0, -1).join('/')
+
+const findDuplicateValues = (values: string[]): string[] => {
+  const seen = new Set<string>()
+  const duplicates = new Set<string>()
+  for (const value of values) {
+    if (seen.has(value)) {
+      duplicates.add(value)
+    }
+    seen.add(value)
+  }
+  return [...duplicates]
+}
+
+const throwOnDuplicateValues = (values: string[], context: string): void => {
+  const duplicates = findDuplicateValues(values)
+  if (duplicates.length > 0) {
+    throw new Error(
+      `Duplicate ${context}: ${duplicates.map((value) => `'${value}'`).join(', ')}`,
+    )
+  }
+}
 
 const normalizeDescription = (content: string): string =>
   content
