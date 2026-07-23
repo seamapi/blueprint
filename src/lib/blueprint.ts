@@ -299,6 +299,8 @@ interface ResourceListResponse extends BaseResponse {
 interface BaseProperty {
   name: string
   description: string
+  isOptional: boolean
+  isNullable: boolean
   isDeprecated: boolean
   deprecationMessage: string
   isUndocumented: boolean
@@ -1247,6 +1249,7 @@ const createPagination = (
       [paginationResponseKey],
       [],
       schemas,
+      schema.required ?? [],
     ),
   }
 }
@@ -1321,6 +1324,7 @@ const createResource = async (
       [schemaName],
       propertyGroups,
       schemas,
+      schema.required ?? [],
     ),
     description: normalizeDescription(schema.description ?? ''),
     isDeprecated: schema.deprecated ?? false,
@@ -1592,6 +1596,7 @@ export const createProperties = (
   parentPaths: string[],
   propertyGroups: PropertyGroup[],
   schemas: Openapi['components']['schemas'],
+  requiredProperties: string[] = [],
 ): Property[] =>
   Object.entries(properties)
     .map(([name, property]) => {
@@ -1618,7 +1623,9 @@ export const createProperties = (
       return true
     })
     .map(([name, prop]) =>
-      createProperty(name, prop, parentPaths, propertyGroups, schemas),
+      createProperty(name, prop, parentPaths, propertyGroups, schemas, {
+        isOptional: !requiredProperties.includes(name),
+      }),
     )
 
 const createProperty = (
@@ -1627,6 +1634,7 @@ const createProperty = (
   parentPaths: string[],
   propertyGroups: PropertyGroup[],
   schemas: Openapi['components']['schemas'],
+  { isOptional }: { isOptional: boolean },
 ): Property => {
   const parsedProp = parsePropertySchema(name, prop, parentPaths, schemas)
 
@@ -1642,6 +1650,8 @@ const createProperty = (
   const baseProperty = {
     name,
     description: normalizeDescription(String(parsedProp.description ?? '')),
+    isOptional,
+    isNullable: parsedProp.nullable === true,
     isDeprecated: parsedProp['x-deprecated'].length > 0,
     deprecationMessage: parsedProp['x-deprecated'],
     isUndocumented: parsedProp['x-undocumented'].length > 0,
@@ -1729,6 +1739,7 @@ const createProperty = (
             [...parentPaths, name],
             nestedPropertyGroups,
             schemas,
+            prop.required ?? [],
           ),
         }
       }
@@ -1863,6 +1874,7 @@ const createArrayProperty = (
               [...parentPaths, baseProperty.name],
               [],
               schemas,
+              schema.required ?? [],
             ),
             description: normalizeDescription(schema.description ?? ''),
           }
@@ -1877,6 +1889,7 @@ const createArrayProperty = (
     [...parentPaths, baseProperty.name],
     [],
     schemas,
+    { isOptional: false },
   )
 
   switch (itemProperty.format) {

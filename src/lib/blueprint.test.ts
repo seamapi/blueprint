@@ -42,6 +42,71 @@ test('createProperties: assigns appropriate default values', (t) => {
     'deprecationMessage should default to empty string',
   )
   t.false(property.isUndocumented, 'isUndocumented should default to false')
+  t.false(
+    property.isNullable,
+    'isNullable should default to false when nullable is not set',
+  )
+  t.true(
+    property.isOptional,
+    'isOptional should default to true when the property is not required',
+  )
+})
+
+test('createProperties: sets isOptional from the required list', (t) => {
+  const properties = createProperties(
+    {
+      required_property: { type: 'string' },
+      optional_property: { type: 'string' },
+    } as Record<string, OpenapiSchema>,
+    ['foo'],
+    [],
+    {},
+    ['required_property'],
+  )
+
+  const requiredProperty = properties.find(
+    (p) => p.name === 'required_property',
+  )
+  const optionalProperty = properties.find(
+    (p) => p.name === 'optional_property',
+  )
+
+  t.false(
+    requiredProperty?.isOptional,
+    'isOptional should be false for properties in the required list',
+  )
+  t.true(
+    optionalProperty?.isOptional,
+    'isOptional should be true for properties absent from the required list',
+  )
+})
+
+test('createProperties: sets isNullable from the nullable flag', (t) => {
+  const properties = createProperties(
+    {
+      nullable_property: { type: 'string', nullable: true },
+      non_nullable_property: { type: 'string', nullable: false },
+    } as Record<string, OpenapiSchema>,
+    ['foo'],
+    [],
+    {},
+  )
+
+  const nullableProperty = properties.find(
+    (p) => p.name === 'nullable_property',
+  )
+  const nonNullableProperty = properties.find(
+    (p) => p.name === 'non_nullable_property',
+  )
+
+  t.true(
+    nullableProperty?.isNullable,
+    'isNullable should be true when nullable is true',
+  )
+  t.false(
+    nonNullableProperty?.isNullable,
+    'isNullable should be false when nullable is false',
+  )
 })
 
 test('createProperties: uses provided values', (t) => {

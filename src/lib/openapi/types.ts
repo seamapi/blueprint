@@ -75,6 +75,7 @@ export interface OpenapiSchema {
   items?: OpenapiSchema
   $ref?: string
   required?: string[]
+  nullable?: boolean
   enum?: string[]
   format?: string
   description?: string
