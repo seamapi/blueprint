@@ -152,6 +152,24 @@ test('createBlueprint: throws when a documented endpoint references an undocumen
   })
 })
 
+test('createBlueprint: throws when a documented resource references an undocumented route', async (t) => {
+  const typesModule = TypesModuleSchema.parse(types)
+  const openapi = structuredClone(typesModule.openapi)
+
+  const fooSchema = openapi.components.schemas['foo']
+  if (fooSchema == null) {
+    t.fail('Expected foo schema to exist')
+    return
+  }
+
+  fooSchema['x-route-path'] = '/deprecated/undocumented'
+
+  await t.throwsAsync(() => createBlueprint({ ...typesModule, openapi }), {
+    message:
+      /Documented resources must not reference undocumented routes\. Found:\n.*'foo' references undocumented route '\/deprecated\/undocumented'/,
+  })
+})
+
 test('createBlueprint: throws when an error code is missing resource_type', async (t) => {
   const typesModule = TypesModuleSchema.parse(types)
   const openapi = structuredClone(typesModule.openapi)

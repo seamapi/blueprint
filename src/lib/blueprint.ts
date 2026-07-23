@@ -1,5 +1,6 @@
 import { z } from 'zod'
 
+import { omitUndocumentedFromBlueprint } from './omit-undocumented.js'
 import { findCommonOpenapiSchemaProperties } from './openapi/find-common-openapi-schema-properties.js'
 import { flattenOpenapiSchema } from './openapi/flatten-openapi-schema.js'
 import {
@@ -32,6 +33,11 @@ import {
   type SeamAuthMethod,
   type SeamWorkspaceScope,
 } from './seam.js'
+import {
+  assertDocumentedEndpointsDontReferenceUndocumentedResources,
+  assertDocumentedResourcesDontReferenceUndocumentedRoutes,
+  assertSeamPathsAreUndocumented,
+} from './validate-undocumented.js'
 
 const paginationResponseKey = 'pagination'
 
@@ -527,6 +533,13 @@ export const createBlueprint = async (
     resources,
   })
 
+  assertDocumentedResourcesDontReferenceUndocumentedRoutes({
+    routes,
+    resources,
+    events,
+    actionAttempts,
+  })
+
   const blueprint: Blueprint = {
     title: openapi.info.title,
     routes,
@@ -538,234 +551,6 @@ export const createBlueprint = async (
   }
 
   return omitUndocumented ? omitUndocumentedFromBlueprint(blueprint) : blueprint
-}
-
-const omitUndocumentedFromBlueprint = (blueprint: Blueprint): Blueprint => ({
-  ...blueprint,
-  routes: blueprint.routes
-    .filter((route) => !route.isUndocumented)
-    .map(omitUndocumentedFromRoute),
-  namespaces: blueprint.namespaces.filter(
-    (namespace) => !namespace.isUndocumented,
-  ),
-  resources: blueprint.resources
-    .filter((resource) => !resource.isUndocumented)
-    .map(omitUndocumentedFromResource),
-  pagination:
-    blueprint.pagination == null
-      ? null
-      : {
-          ...blueprint.pagination,
-          properties: omitUndocumentedFromProperties(
-            blueprint.pagination.properties,
-          ),
-        },
-  events: blueprint.events
-    .filter((event) => !event.isUndocumented)
-    .map(omitUndocumentedFromResource),
-  actionAttempts: blueprint.actionAttempts
-    .filter((actionAttempt) => !actionAttempt.isUndocumented)
-    .map(omitUndocumentedFromResource),
-})
-
-const omitUndocumentedFromRoute = (route: Route): Route => ({
-  ...route,
-  endpoints: route.endpoints
-    .filter((endpoint) => !endpoint.isUndocumented)
-    .map((endpoint) => ({
-      ...endpoint,
-      request: {
-        ...endpoint.request,
-        parameters: omitUndocumentedFromParameters(endpoint.request.parameters),
-      },
-    })),
-})
-
-const omitUndocumentedFromResource = <T extends Resource>(resource: T): T => ({
-  ...resource,
-  properties: omitUndocumentedFromProperties(resource.properties),
-})
-
-const omitUndocumentedFromParameters = (parameters: Parameter[]): Parameter[] =>
-  parameters
-    .filter((parameter) => !parameter.isUndocumented)
-    .map(omitUndocumentedFromParameter)
-
-const omitUndocumentedFromParameter = (parameter: Parameter): Parameter => {
-  if (parameter.format === 'enum') {
-    return {
-      ...parameter,
-      values: parameter.values.filter((value) => !value.isUndocumented),
-    }
-  }
-  if (parameter.format === 'object') {
-    return {
-      ...parameter,
-      parameters: omitUndocumentedFromParameters(parameter.parameters),
-    }
-  }
-  if (parameter.format === 'list') {
-    if (parameter.itemFormat === 'enum') {
-      return {
-        ...parameter,
-        itemEnumValues: parameter.itemEnumValues.filter(
-          (value) => !value.isUndocumented,
-        ),
-      }
-    }
-    if (parameter.itemFormat === 'object') {
-      return {
-        ...parameter,
-        itemParameters: omitUndocumentedFromParameters(
-          parameter.itemParameters,
-        ),
-      }
-    }
-    if (parameter.itemFormat === 'discriminated_object') {
-      return {
-        ...parameter,
-        variants: parameter.variants.map((variant) => ({
-          ...variant,
-          parameters: omitUndocumentedFromParameters(variant.parameters),
-        })),
-      }
-    }
-  }
-  return parameter
-}
-
-const omitUndocumentedFromProperties = (properties: Property[]): Property[] =>
-  properties
-    .filter((property) => !property.isUndocumented)
-    .map(omitUndocumentedFromProperty)
-
-const omitUndocumentedFromProperty = (property: Property): Property => {
-  if (property.format === 'enum') {
-    return {
-      ...property,
-      values: property.values.filter((value) => !value.isUndocumented),
-    }
-  }
-  if (property.format === 'object') {
-    return {
-      ...property,
-      properties: omitUndocumentedFromProperties(property.properties),
-    }
-  }
-  if (property.format === 'list') {
-    if (property.itemFormat === 'enum') {
-      return {
-        ...property,
-        itemEnumValues: property.itemEnumValues.filter(
-          (value) => !value.isUndocumented,
-        ),
-      }
-    }
-    if (property.itemFormat === 'object') {
-      return {
-        ...property,
-        itemProperties: omitUndocumentedFromProperties(property.itemProperties),
-      }
-    }
-    if (property.itemFormat === 'discriminated_object') {
-      return {
-        ...property,
-        variants: property.variants.map((variant) => ({
-          ...variant,
-          properties: omitUndocumentedFromProperties(variant.properties),
-        })),
-      }
-    }
-  }
-  return property
-}
-
-const isSeamPath = (path: string): boolean =>
-  path === '/seam' || path.startsWith('/seam/')
-
-const assertSeamPathsAreUndocumented = ({
-  routes,
-  namespaces,
-  resources,
-  events,
-  actionAttempts,
-}: Pick<
-  Blueprint,
-  'routes' | 'namespaces' | 'resources' | 'events' | 'actionAttempts'
->): void => {
-  const offenders = [
-    ...routes.flatMap((route) => {
-      const routeOffenders =
-        isSeamPath(route.path) && !route.isUndocumented
-          ? [`route ${route.path}`]
-          : []
-      const endpointOffenders = route.endpoints.flatMap((endpoint) =>
-        isSeamPath(endpoint.path) && !endpoint.isUndocumented
-          ? [`endpoint ${endpoint.path}`]
-          : [],
-      )
-
-      return [...routeOffenders, ...endpointOffenders]
-    }),
-    ...namespaces.flatMap((namespace) =>
-      isSeamPath(namespace.path) && !namespace.isUndocumented
-        ? [`namespace ${namespace.path}`]
-        : [],
-    ),
-    ...resources.flatMap((resource) =>
-      isSeamPath(resource.routePath) && !resource.isUndocumented
-        ? [`resource ${resource.routePath}`]
-        : [],
-    ),
-    ...events.flatMap((event) =>
-      isSeamPath(event.routePath) && !event.isUndocumented
-        ? [`event ${event.routePath}`]
-        : [],
-    ),
-    ...actionAttempts.flatMap((actionAttempt) =>
-      isSeamPath(actionAttempt.routePath) && !actionAttempt.isUndocumented
-        ? [`action_attempt ${actionAttempt.routePath}`]
-        : [],
-    ),
-  ]
-
-  if (offenders.length > 0) {
-    throw new Error(
-      `All /seam entries must be marked undocumented. Found: ${offenders.join(', ')}`,
-    )
-  }
-}
-
-const assertDocumentedEndpointsDontReferenceUndocumentedResources = ({
-  routes,
-  resources,
-}: Pick<Blueprint, 'routes' | 'resources'>): void => {
-  const undocumentedResourceTypes = new Set(
-    resources.filter((r) => r.isUndocumented).map((r) => r.resourceType),
-  )
-
-  const offenders: string[] = []
-
-  for (const route of routes) {
-    for (const endpoint of route.endpoints) {
-      if (endpoint.isUndocumented) continue
-      if (endpoint.response.responseType === 'void') continue
-      if (!('resourceType' in endpoint.response)) continue
-
-      const { resourceType } = endpoint.response
-      if (undocumentedResourceTypes.has(resourceType)) {
-        offenders.push(
-          `${endpoint.path} references undocumented resource '${resourceType}'`,
-        )
-      }
-    }
-  }
-
-  if (offenders.length > 0) {
-    throw new Error(
-      `Documented endpoints must not reference undocumented resources. Found:\n${offenders.join('\n')}`,
-    )
-  }
 }
 
 const extractValidActionAttemptTypes = (
