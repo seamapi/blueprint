@@ -142,3 +142,93 @@ test('createBlueprint: throws when an error code is missing resource_type', asyn
     message: /Missing resource_type for error code foo_error/,
   })
 })
+
+test('createBlueprint: throws on duplicate enum values in a property', async (t) => {
+  const typesModule = TypesModuleSchema.parse(types)
+  const openapi = structuredClone(typesModule.openapi)
+
+  const fooSchema = openapi.components.schemas['foo']
+  if (fooSchema?.properties == null) {
+    t.fail('Expected foo schema to have properties')
+    return
+  }
+
+  fooSchema.properties['status'] = {
+    type: 'string',
+    enum: ['active', 'inactive', 'active'],
+  }
+
+  await t.throwsAsync(() => createBlueprint({ ...typesModule, openapi }), {
+    message: /Duplicate enum values for property 'foo\.status': 'active'/,
+  })
+})
+
+test('createBlueprint: throws on duplicate enum values in a request parameter', async (t) => {
+  const typesModule = TypesModuleSchema.parse(types)
+  const openapi = structuredClone(typesModule.openapi)
+
+  const operation = openapi.paths['/foos/create']?.post
+  if (operation == null) {
+    t.fail('Expected /foos/create to have a post operation')
+    return
+  }
+
+  operation.requestBody = {
+    content: {
+      'application/json': {
+        schema: {
+          type: 'object',
+          properties: {
+            manufacturer: {
+              type: 'string',
+              enum: ['kisi', 'august', 'kisi'],
+            },
+          },
+        },
+      },
+    },
+  }
+
+  await t.throwsAsync(() => createBlueprint({ ...typesModule, openapi }), {
+    message:
+      /Duplicate enum values for parameter 'manufacturer' in \/foos\/create: 'kisi'/,
+  })
+})
+
+test('createBlueprint: throws on duplicate discriminator values across variants', async (t) => {
+  const typesModule = TypesModuleSchema.parse(types)
+  const openapi = structuredClone(typesModule.openapi)
+
+  const fooSchema = openapi.components.schemas['foo']
+  if (fooSchema?.properties == null) {
+    t.fail('Expected foo schema to have properties')
+    return
+  }
+
+  const errorVariant = {
+    type: 'object',
+    properties: {
+      error_code: {
+        type: 'string',
+        enum: ['foo_error'],
+      },
+      message: {
+        type: 'string',
+      },
+    },
+    required: ['error_code', 'message'],
+    'x-resource-type': 'foo',
+  }
+
+  fooSchema.properties['errors'] = {
+    type: 'array',
+    items: {
+      discriminator: { propertyName: 'error_code' },
+      oneOf: [errorVariant, structuredClone(errorVariant)],
+    },
+  }
+
+  await t.throwsAsync(() => createBlueprint({ ...typesModule, openapi }), {
+    message: /Duplicate error_code values for 'foo\.errors': 'foo_error'/,
+  })
+})
