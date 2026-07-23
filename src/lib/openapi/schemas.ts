@@ -107,6 +107,7 @@ const VariantGroupSchema = PropertyGroupSchema
 const commonPropertyFields = {
   description: z.string().default(''),
   deprecated: z.boolean().default(false),
+  nullable: z.boolean().default(false),
   default: z.any().optional(),
   'x-undocumented': z.string().default(''),
   'x-deprecated': z.string().default(''),
