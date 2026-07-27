@@ -100,6 +100,94 @@ test('createBlueprint: throws when a /seam entry is documented', async (t) => {
   })
 })
 
+test('createBlueprint: throws when a documented endpoint response uses an inline resource schema', async (t) => {
+  const typesModule = TypesModuleSchema.parse(types)
+  const openapi = structuredClone(typesModule.openapi)
+  const operation = openapi.paths['/foos/get']?.post
+  const responseProperties =
+    operation?.responses?.[200]?.content?.['application/json']?.schema
+      ?.properties
+
+  if (responseProperties?.foo == null) {
+    t.fail('Expected /foos/get response schema to exist')
+    return
+  }
+
+  responseProperties.foo = {
+    type: 'object',
+    properties: {
+      foo_id: { type: 'string', format: 'uuid' },
+    },
+    required: ['foo_id'],
+  }
+
+  await t.throwsAsync(() => createBlueprint({ ...typesModule, openapi }), {
+    message:
+      /Documented endpoint responses must reference a resource type using \$ref\. Found:\n\/foos\/get response key 'foo' uses an inline schema instead of \$ref/,
+  })
+})
+
+test('createBlueprint: allows undocumented endpoint responses to use inline resource schemas', async (t) => {
+  const typesModule = TypesModuleSchema.parse(types)
+  const openapi = structuredClone(typesModule.openapi)
+  const operation = openapi.paths['/foos/get']?.post
+  const responseProperties =
+    operation?.responses?.[200]?.content?.['application/json']?.schema
+      ?.properties
+
+  if (operation == null || responseProperties?.foo == null) {
+    t.fail('Expected /foos/get operation and response schema to exist')
+    return
+  }
+
+  operation['x-undocumented'] = 'This endpoint is not public.'
+  responseProperties.foo = {
+    type: 'object',
+    properties: {
+      foo_id: { type: 'string', format: 'uuid' },
+    },
+    required: ['foo_id'],
+  }
+
+  const blueprint = await createBlueprint({ ...typesModule, openapi })
+  const endpoint = blueprint.routes
+    .flatMap((route) => route.endpoints)
+    .find(({ path }) => path === '/foos/get')
+
+  t.true(endpoint?.isUndocumented)
+  t.deepEqual(endpoint?.response, {
+    actionAttemptType: null,
+    batchResourceTypes: null,
+    description: 'Get a foo by ID.',
+    resourceType: 'unknown',
+    responseKey: 'foo',
+    responseType: 'resource',
+  })
+})
+
+test('createBlueprint: throws when a documented endpoint references an unknown resource type', async (t) => {
+  const typesModule = TypesModuleSchema.parse(types)
+  const openapi = structuredClone(typesModule.openapi)
+  const operation = openapi.paths['/foos/get']?.post
+  const responseProperties =
+    operation?.responses?.[200]?.content?.['application/json']?.schema
+      ?.properties
+
+  if (responseProperties?.foo == null) {
+    t.fail('Expected /foos/get response schema to exist')
+    return
+  }
+
+  responseProperties.foo = {
+    $ref: '#/components/schemas/missing_resource',
+  }
+
+  await t.throwsAsync(() => createBlueprint({ ...typesModule, openapi }), {
+    message:
+      /\/foos\/get response key 'foo' references unknown resource type 'missing_resource'/,
+  })
+})
+
 test('createBlueprint: throws when a documented endpoint references an undocumented resource', async (t) => {
   const typesModule = TypesModuleSchema.parse(types)
   const openapi = structuredClone(typesModule.openapi)

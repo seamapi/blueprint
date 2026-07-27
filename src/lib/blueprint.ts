@@ -33,6 +33,7 @@ import {
   type SeamAuthMethod,
   type SeamWorkspaceScope,
 } from './seam.js'
+import { assertDocumentedEndpointResponsesReferenceResourceSchemas } from './validate-endpoint-responses.js'
 import {
   assertDocumentedEndpointsDontReferenceUndocumentedResources,
   assertDocumentedResourcesDontReferenceUndocumentedRoutes,
@@ -501,6 +502,11 @@ export const createBlueprint = async (
     validActionAttemptTypes,
     validResourceTypes,
   }
+
+  assertDocumentedEndpointResponsesReferenceResourceSchemas(
+    openapi.paths,
+    validResourceTypes,
+  )
 
   const routes = await createRoutes(openapi.paths, context)
   const namespaces = createNamespaces(routes)
