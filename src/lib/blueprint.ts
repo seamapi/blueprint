@@ -881,21 +881,25 @@ export const getWorkspaceScope = (
   return 'none'
 }
 
+// These endpoints serve a deprecated PUT alias alongside POST and PATCH.
+// Dropping the alias would break existing clients, so they stay over the
+// two-method limit indefinitely.
+const pathsAllowedMoreThanTwoMethods: string[] = [
+  '/access_codes/update',
+  '/noise_sensors/noise_thresholds/update',
+]
+
 const createRequest = (
   methods: Method[],
   operation: OpenapiOperation,
   path: string,
 ): Request => {
   if (methods.length === 0) {
-    // eslint-disable-next-line no-console
-    console.warn(`At least one HTTP method should be specified for ${path}`)
+    throw new Error(`At least one HTTP method should be specified for ${path}`)
   }
 
-  if (methods.length > 2) {
-    // eslint-disable-next-line no-console
-    console.warn(
-      `More than two methods detected for ${path}. Was this intended?`,
-    )
+  if (methods.length > 2 && !pathsAllowedMoreThanTwoMethods.includes(path)) {
+    throw new Error(`More than two methods detected for ${path}`)
   }
 
   if (!methods.includes('POST')) {
@@ -957,19 +961,15 @@ const createParameters = (
 
       return [name, flattenOpenapiSchema(property)] as [string, OpenapiSchema]
     })
-    .filter(([name, property]) => {
+    .map(([name, property]) => {
       if (property.type == null) {
-        // eslint-disable-next-line no-console
-        console.warn(
-          `The ${name} property for ${path} will not be documented since it does not define a type.`,
+        throw new Error(
+          `The ${name} property for ${path} cannot be documented since it does not define a type.`,
         )
-        return false
       }
-      return true
+
+      return createParameter(name, property, path, requiredParameters)
     })
-    .map(([name, property]) =>
-      createParameter(name, property, path, requiredParameters),
-    )
 
 const createParameter = (
   name: string,
@@ -1549,22 +1549,17 @@ export const createProperties = (
 
       return [name, flattenOpenapiSchema(property)] as [string, OpenapiSchema]
     })
-    .filter(([name, property]) => {
-      if (property.type == null) {
-        // eslint-disable-next-line no-console
-        console.warn(
-          `The ${name} property for ${parentPaths.join('.')} will not be documented since it does not define a type.`,
+    .map(([name, prop]) => {
+      if (prop.type == null) {
+        throw new Error(
+          `The ${name} property for ${parentPaths.join('.')} cannot be documented since it does not define a type.`,
         )
-        return false
       }
 
-      return true
-    })
-    .map(([name, prop]) =>
-      createProperty(name, prop, parentPaths, propertyGroups, schemas, {
+      return createProperty(name, prop, parentPaths, propertyGroups, schemas, {
         isOptional: !requiredProperties.includes(name),
-      }),
-    )
+      })
+    })
 
 const createProperty = (
   name: string,

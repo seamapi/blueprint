@@ -456,3 +456,99 @@ test('createBlueprint: throws on duplicate discriminator values across variants'
     message: /Duplicate error_code values for 'foo\.errors': 'foo_error'/,
   })
 })
+
+test('createBlueprint: throws when a request parameter does not define a type', async (t) => {
+  const typesModule = TypesModuleSchema.parse(types)
+  const openapi = structuredClone(typesModule.openapi)
+  const createOperation = openapi.paths['/foos/create']?.post
+
+  if (createOperation == null) {
+    t.fail('Expected the /foos/create post operation in the fixture')
+    return
+  }
+
+  createOperation.requestBody = {
+    content: {
+      'application/json': {
+        schema: {
+          type: 'object',
+          properties: { untyped_param: { description: 'No type here.' } },
+        },
+      },
+    },
+  }
+
+  await t.throwsAsync(() => createBlueprint({ ...typesModule, openapi }), {
+    message:
+      /The untyped_param property for \/foos\/create cannot be documented since it does not define a type/,
+  })
+})
+
+test('createBlueprint: throws when a nested property does not define a type', async (t) => {
+  const typesModule = TypesModuleSchema.parse(types)
+  const openapi = structuredClone(typesModule.openapi)
+  const successVariant =
+    openapi.components?.schemas?.action_attempt?.oneOf?.find(
+      (variant: { properties?: { status?: { enum?: string[] } } }) =>
+        variant.properties?.status?.enum?.[0] === 'success',
+    )
+
+  if (successVariant?.properties?.result?.properties == null) {
+    t.fail('Expected the succeeded action attempt result in the fixture')
+    return
+  }
+
+  successVariant.properties.result.properties.untyped_property = {
+    description: 'No type here.',
+  }
+
+  await t.throwsAsync(() => createBlueprint({ ...typesModule, openapi }), {
+    message:
+      /The untyped_property property for action_attempt.result cannot be documented since it does not define a type/,
+  })
+})
+
+test('createBlueprint: throws when an endpoint exposes more than two methods', async (t) => {
+  const typesModule = TypesModuleSchema.parse(types)
+  const openapi = structuredClone(typesModule.openapi)
+  const createOperation = openapi.paths['/foos/create']?.post
+
+  if (createOperation == null) {
+    t.fail('Expected the /foos/create post operation in the fixture')
+    return
+  }
+
+  openapi.paths['/foos/replace'] = {
+    post: structuredClone(createOperation),
+    patch: structuredClone(createOperation),
+    put: structuredClone(createOperation),
+  }
+
+  await t.throwsAsync(() => createBlueprint({ ...typesModule, openapi }), {
+    message: /More than two methods detected for \/foos\/replace/,
+  })
+})
+
+test('createBlueprint: allows more than two methods on exempt endpoints', async (t) => {
+  const typesModule = TypesModuleSchema.parse(types)
+  const openapi = structuredClone(typesModule.openapi)
+  const createOperation = openapi.paths['/foos/create']?.post
+
+  if (createOperation == null) {
+    t.fail('Expected the /foos/create post operation in the fixture')
+    return
+  }
+
+  openapi.paths['/access_codes/update'] = {
+    post: structuredClone(createOperation),
+    patch: structuredClone(createOperation),
+    put: structuredClone(createOperation),
+  }
+
+  const blueprint = await createBlueprint({ ...typesModule, openapi })
+  const endpoint = blueprint.routes
+    .flatMap((route) => route.endpoints)
+    .find(({ path }) => path === '/access_codes/update')
+
+  t.deepEqual(endpoint?.request.methods, ['POST', 'PATCH', 'PUT'])
+})

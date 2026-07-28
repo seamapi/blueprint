@@ -243,7 +243,14 @@ export default {
                 enum: ['success'],
               },
               result: {
-                nullable: true,
+                type: 'object',
+                properties: {
+                  foo_id: {
+                    type: 'string',
+                    format: 'uuid',
+                  },
+                },
+                required: ['foo_id'],
               },
               error: {
                 nullable: true,
@@ -276,7 +283,16 @@ export default {
                 nullable: true,
               },
               error: {
-                nullable: true,
+                type: 'object',
+                properties: {
+                  type: {
+                    type: 'string',
+                  },
+                  message: {
+                    type: 'string',
+                  },
+                },
+                required: ['type', 'message'],
               },
               action_type: {
                 type: 'string',
