@@ -165,6 +165,78 @@ test('createBlueprint: allows undocumented endpoint responses to use inline reso
   })
 })
 
+test('createBlueprint: resolves documented batch response keys without requiring an outer resource ref', async (t) => {
+  const typesModule = TypesModuleSchema.parse(types)
+  const openapi = structuredClone(typesModule.openapi)
+  const operation = openapi.paths['/foos/get']?.post
+  const responseProperties =
+    operation?.responses?.[200]?.content?.['application/json']?.schema
+      ?.properties
+
+  if (operation == null || responseProperties == null) {
+    t.fail('Expected /foos/get operation and response schema to exist')
+    return
+  }
+
+  operation['x-response-key'] = 'batch'
+  operation['x-batch-keys'] = ['foos']
+  responseProperties.batch = {
+    type: 'object',
+    properties: {
+      foos: {
+        type: 'array',
+        items: { $ref: '#/components/schemas/foo' },
+      },
+    },
+  }
+
+  const blueprint = await createBlueprint({
+    ...typesModule,
+    codeSampleDefinitions: [],
+    openapi,
+  })
+  const endpoint = blueprint.routes
+    .flatMap((route) => route.endpoints)
+    .find(({ path }) => path === '/foos/get')
+
+  t.deepEqual(
+    endpoint?.response.responseType === 'resource'
+      ? endpoint.response.batchResourceTypes
+      : null,
+    [{ batchKey: 'foos', resourceType: 'foo' }],
+  )
+})
+
+test('createBlueprint: throws when a documented batch key does not resolve using items.$ref', async (t) => {
+  const typesModule = TypesModuleSchema.parse(types)
+  const openapi = structuredClone(typesModule.openapi)
+  const operation = openapi.paths['/foos/get']?.post
+  const responseProperties =
+    operation?.responses?.[200]?.content?.['application/json']?.schema
+      ?.properties
+
+  if (operation == null || responseProperties == null) {
+    t.fail('Expected /foos/get operation and response schema to exist')
+    return
+  }
+
+  operation['x-response-key'] = 'batch'
+  operation['x-batch-keys'] = ['foos']
+  responseProperties.batch = {
+    type: 'object',
+    properties: {
+      foos: {
+        type: 'array',
+        items: { type: 'object' },
+      },
+    },
+  }
+
+  await t.throwsAsync(() => createBlueprint({ ...typesModule, openapi }), {
+    message: /\/foos\/get batch key 'foos' does not resolve using items\.\$ref/,
+  })
+})
+
 test('createBlueprint: throws when a documented endpoint references an unknown resource type', async (t) => {
   const typesModule = TypesModuleSchema.parse(types)
   const openapi = structuredClone(typesModule.openapi)

@@ -14,6 +14,29 @@ const getResponseResourceSchema = (
   operation.responses['200']?.content?.['application/json']?.schema
     .properties?.[responseKey]
 
+const addInvalidResourceReferenceOffender = (
+  offenders: string[],
+  location: string,
+  ref: string,
+  validResourceTypes: Set<string>,
+): void => {
+  if (!ref.startsWith(schemaRefPrefix)) {
+    offenders.push(`${location} uses invalid resource reference '${ref}'`)
+    return
+  }
+
+  const resourceType = ref.slice(schemaRefPrefix.length)
+  if (
+    resourceType.length === 0 ||
+    resourceType.includes('/') ||
+    !validResourceTypes.has(resourceType)
+  ) {
+    offenders.push(
+      `${location} references unknown resource type '${resourceType}'`,
+    )
+  }
+}
+
 export const assertDocumentedEndpointResponsesReferenceResourceSchemas = (
   paths: OpenapiPaths,
   validResourceTypes: string[],
@@ -35,6 +58,29 @@ export const assertDocumentedEndpointResponsesReferenceResourceSchemas = (
     if (responseKey == null) continue
 
     const responseSchema = getResponseResourceSchema(operation, responseKey)
+    const batchKeys = parsedOperation['x-batch-keys']
+
+    if (batchKeys != null) {
+      for (const batchKey of batchKeys) {
+        const ref = responseSchema?.properties?.[batchKey]?.items?.$ref
+
+        if (ref == null) {
+          offenders.push(
+            `${path} batch key '${batchKey}' does not resolve using items.$ref`,
+          )
+          continue
+        }
+
+        addInvalidResourceReferenceOffender(
+          offenders,
+          `${path} batch key '${batchKey}'`,
+          ref,
+          validResourceTypeSet,
+        )
+      }
+      continue
+    }
+
     const ref = responseSchema?.$ref ?? responseSchema?.items?.$ref
 
     if (ref == null) {
@@ -44,23 +90,12 @@ export const assertDocumentedEndpointResponsesReferenceResourceSchemas = (
       continue
     }
 
-    if (!ref.startsWith(schemaRefPrefix)) {
-      offenders.push(
-        `${path} response key '${responseKey}' uses invalid resource reference '${ref}'`,
-      )
-      continue
-    }
-
-    const resourceType = ref.slice(schemaRefPrefix.length)
-    if (
-      resourceType.length === 0 ||
-      resourceType.includes('/') ||
-      !validResourceTypeSet.has(resourceType)
-    ) {
-      offenders.push(
-        `${path} response key '${responseKey}' references unknown resource type '${resourceType}'`,
-      )
-    }
+    addInvalidResourceReferenceOffender(
+      offenders,
+      `${path} response key '${responseKey}'`,
+      ref,
+      validResourceTypeSet,
+    )
   }
 
   if (offenders.length > 0) {
