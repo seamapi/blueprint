@@ -2,7 +2,7 @@ import type { Blueprint, Property, Resource } from './blueprint.js'
 
 const errorDiscriminator = 'error_code'
 const warningDiscriminator = 'warning_code'
-const redundantCodeSuffixes = ['_error', '_warning']
+const redundantCodeWords = ['error', 'warning']
 
 type ResourceBlueprint = Pick<
   Blueprint,
@@ -34,15 +34,15 @@ export const assertResourceErrorAndWarningCodesDontOverlap = (
   }
 }
 
-export const assertResourceErrorAndWarningCodesDontHaveRedundantSuffixes = (
+export const assertResourceErrorAndWarningCodesDontContainRedundantWords = (
   blueprint: ResourceBlueprint,
 ): void => {
   const offenders = labelResources(blueprint).flatMap(
     ([label, { properties }]) => [
-      ...findRedundantlySuffixedCodes(properties, errorDiscriminator).map(
+      ...findRedundantlyWordedCodes(properties, errorDiscriminator).map(
         (code) => `${label} has an error with the code '${code}'`,
       ),
-      ...findRedundantlySuffixedCodes(properties, warningDiscriminator).map(
+      ...findRedundantlyWordedCodes(properties, warningDiscriminator).map(
         (code) => `${label} has a warning with the code '${code}'`,
       ),
     ],
@@ -50,8 +50,8 @@ export const assertResourceErrorAndWarningCodesDontHaveRedundantSuffixes = (
 
   if (offenders.length > 0) {
     throw new Error(
-      `Error and warning codes must not end with ${redundantCodeSuffixes
-        .map((suffix) => `'${suffix}'`)
+      `Error and warning codes must not contain ${redundantCodeWords
+        .map((word) => `'${word}'`)
         .join(' or ')}. Found:\n${offenders.join('\n')}`,
     )
   }
@@ -75,13 +75,13 @@ const labelResources = ({
   ),
 ]
 
-const findRedundantlySuffixedCodes = (
+const findRedundantlyWordedCodes = (
   properties: Property[],
   discriminator: string,
 ): string[] => [
   ...new Set(
     findCodes(properties, discriminator).filter((code) =>
-      redundantCodeSuffixes.some((suffix) => code.endsWith(suffix)),
+      redundantCodeWords.some((word) => code.toLowerCase().includes(word)),
     ),
   ),
 ]

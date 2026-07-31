@@ -7,7 +7,7 @@ import type {
   Resource,
 } from 'lib/blueprint.js'
 import {
-  assertResourceErrorAndWarningCodesDontHaveRedundantSuffixes,
+  assertResourceErrorAndWarningCodesDontContainRedundantWords,
   assertResourceErrorAndWarningCodesDontOverlap,
 } from 'lib/validate-error-and-warning-codes.js'
 
@@ -113,34 +113,32 @@ test('assertResourceErrorAndWarningCodesDontOverlap: throws for events and actio
   )
 })
 
-test('assertResourceErrorAndWarningCodesDontHaveRedundantSuffixes: passes when codes have no redundant suffix', (t) => {
+test('assertResourceErrorAndWarningCodesDontContainRedundantWords: passes when no code contains error or warning', (t) => {
   t.notThrows(() => {
-    assertResourceErrorAndWarningCodesDontHaveRedundantSuffixes({
-      resources: [
-        createResource('foo', ['device_offline'], ['being_deleted', 'error']),
-      ],
+    assertResourceErrorAndWarningCodesDontContainRedundantWords({
+      resources: [createResource('foo', ['device_offline'], ['being_deleted'])],
       events: [],
       actionAttempts: [],
     })
   })
 })
 
-test('assertResourceErrorAndWarningCodesDontHaveRedundantSuffixes: throws on codes ending with _error or _warning', (t) => {
+test('assertResourceErrorAndWarningCodesDontContainRedundantWords: throws on codes containing error or warning', (t) => {
   const error = t.throws(
     () => {
-      assertResourceErrorAndWarningCodesDontHaveRedundantSuffixes({
+      assertResourceErrorAndWarningCodesDontContainRedundantWords({
         resources: [
           createResource(
             'foo',
-            ['device_offline', 'provider_error'],
-            ['being_deleted', 'provider_warning'],
+            ['device_offline', 'provider_error', 'error_setting_code'],
+            ['being_deleted', 'provider_warning', 'warning_from_provider'],
           ),
         ],
         events: [],
         actionAttempts: [],
       })
     },
-    { message: /must not end with '_error' or '_warning'/ },
+    { message: /must not contain 'error' or 'warning'/ },
   )
 
   t.regex(
@@ -149,7 +147,15 @@ test('assertResourceErrorAndWarningCodesDontHaveRedundantSuffixes: throws on cod
   )
   t.regex(
     error?.message ?? '',
+    /resource 'foo' has an error with the code 'error_setting_code'/,
+  )
+  t.regex(
+    error?.message ?? '',
     /resource 'foo' has a warning with the code 'provider_warning'/,
+  )
+  t.regex(
+    error?.message ?? '',
+    /resource 'foo' has a warning with the code 'warning_from_provider'/,
   )
   t.notRegex(error?.message ?? '', /device_offline|being_deleted/)
 })

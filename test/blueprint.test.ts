@@ -470,7 +470,7 @@ test('createBlueprint: throws when a resource has an error and a warning with th
   })
 })
 
-test('createBlueprint: throws when an error code ends with _error', async (t) => {
+test('createBlueprint: throws when an error code contains error', async (t) => {
   const typesModule = TypesModuleSchema.parse(types)
   const openapi = structuredClone(typesModule.openapi)
 
@@ -488,7 +488,7 @@ test('createBlueprint: throws when an error code ends with _error', async (t) =>
         {
           type: 'object',
           properties: {
-            error_code: { type: 'string', enum: ['foo_error'] },
+            error_code: { type: 'string', enum: ['error_setting_on_device'] },
             message: { type: 'string' },
           },
           required: ['error_code', 'message'],
@@ -499,11 +499,12 @@ test('createBlueprint: throws when an error code ends with _error', async (t) =>
   }
 
   await t.throwsAsync(() => createBlueprint({ ...typesModule, openapi }), {
-    message: /resource 'foo' has an error with the code 'foo_error'/,
+    message:
+      /resource 'foo' has an error with the code 'error_setting_on_device'/,
   })
 })
 
-test('createBlueprint: throws when a warning code ends with _warning', async (t) => {
+test('createBlueprint: throws when a warning code contains warning', async (t) => {
   const typesModule = TypesModuleSchema.parse(types)
   const openapi = structuredClone(typesModule.openapi)
 
@@ -521,7 +522,7 @@ test('createBlueprint: throws when a warning code ends with _warning', async (t)
         {
           type: 'object',
           properties: {
-            warning_code: { type: 'string', enum: ['foo_warning'] },
+            warning_code: { type: 'string', enum: ['warning_from_provider'] },
             message: { type: 'string' },
           },
           required: ['warning_code', 'message'],
@@ -531,7 +532,8 @@ test('createBlueprint: throws when a warning code ends with _warning', async (t)
   }
 
   await t.throwsAsync(() => createBlueprint({ ...typesModule, openapi }), {
-    message: /resource 'foo' has a warning with the code 'foo_warning'/,
+    message:
+      /resource 'foo' has a warning with the code 'warning_from_provider'/,
   })
 })
 

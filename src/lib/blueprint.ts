@@ -35,7 +35,7 @@ import {
 } from './seam.js'
 import { assertDocumentedEndpointResponsesReferenceResourceSchemas } from './validate-endpoint-responses.js'
 import {
-  assertResourceErrorAndWarningCodesDontHaveRedundantSuffixes,
+  assertResourceErrorAndWarningCodesDontContainRedundantWords,
   assertResourceErrorAndWarningCodesDontOverlap,
 } from './validate-error-and-warning-codes.js'
 import {
@@ -556,7 +556,7 @@ export const createBlueprint = async (
     actionAttempts,
   })
 
-  assertResourceErrorAndWarningCodesDontHaveRedundantSuffixes({
+  assertResourceErrorAndWarningCodesDontContainRedundantWords({
     resources,
     events,
     actionAttempts,
