@@ -2,29 +2,30 @@ import type { Blueprint, Property, Resource } from './blueprint.js'
 
 const errorDiscriminator = 'error_code'
 const warningDiscriminator = 'warning_code'
+const redundantCodeSuffixes = ['_error', '_warning']
 
-export const assertResourceErrorAndWarningCodesDontOverlap = ({
-  resources,
-  events,
-  actionAttempts,
-}: Pick<Blueprint, 'resources' | 'events' | 'actionAttempts'>): void => {
-  const offenders = [
-    ...resources.flatMap((resource) =>
-      findOverlappingCodeOffenders(
-        resource,
-        `resource '${resource.resourceType}'`,
-      ),
-    ),
-    ...events.flatMap((event) =>
-      findOverlappingCodeOffenders(event, `event '${event.eventType}'`),
-    ),
-    ...actionAttempts.flatMap((actionAttempt) =>
-      findOverlappingCodeOffenders(
-        actionAttempt,
-        `action_attempt '${actionAttempt.actionAttemptType}'`,
-      ),
-    ),
-  ]
+type ResourceBlueprint = Pick<
+  Blueprint,
+  'resources' | 'events' | 'actionAttempts'
+>
+
+export const assertResourceErrorAndWarningCodesDontOverlap = (
+  blueprint: ResourceBlueprint,
+): void => {
+  const offenders = labelResources(blueprint).flatMap(
+    ([label, { properties }]) => {
+      const errorCodes = new Set(findCodes(properties, errorDiscriminator))
+      const overlappingCodes = new Set(
+        findCodes(properties, warningDiscriminator).filter((code) =>
+          errorCodes.has(code),
+        ),
+      )
+
+      return [...overlappingCodes].map(
+        (code) => `${label} has an error and a warning with the code '${code}'`,
+      )
+    },
+  )
 
   if (offenders.length > 0) {
     throw new Error(
@@ -33,21 +34,57 @@ export const assertResourceErrorAndWarningCodesDontOverlap = ({
   }
 }
 
-const findOverlappingCodeOffenders = (
-  { properties }: Resource,
-  label: string,
-): string[] => {
-  const errorCodes = new Set(findCodes(properties, errorDiscriminator))
-  const overlappingCodes = new Set(
-    findCodes(properties, warningDiscriminator).filter((code) =>
-      errorCodes.has(code),
-    ),
+export const assertResourceErrorAndWarningCodesDontHaveRedundantSuffixes = (
+  blueprint: ResourceBlueprint,
+): void => {
+  const offenders = labelResources(blueprint).flatMap(
+    ([label, { properties }]) => [
+      ...findRedundantlySuffixedCodes(properties, errorDiscriminator).map(
+        (code) => `${label} has an error with the code '${code}'`,
+      ),
+      ...findRedundantlySuffixedCodes(properties, warningDiscriminator).map(
+        (code) => `${label} has a warning with the code '${code}'`,
+      ),
+    ],
   )
 
-  return [...overlappingCodes].map(
-    (code) => `${label} has an error and a warning with the code '${code}'`,
-  )
+  if (offenders.length > 0) {
+    throw new Error(
+      `Error and warning codes must not end with ${redundantCodeSuffixes
+        .map((suffix) => `'${suffix}'`)
+        .join(' or ')}. Found:\n${offenders.join('\n')}`,
+    )
+  }
 }
+
+const labelResources = ({
+  resources,
+  events,
+  actionAttempts,
+}: ResourceBlueprint): Array<readonly [string, Resource]> => [
+  ...resources.map(
+    (resource) => [`resource '${resource.resourceType}'`, resource] as const,
+  ),
+  ...events.map((event) => [`event '${event.eventType}'`, event] as const),
+  ...actionAttempts.map(
+    (actionAttempt) =>
+      [
+        `action_attempt '${actionAttempt.actionAttemptType}'`,
+        actionAttempt,
+      ] as const,
+  ),
+]
+
+const findRedundantlySuffixedCodes = (
+  properties: Property[],
+  discriminator: string,
+): string[] => [
+  ...new Set(
+    findCodes(properties, discriminator).filter((code) =>
+      redundantCodeSuffixes.some((suffix) => code.endsWith(suffix)),
+    ),
+  ),
+]
 
 const findCodes = (properties: Property[], discriminator: string): string[] =>
   properties.flatMap((property) => {

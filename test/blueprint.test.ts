@@ -470,6 +470,71 @@ test('createBlueprint: throws when a resource has an error and a warning with th
   })
 })
 
+test('createBlueprint: throws when an error code ends with _error', async (t) => {
+  const typesModule = TypesModuleSchema.parse(types)
+  const openapi = structuredClone(typesModule.openapi)
+
+  const fooSchema = openapi.components.schemas['foo']
+  if (fooSchema?.properties == null) {
+    t.fail('Expected foo schema to have properties')
+    return
+  }
+
+  fooSchema.properties['errors'] = {
+    type: 'array',
+    items: {
+      discriminator: { propertyName: 'error_code' },
+      oneOf: [
+        {
+          type: 'object',
+          properties: {
+            error_code: { type: 'string', enum: ['foo_error'] },
+            message: { type: 'string' },
+          },
+          required: ['error_code', 'message'],
+          'x-resource-type': 'foo',
+        },
+      ],
+    },
+  }
+
+  await t.throwsAsync(() => createBlueprint({ ...typesModule, openapi }), {
+    message: /resource 'foo' has an error with the code 'foo_error'/,
+  })
+})
+
+test('createBlueprint: throws when a warning code ends with _warning', async (t) => {
+  const typesModule = TypesModuleSchema.parse(types)
+  const openapi = structuredClone(typesModule.openapi)
+
+  const fooSchema = openapi.components.schemas['foo']
+  if (fooSchema?.properties == null) {
+    t.fail('Expected foo schema to have properties')
+    return
+  }
+
+  fooSchema.properties['warnings'] = {
+    type: 'array',
+    items: {
+      discriminator: { propertyName: 'warning_code' },
+      oneOf: [
+        {
+          type: 'object',
+          properties: {
+            warning_code: { type: 'string', enum: ['foo_warning'] },
+            message: { type: 'string' },
+          },
+          required: ['warning_code', 'message'],
+        },
+      ],
+    },
+  }
+
+  await t.throwsAsync(() => createBlueprint({ ...typesModule, openapi }), {
+    message: /resource 'foo' has a warning with the code 'foo_warning'/,
+  })
+})
+
 test('createBlueprint: throws on duplicate discriminator values across variants', async (t) => {
   const typesModule = TypesModuleSchema.parse(types)
   const openapi = structuredClone(typesModule.openapi)

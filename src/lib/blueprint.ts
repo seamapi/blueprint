@@ -34,7 +34,10 @@ import {
   type SeamWorkspaceScope,
 } from './seam.js'
 import { assertDocumentedEndpointResponsesReferenceResourceSchemas } from './validate-endpoint-responses.js'
-import { assertResourceErrorAndWarningCodesDontOverlap } from './validate-error-and-warning-codes.js'
+import {
+  assertResourceErrorAndWarningCodesDontHaveRedundantSuffixes,
+  assertResourceErrorAndWarningCodesDontOverlap,
+} from './validate-error-and-warning-codes.js'
 import {
   assertDocumentedEndpointsDontReferenceUndocumentedResources,
   assertDocumentedResourcesDontReferenceUndocumentedRoutes,
@@ -548,6 +551,12 @@ export const createBlueprint = async (
   })
 
   assertResourceErrorAndWarningCodesDontOverlap({
+    resources,
+    events,
+    actionAttempts,
+  })
+
+  assertResourceErrorAndWarningCodesDontHaveRedundantSuffixes({
     resources,
     events,
     actionAttempts,
