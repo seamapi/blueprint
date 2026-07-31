@@ -35,6 +35,10 @@ import {
 } from './seam.js'
 import { assertDocumentedEndpointResponsesReferenceResourceSchemas } from './validate-endpoint-responses.js'
 import {
+  assertResourceErrorAndWarningCodesDontContainRedundantWords,
+  assertResourceErrorAndWarningCodesDontOverlap,
+} from './validate-error-and-warning-codes.js'
+import {
   assertDocumentedEndpointsDontReferenceUndocumentedResources,
   assertDocumentedResourcesDontReferenceUndocumentedRoutes,
   assertSeamPathsAreUndocumented,
@@ -541,6 +545,18 @@ export const createBlueprint = async (
 
   assertDocumentedResourcesDontReferenceUndocumentedRoutes({
     routes,
+    resources,
+    events,
+    actionAttempts,
+  })
+
+  assertResourceErrorAndWarningCodesDontOverlap({
+    resources,
+    events,
+    actionAttempts,
+  })
+
+  assertResourceErrorAndWarningCodesDontContainRedundantWords({
     resources,
     events,
     actionAttempts,

@@ -419,6 +419,124 @@ test('createBlueprint: throws on duplicate enum values in a request parameter', 
   })
 })
 
+test('createBlueprint: throws when a resource has an error and a warning with the same code', async (t) => {
+  const typesModule = TypesModuleSchema.parse(types)
+  const openapi = structuredClone(typesModule.openapi)
+
+  const fooSchema = openapi.components.schemas['foo']
+  if (fooSchema?.properties == null) {
+    t.fail('Expected foo schema to have properties')
+    return
+  }
+
+  fooSchema.properties['errors'] = {
+    type: 'array',
+    items: {
+      discriminator: { propertyName: 'error_code' },
+      oneOf: [
+        {
+          type: 'object',
+          properties: {
+            error_code: { type: 'string', enum: ['foo_issue'] },
+            message: { type: 'string' },
+          },
+          required: ['error_code', 'message'],
+          'x-resource-type': 'foo',
+        },
+      ],
+    },
+  }
+
+  fooSchema.properties['warnings'] = {
+    type: 'array',
+    items: {
+      discriminator: { propertyName: 'warning_code' },
+      oneOf: [
+        {
+          type: 'object',
+          properties: {
+            warning_code: { type: 'string', enum: ['foo_issue'] },
+            message: { type: 'string' },
+          },
+          required: ['warning_code', 'message'],
+        },
+      ],
+    },
+  }
+
+  await t.throwsAsync(() => createBlueprint({ ...typesModule, openapi }), {
+    message:
+      /resource 'foo' has an error and a warning with the code 'foo_issue'/,
+  })
+})
+
+test('createBlueprint: throws when an error code contains error', async (t) => {
+  const typesModule = TypesModuleSchema.parse(types)
+  const openapi = structuredClone(typesModule.openapi)
+
+  const fooSchema = openapi.components.schemas['foo']
+  if (fooSchema?.properties == null) {
+    t.fail('Expected foo schema to have properties')
+    return
+  }
+
+  fooSchema.properties['errors'] = {
+    type: 'array',
+    items: {
+      discriminator: { propertyName: 'error_code' },
+      oneOf: [
+        {
+          type: 'object',
+          properties: {
+            error_code: { type: 'string', enum: ['error_setting_on_device'] },
+            message: { type: 'string' },
+          },
+          required: ['error_code', 'message'],
+          'x-resource-type': 'foo',
+        },
+      ],
+    },
+  }
+
+  await t.throwsAsync(() => createBlueprint({ ...typesModule, openapi }), {
+    message:
+      /resource 'foo' has an error with the code 'error_setting_on_device'/,
+  })
+})
+
+test('createBlueprint: throws when a warning code contains warning', async (t) => {
+  const typesModule = TypesModuleSchema.parse(types)
+  const openapi = structuredClone(typesModule.openapi)
+
+  const fooSchema = openapi.components.schemas['foo']
+  if (fooSchema?.properties == null) {
+    t.fail('Expected foo schema to have properties')
+    return
+  }
+
+  fooSchema.properties['warnings'] = {
+    type: 'array',
+    items: {
+      discriminator: { propertyName: 'warning_code' },
+      oneOf: [
+        {
+          type: 'object',
+          properties: {
+            warning_code: { type: 'string', enum: ['warning_from_provider'] },
+            message: { type: 'string' },
+          },
+          required: ['warning_code', 'message'],
+        },
+      ],
+    },
+  }
+
+  await t.throwsAsync(() => createBlueprint({ ...typesModule, openapi }), {
+    message:
+      /resource 'foo' has a warning with the code 'warning_from_provider'/,
+  })
+})
+
 test('createBlueprint: throws on duplicate discriminator values across variants', async (t) => {
   const typesModule = TypesModuleSchema.parse(types)
   const openapi = structuredClone(typesModule.openapi)
