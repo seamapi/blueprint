@@ -1955,22 +1955,36 @@ export const getPreferredMethod = (
 
   if (methods.includes('POST')) {
     if (semanticMethod === 'GET' || semanticMethod === 'DELETE') {
-      const hasComplexParameters =
-        (operation.parameters?.some(
-          (param) =>
-            param.schema?.type === 'array' || param.schema?.type === 'object',
-        ) ??
-          false) ||
-        operation.requestBody?.content?.['application/json']?.schema?.type ===
-          'object'
-
-      if (hasComplexParameters) {
+      if (hasComplexParameters(operation)) {
         return 'POST'
       }
     }
   }
 
   return semanticMethod
+}
+
+/*
+ * Array and object parameters have no unambiguous query string representation,
+ * so endpoints that take them are served over POST even when their semantics
+ * are those of a GET or a DELETE.
+ *
+ * Parameters are read from the request body of the POST operation: it is the
+ * authoritative parameter list for an endpoint, the same source used to build
+ * Request#parameters. The GET and DELETE operations of an endpoint are not
+ * guaranteed to enumerate their query parameters, e.g. /acs/encoders/list
+ * declares none despite taking two array parameters.
+ */
+const hasComplexParameters = (operation: OpenapiOperation): boolean => {
+  const schema = operation.requestBody?.content?.['application/json']?.schema
+  if (schema == null) return false
+
+  const flattenedSchema = flattenOpenapiSchema(schema)
+  if (flattenedSchema.properties == null) return false
+
+  return Object.values(flattenedSchema.properties).some(
+    (property) => property.type === 'array' || property.type === 'object',
+  )
 }
 
 const createEvents = async (

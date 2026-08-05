@@ -269,6 +269,107 @@ test('getPreferredMethod: get and post with complex parameters', (t) => {
   )
 })
 
+const withRequestBodySchema = (schema: OpenapiSchema): OpenapiOperation => ({
+  ...getPostEndpoint,
+  requestBody: { content: { 'application/json': { schema } } },
+})
+
+test('getPreferredMethod: get and post with array parameter', (t) => {
+  t.is(
+    getPreferredMethod(
+      ['GET', 'POST'],
+      'GET',
+      withRequestBodySchema({
+        type: 'object',
+        properties: {
+          device_ids: { type: 'array', items: { type: 'string' } },
+        },
+      }),
+    ),
+    'POST',
+    'Preferred method should be POST when a parameter is an array',
+  )
+})
+
+test('getPreferredMethod: get and post with only scalar parameters', (t) => {
+  t.is(
+    getPreferredMethod(
+      ['GET', 'POST'],
+      'GET',
+      withRequestBodySchema({
+        type: 'object',
+        properties: {
+          device_id: { type: 'string', format: 'uuid' },
+          name: { type: 'string' },
+          limit: { type: 'number' },
+          is_managed: { type: 'boolean' },
+        },
+        required: ['device_id'],
+      }),
+    ),
+    'GET',
+    'Preferred method should be GET when every parameter is a scalar',
+  )
+})
+
+test('getPreferredMethod: get and post with complex parameters inside allOf', (t) => {
+  t.is(
+    getPreferredMethod(
+      ['GET', 'POST'],
+      'GET',
+      withRequestBodySchema({
+        allOf: [
+          {
+            type: 'object',
+            properties: {
+              acs_system_ids: { type: 'array', items: { type: 'string' } },
+            },
+          },
+          {
+            type: 'object',
+            properties: { limit: { type: 'number' } },
+          },
+        ],
+      }),
+    ),
+    'POST',
+    'Preferred method should be POST when an allOf subschema contributes a complex parameter',
+  )
+})
+
+test('getPreferredMethod: get and post with only scalar parameters inside oneOf', (t) => {
+  t.is(
+    getPreferredMethod(
+      ['GET', 'POST'],
+      'GET',
+      withRequestBodySchema({
+        oneOf: [
+          {
+            type: 'object',
+            properties: { device_id: { type: 'string', format: 'uuid' } },
+            required: ['device_id'],
+          },
+          {
+            type: 'object',
+            properties: { name: { type: 'string' } },
+            required: ['name'],
+          },
+        ],
+      }),
+    ),
+    'GET',
+    'Preferred method should be GET when every oneOf variant only contributes scalars',
+  )
+})
+
+test('getPreferredMethod: get and post without a request body', (t) => {
+  t.is(
+    getPreferredMethod(['GET', 'POST'], 'GET', getPostEndpoint),
+    'GET',
+    'Preferred method should be GET when the endpoint takes no parameters',
+  )
+})
+
 const patchPostEndpoint: OpenapiOperation = {
   summary: '/user_identities/update',
   responses: {
@@ -413,8 +514,38 @@ test('getPreferredMethod: delete and post', (t) => {
   const deletePostMethods: Method[] = ['DELETE', 'POST']
   t.is(
     getPreferredMethod(deletePostMethods, 'DELETE', deletePostEndpoint),
+    'DELETE',
+    'Preferred method should be DELETE when both DELETE and POST are available and all parameters are scalars',
+  )
+})
+
+const deletePostComplexParamsEndpoint: OpenapiOperation = {
+  ...deletePostEndpoint,
+  requestBody: {
+    content: {
+      'application/json': {
+        schema: {
+          type: 'object',
+          properties: {
+            user_identity_ids: { type: 'array', items: { type: 'string' } },
+          },
+          required: ['user_identity_ids'],
+        },
+      },
+    },
+  },
+}
+
+test('getPreferredMethod: delete and post with complex parameters', (t) => {
+  const deletePostMethods: Method[] = ['DELETE', 'POST']
+  t.is(
+    getPreferredMethod(
+      deletePostMethods,
+      'DELETE',
+      deletePostComplexParamsEndpoint,
+    ),
     'POST',
-    'Preferred method should be POST when both DELETE and POST are available',
+    'Preferred method should be POST when both DELETE and POST are available and complex parameters are present',
   )
 })
 
