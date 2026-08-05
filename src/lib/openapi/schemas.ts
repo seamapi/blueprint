@@ -84,6 +84,7 @@ export const OpenapiOperationSchema = z.object({
   'x-deprecated': z.string().default(''),
   'x-draft': z.string().default(''),
   'x-action-attempt-type': z.string().optional(),
+  'x-has-required-parameters': z.boolean().optional(),
 })
 
 export const EnumValueSchema = z.object({
