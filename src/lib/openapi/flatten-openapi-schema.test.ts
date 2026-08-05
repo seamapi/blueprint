@@ -372,8 +372,16 @@ test('flattenOneOfSchema: preserves nullable from the union', (t) => {
   const schema: OpenapiSchema = {
     nullable: true,
     oneOf: [
-      { type: 'object', properties: { a: { type: 'string' } }, required: ['a'] },
-      { type: 'object', properties: { a: { type: 'string' } }, required: ['a'] },
+      {
+        type: 'object',
+        properties: { a: { type: 'string' } },
+        required: ['a'],
+      },
+      {
+        type: 'object',
+        properties: { a: { type: 'string' } },
+        required: ['a'],
+      },
     ],
   }
   const flattened = flattenOneOfSchema(schema as { oneOf: OpenapiSchema[] })
@@ -395,10 +403,9 @@ test('flattenOneOfSchema: throws when mixing scalar and object variants', (t) =>
       { type: 'object', properties: { a: { type: 'string' } } },
     ],
   }
-  t.throws(
-    () => flattenOneOfSchema(schema as { oneOf: OpenapiSchema[] }),
-    { message: /mixing scalar and non-scalar variants/ },
-  )
+  t.throws(() => flattenOneOfSchema(schema as { oneOf: OpenapiSchema[] }), {
+    message: /mixing scalar and non-scalar variants/,
+  })
 })
 
 test('flattenAllOfSchema: throws when a subschema is a scalar', (t) => {
