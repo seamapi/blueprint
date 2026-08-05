@@ -4,6 +4,10 @@ import { omitUndocumentedFromBlueprint } from './omit-undocumented.js'
 import { findCommonOpenapiSchemaProperties } from './openapi/find-common-openapi-schema-properties.js'
 import { flattenOpenapiSchema } from './openapi/flatten-openapi-schema.js'
 import {
+  getRequestBodySchema,
+  schemaRequiresAnyProperty,
+} from './openapi/get-request-body-schema.js'
+import {
   EventResourceSchema,
   OpenapiOperationSchema,
   PropertySchema,
@@ -38,6 +42,7 @@ import {
   assertResourceErrorAndWarningCodesDontContainRedundantWords,
   assertResourceErrorAndWarningCodesDontOverlap,
 } from './validate-error-and-warning-codes.js'
+import { assertRequestParameterAnnotationsMatchSchemas } from './validate-request-parameters.js'
 import {
   assertDocumentedEndpointsDontReferenceUndocumentedResources,
   assertDocumentedResourcesDontReferenceUndocumentedRoutes,
@@ -282,6 +287,7 @@ export interface Request {
   semanticMethod: Method
   preferredMethod: Method
   parameters: Parameter[]
+  hasRequiredParameters: boolean
 }
 
 export type Response = VoidResponse | ResourceResponse | ResourceListResponse
@@ -512,6 +518,8 @@ export const createBlueprint = async (
     openapi.paths,
     validResourceTypes,
   )
+
+  assertRequestParameterAnnotationsMatchSchemas(openapi.paths)
 
   const routes = await createRoutes(openapi.paths, context)
   const namespaces = createNamespaces(routes)
@@ -804,7 +812,9 @@ const createEndpointFromOperation = async (
   const isDraft = parsedOperation['x-draft'].length > 0
   const draftMessage = parsedOperation['x-draft']
 
-  const request = createRequest(methods, operation, path)
+  const request = createRequest(methods, operation, path, {
+    hasRequiredParameters: parsedOperation['x-has-required-parameters'],
+  })
   const { hasPagination, ...response } = createResponse(
     operation,
     path,
@@ -910,6 +920,9 @@ const createRequest = (
   methods: Method[],
   operation: OpenapiOperation,
   path: string,
+  {
+    hasRequiredParameters,
+  }: { hasRequiredParameters?: boolean | undefined } = {},
 ): Request => {
   if (methods.length === 0) {
     throw new Error(`At least one HTTP method should be specified for ${path}`)
@@ -925,14 +938,25 @@ const createRequest = (
 
   const semanticMethod = getSemanticMethod(methods)
   const preferredMethod = getPreferredMethod(methods, semanticMethod, operation)
+  const parameters = createRequestBody(operation, path)
 
   return {
     methods,
     semanticMethod,
     preferredMethod,
-    parameters: createRequestBody(operation, path),
+    parameters,
+    hasRequiredParameters:
+      hasRequiredParameters ??
+      deriveHasRequiredParameters(operation, parameters),
   }
 }
+
+const deriveHasRequiredParameters = (
+  operation: OpenapiOperation,
+  parameters: Parameter[],
+): boolean =>
+  parameters.some(({ isRequired }) => isRequired) ||
+  schemaRequiresAnyProperty(getRequestBodySchema(operation))
 
 const createRequestBody = (
   operation: OpenapiOperation,
@@ -940,12 +964,7 @@ const createRequestBody = (
 ): Parameter[] => {
   // This should be done by the createParameters but for some reason it's not
   // TODO: remove this in favour of using createParameters
-  if (!('requestBody' in operation) || operation.requestBody === undefined) {
-    return []
-  }
-
-  const { requestBody } = operation
-  const jsonSchema = requestBody.content?.['application/json']?.schema
+  const jsonSchema = getRequestBodySchema(operation)
   if (jsonSchema == null) return []
 
   const flattenedSchema = flattenOpenapiSchema(jsonSchema)

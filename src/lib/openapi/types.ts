@@ -44,6 +44,7 @@ export interface OpenapiOperation {
   responses: Record<string, OpenapiResponse>
   tags?: string[]
   security?: OpenapiSecurity[]
+  'x-has-required-parameters'?: boolean
 }
 
 export interface OpenapiParameter {
@@ -98,6 +99,7 @@ export interface OpenapiSchema {
     }
   >
   oneOf?: OpenapiSchema[]
+  anyOf?: OpenapiSchema[]
   allOf?: OpenapiSchema[]
   discriminator?: {
     propertyName: string

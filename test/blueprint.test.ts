@@ -1,5 +1,9 @@
-import { createBlueprint, TypesModuleSchema } from '@seamapi/blueprint'
-import test from 'ava'
+import {
+  createBlueprint,
+  type Endpoint,
+  TypesModuleSchema,
+} from '@seamapi/blueprint'
+import test, { type ExecutionContext } from 'ava'
 
 import * as types from './fixtures/types/index.js'
 
@@ -669,4 +673,110 @@ test('createBlueprint: allows more than two methods on exempt endpoints', async 
     .find(({ path }) => path === '/access_codes/update')
 
   t.deepEqual(endpoint?.request.methods, ['POST', 'PATCH', 'PUT'])
+})
+
+const createBlueprintWithFoosGetRequestBody = async (
+  t: ExecutionContext,
+  schema: Record<string, unknown>,
+  hasRequiredParameters?: boolean,
+): Promise<Endpoint | undefined> => {
+  const typesModule = TypesModuleSchema.parse(types)
+  const openapi = structuredClone(typesModule.openapi)
+  const operation = openapi.paths['/foos/get']?.post
+
+  if (operation == null) {
+    t.fail('Expected the /foos/get post operation in the fixture')
+  }
+
+  operation.requestBody = { content: { 'application/json': { schema } } }
+
+  if (hasRequiredParameters != null) {
+    operation['x-has-required-parameters'] = hasRequiredParameters
+  }
+
+  const blueprint = await createBlueprint({ ...typesModule, openapi })
+
+  return blueprint.routes
+    .flatMap((route) => route.endpoints)
+    .find(({ path }) => path === '/foos/get')
+}
+
+test('createBlueprint: hasRequiredParameters is false when every parameter is optional', async (t) => {
+  const endpoint = await createBlueprintWithFoosGetRequestBody(t, {
+    type: 'object',
+    properties: { foo_id: { type: 'string' }, name: { type: 'string' } },
+  })
+
+  t.false(endpoint?.request.hasRequiredParameters)
+})
+
+test('createBlueprint: hasRequiredParameters is true when a parameter is required', async (t) => {
+  const endpoint = await createBlueprintWithFoosGetRequestBody(t, {
+    type: 'object',
+    properties: { foo_id: { type: 'string' } },
+    required: ['foo_id'],
+  })
+
+  t.true(endpoint?.request.hasRequiredParameters)
+})
+
+test('createBlueprint: hasRequiredParameters is true when every union variant requires a parameter', async (t) => {
+  const endpoint = await createBlueprintWithFoosGetRequestBody(t, {
+    oneOf: [
+      {
+        type: 'object',
+        properties: { foo_id: { type: 'string' } },
+        required: ['foo_id'],
+      },
+      {
+        type: 'object',
+        properties: { name: { type: 'string' } },
+        required: ['name'],
+      },
+    ],
+  })
+
+  t.deepEqual(
+    endpoint?.request.parameters.map(({ name, isRequired }) => ({
+      name,
+      isRequired,
+    })),
+    [
+      { name: 'foo_id', isRequired: false },
+      { name: 'name', isRequired: false },
+    ],
+  )
+  t.true(endpoint?.request.hasRequiredParameters)
+})
+
+test('createBlueprint: hasRequiredParameters honors the annotation when all parameters are optional', async (t) => {
+  const endpoint = await createBlueprintWithFoosGetRequestBody(
+    t,
+    {
+      type: 'object',
+      properties: { foo_id: { type: 'string' }, name: { type: 'string' } },
+    },
+    true,
+  )
+
+  t.true(endpoint?.request.hasRequiredParameters)
+})
+
+test('createBlueprint: throws when the annotation contradicts a required parameter', async (t) => {
+  await t.throwsAsync(
+    async () =>
+      await createBlueprintWithFoosGetRequestBody(
+        t,
+        {
+          type: 'object',
+          properties: { foo_id: { type: 'string' } },
+          required: ['foo_id'],
+        },
+        false,
+      ),
+    {
+      message:
+        /\/foos\/get sets 'x-has-required-parameters: false' but requires foo_id/,
+    },
+  )
 })
