@@ -1,6 +1,7 @@
 import test from 'ava'
 
 import {
+  createParameters,
   createProperties,
   getPreferredMethod,
   getSemanticMethod,
@@ -153,6 +154,70 @@ test('createProperties: uses provided values', (t) => {
     'isUndocumented should be true when x-undocumented is provided',
   )
   t.true(property.isDraft, 'isDraft should be true when x-draft is provided')
+})
+
+test('createParameters: assigns appropriate default values', (t) => {
+  const parameters = createParameters(
+    {
+      minimal_parameter: { type: 'string' },
+    } as Record<string, OpenapiSchema>,
+    '/foo',
+  )
+
+  t.is(parameters.length, 1, 'Should create one parameter')
+  const [parameter] = parameters
+  if (parameter === undefined) {
+    t.fail('Parameter should not be undefined')
+    return
+  }
+  t.false(
+    parameter.isNullable,
+    'isNullable should default to false when nullable is not set',
+  )
+  t.false(
+    parameter.isRequired,
+    'isRequired should default to false when the parameter is not required',
+  )
+})
+
+test('createParameters: sets isNullable from the nullable flag', (t) => {
+  const parameters = createParameters(
+    {
+      nullable_parameter: { type: 'string', nullable: true },
+      non_nullable_parameter: { type: 'string', nullable: false },
+      nullable_list_parameter: {
+        type: 'array',
+        nullable: true,
+        items: { type: 'string' },
+      },
+      nullable_object_parameter: {
+        type: 'object',
+        nullable: true,
+        properties: { a: { type: 'string' } },
+      },
+    } as Record<string, OpenapiSchema>,
+    '/foo',
+  )
+
+  const findParameter = (name: string): boolean | undefined =>
+    parameters.find((p) => p.name === name)?.isNullable
+
+  t.true(
+    findParameter('nullable_parameter'),
+    'isNullable should be true when nullable is true',
+  )
+  t.false(
+    findParameter('non_nullable_parameter'),
+    'isNullable should be false when nullable is false',
+  )
+  t.true(
+    findParameter('nullable_list_parameter'),
+    'isNullable should be true for a nullable list parameter',
+  )
+  t.true(
+    findParameter('nullable_object_parameter'),
+    'isNullable should be true for a nullable object parameter',
+  )
 })
 
 const postEndpoint: OpenapiOperation = {

@@ -141,6 +141,7 @@ interface BaseParameter {
   name: string
   description: string
   isRequired: boolean
+  isNullable: boolean
   isDeprecated: boolean
   deprecationMessage: string
   isUndocumented: boolean
@@ -959,7 +960,7 @@ const createRequestBody = (
   )
 }
 
-const createParameters = (
+export const createParameters = (
   properties: Record<string, OpenapiSchema>,
   path: string,
   requiredParameters: string[] = [],
@@ -1003,6 +1004,7 @@ const createParameter = (
     name,
     description: normalizeDescription(String(parsedProp.description ?? '')),
     isRequired: requiredParameters.includes(name),
+    isNullable: parsedProp.nullable === true,
     isDeprecated: parsedProp['x-deprecated'].length > 0,
     deprecationMessage: parsedProp['x-deprecated'],
     isUndocumented: parsedProp['x-undocumented'].length > 0,
