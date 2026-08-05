@@ -1,5 +1,16 @@
 import type { OpenapiSchema } from './types.js'
 
+type ScalarType = 'string' | 'number' | 'integer' | 'boolean'
+
+// Ordered widest first. Every JSON scalar has a faithful string rendering, so
+// string is the safest common supertype, and number subsumes integer.
+const scalarTypes: ScalarType[] = ['string', 'number', 'integer', 'boolean']
+
+const isScalarSchema = (
+  schema: OpenapiSchema,
+): schema is OpenapiSchema & { type: ScalarType } =>
+  schema.type != null && scalarTypes.includes(schema.type as ScalarType)
+
 export const flattenOpenapiSchema = (schema: OpenapiSchema): OpenapiSchema => {
   if ('allOf' in schema && Array.isArray(schema.allOf)) {
     return flattenAllOfSchema(schema as { allOf: OpenapiSchema[] })
@@ -41,6 +52,13 @@ export const flattenAllOfSchema = (schema: AllOfSchema): OpenapiSchema => {
   }
 
   const flattenedSubschemas = schema.allOf.map(flattenOpenapiSchema)
+
+  const scalarSubschema = flattenedSubschemas.find(isScalarSchema)
+  if (scalarSubschema != null) {
+    throw new Error(
+      `Cannot flatten an allOf containing the scalar type '${scalarSubschema.type}': an intersection of an object with a scalar has no object representation.`,
+    )
+  }
 
   for (const flattenedSubschema of flattenedSubschemas) {
     if (flattenedSubschema.properties != null) {
@@ -90,10 +108,17 @@ export const flattenAllOfSchema = (schema: AllOfSchema): OpenapiSchema => {
 type OneOfSchema = OpenapiSchema & Required<Pick<OpenapiSchema, 'oneOf'>>
 
 export const flattenOneOfSchema = (schema: OneOfSchema): OpenapiSchema => {
+  const flattenedSubschemas = schema.oneOf.map(flattenOpenapiSchema)
+
+  // A variant that is itself nullable makes the whole union nullable.
+  const isNullable =
+    schema.nullable === true ||
+    flattenedSubschemas.some((s) => s.nullable === true)
+
   const baseFlattenedSchema: OpenapiSchema = {
     ...(schema?.description != null && { description: schema.description }),
+    ...(isNullable && { nullable: true }),
   }
-  const flattenedSubschemas = schema.oneOf.map(flattenOpenapiSchema)
 
   if (
     flattenedSubschemas.every(
@@ -109,6 +134,18 @@ export const flattenOneOfSchema = (schema: OneOfSchema): OpenapiSchema => {
       type: 'string',
       enum: mergedEnums,
     }
+  } else if (flattenedSubschemas.every(isScalarSchema)) {
+    return {
+      ...baseFlattenedSchema,
+      ...flattenScalarSubschemas(flattenedSubschemas),
+    }
+  } else if (flattenedSubschemas.some(isScalarSchema)) {
+    const kinds = Array.from(
+      new Set(flattenedSubschemas.map((s) => s.type ?? 'unknown')),
+    )
+    throw new Error(
+      `Cannot flatten a oneOf mixing scalar and non-scalar variants (${kinds.join(', ')}): there is no single type that describes every variant.`,
+    )
   } else {
     let mergedProperties: Record<string, OpenapiSchema> = {}
     const requiredFieldsLists: string[][] = []
@@ -169,5 +206,37 @@ export const flattenOneOfSchema = (schema: OneOfSchema): OpenapiSchema => {
       properties: mergedProperties,
       required: commonRequiredFields,
     }
+  }
+}
+
+// A union of scalars is described by the narrowest type that still accepts every
+// variant. Without this, a scalar union falls through to the object merge above
+// and is reported as an object with no properties, which is not something the
+// endpoint accepts at all.
+const flattenScalarSubschemas = (
+  subschemas: Array<OpenapiSchema & { type: ScalarType }>,
+): OpenapiSchema => {
+  const types = new Set(subschemas.map((s) => s.type))
+  const type = scalarTypes.find((t) => types.has(t))
+  if (type == null) {
+    throw new Error('Expected at least one scalar subschema')
+  }
+
+  // Only variants of the resolved type constrain its format, and a variant with
+  // no format is the unconstrained form of that type. So a single distinct
+  // format is the most specific description of the union: `string` unioned with
+  // a `date-time` string is still always a timestamp in practice. Competing
+  // formats have no common refinement, leaving the bare type.
+  const formats = new Set(
+    subschemas
+      .filter((s) => s.type === type)
+      .map((s) => s.format)
+      .filter((format) => format != null),
+  )
+  const [format] = formats
+
+  return {
+    type,
+    ...(formats.size === 1 && { format }),
   }
 }
