@@ -1,4 +1,4 @@
-import type { OpenapiSchema } from 'lib/openapi/types.js'
+import type { OpenapiEnumValue, OpenapiSchema } from 'lib/openapi/types.js'
 
 export function findCommonOpenapiSchemaProperties(
   schemas: OpenapiSchema[],
@@ -20,10 +20,13 @@ export function findCommonOpenapiSchemaProperties(
     }
 
     if ('enum' in propValue) {
-      const mergedEnumValues = schemas.reduce<string[]>((allEnums, schema) => {
-        const enumValues = schema.properties?.[propKey]?.enum ?? []
-        return [...new Set([...allEnums, ...enumValues])]
-      }, [])
+      const mergedEnumValues = schemas.reduce<OpenapiEnumValue[]>(
+        (allEnums, schema) => {
+          const enumValues = schema.properties?.[propKey]?.enum ?? []
+          return [...new Set([...allEnums, ...enumValues])]
+        },
+        [],
+      )
 
       return {
         ...commonProps,
