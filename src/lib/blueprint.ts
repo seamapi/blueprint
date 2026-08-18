@@ -250,6 +250,7 @@ interface DiscriminatedListParameter extends BaseListParameter {
 interface BooleanParameter extends BaseParameter {
   format: 'boolean'
   jsonType: 'boolean'
+  values?: boolean[]
   default?: boolean | null
 }
 
@@ -436,6 +437,7 @@ type ListProperty =
 interface BooleanProperty extends BaseProperty {
   format: 'boolean'
   jsonType: 'boolean'
+  values?: boolean[]
 }
 
 interface ObjectProperty extends BaseProperty {
@@ -1078,7 +1080,12 @@ const createParameter = (
       }
       return { ...baseParam, format: 'string', jsonType: 'string' }
     case 'boolean':
-      return { ...baseParam, format: 'boolean', jsonType: 'boolean' }
+      return {
+        ...baseParam,
+        format: 'boolean',
+        jsonType: 'boolean',
+        ...(parsedProp.enum !== undefined && { values: parsedProp.enum }),
+      }
     case 'array': {
       return createArrayParameter(baseParam, property, path)
     }
@@ -1152,7 +1159,7 @@ const createArrayParameter = (
           (schema: OpenapiSchema) =>
             schema.properties?.[discriminatorPropertyName]?.enum?.[0],
         )
-        .filter((value): value is string => value != null)
+        .filter((value) => value != null)
         .map((value) => String(value)),
       `${discriminatorPropertyName} values for parameter '${baseParam.name}' in ${path}`,
     )
@@ -1692,7 +1699,12 @@ const createProperty = (
       }
       return { ...baseProperty, format: 'string', jsonType: 'string' }
     case 'boolean':
-      return { ...baseProperty, format: 'boolean', jsonType: 'boolean' }
+      return {
+        ...baseProperty,
+        format: 'boolean',
+        jsonType: 'boolean',
+        ...(parsedProp.enum !== undefined && { values: parsedProp.enum }),
+      }
     case 'array': {
       return createArrayProperty(baseProperty, prop, parentPaths, schemas)
     }
@@ -1802,7 +1814,7 @@ const createArrayProperty = (
         .map(
           (schema) => schema.properties?.[discriminatorPropertyName]?.enum?.[0],
         )
-        .filter((value): value is string => value != null)
+        .filter((value) => value != null)
         .map((value) => String(value)),
       `${discriminatorPropertyName} values for '${[...parentPaths, baseProperty.name].join('.')}'`,
     )
@@ -2025,14 +2037,10 @@ const createEvents = async (
 
   const events = await Promise.all(
     eventSchema.oneOf.map(async (schema) => {
-      if (
-        typeof schema !== 'object' ||
-        schema.properties?.['event_type']?.enum?.[0] == null
-      ) {
-        return null
-      }
+      if (typeof schema !== 'object') return null
 
-      const eventType = schema.properties['event_type'].enum[0]
+      const eventType = schema.properties?.['event_type']?.enum?.[0]
+      if (typeof eventType !== 'string') return null
 
       if (!('x-route-path' in schema && schema['x-route-path'].length > 0)) {
         throw new Error(`Missing route_path for event type ${eventType}`)
@@ -2094,6 +2102,8 @@ const createActionAttempts = async (
     }
 
     const actionType = schema.properties['action_type'].enum[0]
+    if (typeof actionType !== 'string') continue
+
     const currentSchemas = schemasByActionType.get(actionType)
 
     if (currentSchemas == null) {

@@ -1,4 +1,5 @@
 import {
+  type Blueprint,
   createBlueprint,
   type Endpoint,
   TypesModuleSchema,
@@ -779,4 +780,208 @@ test('createBlueprint: throws when the annotation contradicts a required paramet
         /\/foos\/get sets 'x-has-required-parameters: false' but requires foo_id/,
     },
   )
+})
+
+const createBlueprintWithFooProperties = async (
+  t: ExecutionContext,
+  properties: Record<string, unknown>,
+): Promise<Blueprint> => {
+  const typesModule = TypesModuleSchema.parse(types)
+  const openapi = structuredClone(typesModule.openapi)
+  const fooSchema = openapi.components.schemas['foo']
+
+  if (fooSchema?.properties == null) {
+    t.fail('Expected foo schema to have properties')
+  }
+
+  Object.assign(fooSchema.properties, properties)
+  return await createBlueprint({ ...typesModule, openapi })
+}
+
+test('createBlueprint: preserves boolean enum constraints on resource properties', async (t) => {
+  const blueprint = await createBlueprintWithFooProperties(t, {
+    true_literal: { type: 'boolean', enum: [true] },
+    false_literal: { type: 'boolean', enum: [false] },
+    multiple_literals: { type: 'boolean', enum: [true, false] },
+    unconstrained_boolean: { type: 'boolean' },
+  })
+
+  const properties = blueprint.resources.find(
+    ({ resourceType }) => resourceType === 'foo',
+  )?.properties
+  const trueLiteral = properties?.find(({ name }) => name === 'true_literal')
+  const falseLiteral = properties?.find(({ name }) => name === 'false_literal')
+  const multipleLiterals = properties?.find(
+    ({ name }) => name === 'multiple_literals',
+  )
+  const unconstrainedBoolean = properties?.find(
+    ({ name }) => name === 'unconstrained_boolean',
+  )
+
+  if (
+    trueLiteral?.format !== 'boolean' ||
+    falseLiteral?.format !== 'boolean' ||
+    multipleLiterals?.format !== 'boolean' ||
+    unconstrainedBoolean?.format !== 'boolean'
+  ) {
+    t.fail('Expected all test properties to be booleans')
+    return
+  }
+
+  t.deepEqual(trueLiteral.values, [true])
+  t.deepEqual(falseLiteral.values, [false])
+  t.is(
+    falseLiteral.values?.[0],
+    false,
+    'Expected the false literal to be retained',
+  )
+  t.deepEqual(multipleLiterals.values, [true, false])
+  t.false('values' in unconstrainedBoolean)
+})
+
+test('createBlueprint: preserves boolean constraints on request parameters independently of defaults', async (t) => {
+  const endpoint = await createBlueprintWithFoosGetRequestBody(t, {
+    type: 'object',
+    properties: {
+      include_unmanaged: { type: 'boolean', enum: [false] },
+      use_cache: { type: 'boolean', default: false },
+    },
+  })
+  const includeUnmanaged = endpoint?.request.parameters.find(
+    ({ name }) => name === 'include_unmanaged',
+  )
+  const useCache = endpoint?.request.parameters.find(
+    ({ name }) => name === 'use_cache',
+  )
+
+  if (includeUnmanaged?.format !== 'boolean') {
+    t.fail('Expected include_unmanaged to be a boolean parameter')
+    return
+  }
+  if (useCache?.format !== 'boolean') {
+    t.fail('Expected use_cache to be a boolean parameter')
+    return
+  }
+
+  t.deepEqual(includeUnmanaged.values, [false])
+  t.false('values' in useCache)
+  t.true(useCache.hasDefault)
+  t.is(useCache.default, false)
+})
+
+test('createBlueprint: preserves boolean constraints in nested and flattened schemas', async (t) => {
+  const blueprint = await createBlueprintWithFooProperties(t, {
+    status_updates: {
+      type: 'array',
+      items: {
+        discriminator: { propertyName: 'kind' },
+        oneOf: [
+          {
+            type: 'object',
+            properties: {
+              kind: { type: 'string', enum: ['connected_account'] },
+              is_connected_account_error: {
+                type: 'boolean',
+                enum: [true],
+              },
+            },
+            required: ['kind', 'is_connected_account_error'],
+          },
+        ],
+      },
+    },
+    scalar_union: {
+      oneOf: [
+        { type: 'boolean', enum: [true] },
+        { type: 'boolean', enum: [false] },
+      ],
+    },
+    all_of_flags: {
+      allOf: [
+        {
+          type: 'object',
+          properties: {
+            is_enabled: { type: 'boolean', enum: [true] },
+          },
+        },
+        {
+          type: 'object',
+          properties: {
+            is_enabled: { type: 'boolean', enum: [false] },
+          },
+        },
+      ],
+    },
+    one_of_flags: {
+      oneOf: [
+        {
+          type: 'object',
+          properties: {
+            is_enabled: { type: 'boolean', enum: [true] },
+          },
+        },
+        {
+          type: 'object',
+          properties: {
+            is_enabled: { type: 'boolean', enum: [false] },
+          },
+        },
+      ],
+    },
+  })
+
+  const properties = blueprint.resources.find(
+    ({ resourceType }) => resourceType === 'foo',
+  )?.properties
+  const statusUpdates = properties?.find(
+    ({ name }) => name === 'status_updates',
+  )
+  if (
+    statusUpdates?.format !== 'list' ||
+    statusUpdates.itemFormat !== 'discriminated_object'
+  ) {
+    t.fail('Expected status_updates to be a discriminated list property')
+    return
+  }
+
+  const variantProperties = statusUpdates.variants[0]?.properties
+  const nestedBoolean = variantProperties?.find(
+    ({ name }) => name === 'is_connected_account_error',
+  )
+  const kind = variantProperties?.find(({ name }) => name === 'kind')
+  if (nestedBoolean?.format !== 'boolean' || kind?.format !== 'enum') {
+    t.fail('Expected boolean and string discriminants to retain their formats')
+    return
+  }
+
+  t.deepEqual(nestedBoolean.values, [true])
+  t.deepEqual(
+    kind.values.map(({ name }) => name),
+    ['connected_account'],
+  )
+
+  const scalarUnion = properties?.find(({ name }) => name === 'scalar_union')
+  if (scalarUnion?.format !== 'boolean') {
+    t.fail('Expected scalar_union to be a boolean property')
+    return
+  }
+  t.deepEqual(scalarUnion.values, [true, false])
+
+  for (const name of ['all_of_flags', 'one_of_flags']) {
+    const container = properties?.find((property) => property.name === name)
+    if (container?.format !== 'object') {
+      t.fail(`Expected ${name} to be an object property`)
+      continue
+    }
+
+    const nestedProperty = container.properties.find(
+      ({ name }) => name === 'is_enabled',
+    )
+    if (nestedProperty?.format !== 'boolean') {
+      t.fail(`Expected ${name}.is_enabled to be a boolean property`)
+      continue
+    }
+
+    t.deepEqual(nestedProperty.values, [true, false])
+  }
 })

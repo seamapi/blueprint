@@ -70,6 +70,8 @@ export interface OpenapiMediaType {
   schema: OpenapiSchema
 }
 
+export type OpenapiEnumValue = string | boolean
+
 export interface OpenapiSchema {
   type?: 'object' | 'array' | 'string' | 'number' | 'integer' | 'boolean'
   properties?: Record<string, OpenapiSchema>
@@ -77,7 +79,7 @@ export interface OpenapiSchema {
   $ref?: string
   required?: string[]
   nullable?: boolean
-  enum?: string[]
+  enum?: OpenapiEnumValue[]
   format?: string
   description?: string
   deprecated?: boolean

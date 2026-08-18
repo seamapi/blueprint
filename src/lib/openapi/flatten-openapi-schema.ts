@@ -1,4 +1,4 @@
-import type { OpenapiSchema } from './types.js'
+import type { OpenapiEnumValue, OpenapiSchema } from './types.js'
 
 type ScalarType = 'string' | 'number' | 'integer' | 'boolean'
 
@@ -82,7 +82,7 @@ export const flattenAllOfSchema = (schema: AllOfSchema): OpenapiSchema => {
     flattenedSchema.properties,
   )) {
     if ('enum' in propSchema && Array.isArray(propSchema.enum)) {
-      const enumValues = new Set<string>()
+      const enumValues = new Set<OpenapiEnumValue>()
 
       for (const subschema of flattenedSubschemas) {
         const enumProp = subschema.properties?.[propKey]
@@ -120,9 +120,11 @@ export const flattenOneOfSchema = (schema: OneOfSchema): OpenapiSchema => {
     ...(isNullable && { nullable: true }),
   }
 
+  const enumType = flattenedSubschemas[0]?.type
   if (
+    (enumType === 'string' || enumType === 'boolean') &&
     flattenedSubschemas.every(
-      (s) => s.type === 'string' && Array.isArray(s.enum),
+      (s) => s.type === enumType && Array.isArray(s.enum),
     )
   ) {
     const mergedEnums = Array.from(
@@ -131,7 +133,7 @@ export const flattenOneOfSchema = (schema: OneOfSchema): OpenapiSchema => {
 
     return {
       ...baseFlattenedSchema,
-      type: 'string',
+      type: enumType,
       enum: mergedEnums,
     }
   } else if (flattenedSubschemas.every(isScalarSchema)) {
@@ -170,7 +172,7 @@ export const flattenOneOfSchema = (schema: OneOfSchema): OpenapiSchema => {
 
     for (const [propKey, propSchema] of Object.entries(mergedProperties)) {
       if ('enum' in propSchema && Array.isArray(propSchema.enum)) {
-        const enumValues = new Set<string>()
+        const enumValues = new Set<OpenapiEnumValue>()
 
         for (const subschema of flattenedSubschemas) {
           const enumProp = subschema.properties?.[propKey]
