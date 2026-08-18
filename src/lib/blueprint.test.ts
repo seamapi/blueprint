@@ -180,6 +180,30 @@ test('createParameters: assigns appropriate default values', (t) => {
   )
 })
 
+test('record properties and parameters preserve their value types', (t) => {
+  const schema: OpenapiSchema = {
+    type: 'object',
+    additionalProperties: {
+      oneOf: [{ type: 'string' }, { type: 'boolean' }],
+    },
+  }
+
+  const [property] = createProperties({ metadata: schema }, ['foo'], [], {})
+  const [parameter] = createParameters({ metadata: schema }, '/foo')
+
+  if (
+    property?.format !== 'record' ||
+    !('valueTypes' in property) ||
+    parameter?.format !== 'record'
+  ) {
+    t.fail('Expected metadata to be a typed record')
+    return
+  }
+
+  t.deepEqual(property.valueTypes, ['string', 'boolean'])
+  t.deepEqual(parameter.valueTypes, ['string', 'boolean'])
+})
+
 test('createParameters: sets isNullable from the nullable flag', (t) => {
   const parameters = createParameters(
     {
