@@ -75,6 +75,7 @@ export type OpenapiEnumValue = string | boolean
 export interface OpenapiSchema {
   type?: 'object' | 'array' | 'string' | 'number' | 'integer' | 'boolean'
   properties?: Record<string, OpenapiSchema>
+  additionalProperties?: boolean | OpenapiSchema
   items?: OpenapiSchema
   $ref?: string
   required?: string[]

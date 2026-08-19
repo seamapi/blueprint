@@ -51,6 +51,20 @@ import {
 
 const paginationResponseKey = 'pagination'
 
+type RecordValueType = NonNullable<OpenapiSchema['type']>
+
+const getRecordValueTypes = (
+  additionalProperties: OpenapiSchema | boolean | undefined,
+): RecordValueType[] | undefined => {
+  if (typeof additionalProperties !== 'object') return undefined
+
+  const valueTypes = (
+    additionalProperties.oneOf ?? [additionalProperties]
+  ).flatMap(({ type }) => (type == null ? [] : [type]))
+
+  return valueTypes.length === 0 ? undefined : Array.from(new Set(valueTypes))
+}
+
 export interface Blueprint {
   title: string
   routes: Route[]
@@ -179,6 +193,7 @@ interface EnumParameter extends BaseParameter {
 interface RecordParameter extends BaseParameter {
   format: 'record'
   jsonType: 'object'
+  valueTypes?: RecordValueType[]
 }
 
 interface BaseListParameter extends BaseParameter {
@@ -363,6 +378,7 @@ type EnumValue = BaseProperty
 interface RecordProperty extends BaseProperty {
   format: 'record'
   jsonType: 'object'
+  valueTypes?: RecordValueType[]
 }
 
 interface BaseListProperty extends BaseProperty {
@@ -1038,6 +1054,8 @@ const createParameter = (
     baseParam.default = parsedProp.default
   }
 
+  const recordValueTypes = getRecordValueTypes(property.additionalProperties)
+
   switch (parsedProp.type) {
     case 'string':
       if (parsedProp.enum !== undefined) {
@@ -1097,7 +1115,12 @@ const createParameter = (
           parameters: createParameters(property.properties, path),
         }
       }
-      return { ...baseParam, format: 'record', jsonType: 'object' }
+      return {
+        ...baseParam,
+        format: 'record',
+        jsonType: 'object',
+        ...(recordValueTypes != null && { valueTypes: recordValueTypes }),
+      }
     case 'number':
     case 'integer':
       return {
@@ -1637,6 +1660,8 @@ const createProperty = (
     propertyGroupKey: propertyGroupKey === '' ? null : propertyGroupKey,
   }
 
+  const recordValueTypes = getRecordValueTypes(prop.additionalProperties)
+
   if (
     parentPaths.includes('batch') &&
     prop.type === 'array' &&
@@ -1724,7 +1749,12 @@ const createProperty = (
           ),
         }
       }
-      return { ...baseProperty, format: 'record', jsonType: 'object' }
+      return {
+        ...baseProperty,
+        format: 'record',
+        jsonType: 'object',
+        ...(recordValueTypes != null && { valueTypes: recordValueTypes }),
+      }
     case 'number':
     case 'integer':
       return {
