@@ -673,7 +673,8 @@ test('createBlueprint: allows more than two methods on exempt endpoints', async 
     .flatMap((route) => route.endpoints)
     .find(({ path }) => path === '/access_codes/update')
 
-  t.deepEqual(endpoint?.request.methods, ['POST', 'PATCH', 'PUT'])
+  // Methods are ordered by name, not by how the spec listed them.
+  t.deepEqual(endpoint?.request.methods, ['PATCH', 'POST', 'PUT'])
 })
 
 test('createBlueprint: builds an endpoint from a semantic-method spec without a post operation', async (t) => {
