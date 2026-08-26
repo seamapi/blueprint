@@ -676,6 +676,98 @@ test('createBlueprint: allows more than two methods on exempt endpoints', async 
   t.deepEqual(endpoint?.request.methods, ['POST', 'PATCH', 'PUT'])
 })
 
+test('createBlueprint: builds an endpoint from a semantic-method spec without a post operation', async (t) => {
+  const typesModule = TypesModuleSchema.parse(types)
+  const openapi = structuredClone(typesModule.openapi)
+  const foosGetPathItem = openapi.paths['/foos/get']
+
+  if (foosGetPathItem?.get == null) {
+    t.fail('Expected the /foos/get get operation in the fixture')
+    return
+  }
+
+  foosGetPathItem.get.parameters = [
+    {
+      name: 'foo_id',
+      in: 'query',
+      required: true,
+      schema: { type: 'string', format: 'uuid' },
+    },
+  ]
+  delete foosGetPathItem.post
+
+  const blueprint = await createBlueprint({ ...typesModule, openapi })
+  const endpoint = blueprint.routes
+    .flatMap((route) => route.endpoints)
+    .find(({ path }) => path === '/foos/get')
+
+  t.deepEqual(endpoint?.request.methods, ['GET', 'POST'])
+  t.is(endpoint?.request.semanticMethod, 'GET')
+
+  const fooIdParameter = endpoint?.request.parameters.find(
+    ({ name }) => name === 'foo_id',
+  )
+  t.is(fooIdParameter?.isRequired, true)
+  t.true(endpoint?.request.hasRequiredParameters)
+})
+
+test('createBlueprint: a semantic-method spec produces the same endpoint as a post-mirrored spec', async (t) => {
+  const typesModule = TypesModuleSchema.parse(types)
+
+  const mirroredOpenapi = structuredClone(typesModule.openapi)
+  const mirroredPathItem = mirroredOpenapi.paths['/foos/get']
+
+  if (mirroredPathItem?.get == null || mirroredPathItem.post == null) {
+    t.fail('Expected the /foos/get get and post operations in the fixture')
+    return
+  }
+
+  mirroredPathItem.get.parameters = [
+    {
+      name: 'foo_id',
+      in: 'query',
+      required: true,
+      schema: { type: 'string', format: 'uuid' },
+    },
+  ]
+  mirroredPathItem.post.requestBody = {
+    content: {
+      'application/json': {
+        schema: {
+          type: 'object',
+          properties: { foo_id: { type: 'string', format: 'uuid' } },
+          required: ['foo_id'],
+        },
+      },
+    },
+  }
+
+  const semanticOpenapi = structuredClone(mirroredOpenapi)
+  const semanticPathItem = semanticOpenapi.paths['/foos/get']
+
+  if (semanticPathItem == null) {
+    t.fail('Expected the /foos/get path in the fixture')
+    return
+  }
+
+  delete semanticPathItem.post
+
+  const findFoosGetEndpoint = (blueprint: Blueprint): Endpoint | undefined =>
+    blueprint.routes
+      .flatMap((route) => route.endpoints)
+      .find(({ path }) => path === '/foos/get')
+
+  const mirroredEndpoint = findFoosGetEndpoint(
+    await createBlueprint({ ...typesModule, openapi: mirroredOpenapi }),
+  )
+  const semanticEndpoint = findFoosGetEndpoint(
+    await createBlueprint({ ...typesModule, openapi: semanticOpenapi }),
+  )
+
+  t.truthy(mirroredEndpoint)
+  t.deepEqual(semanticEndpoint, mirroredEndpoint)
+})
+
 const createBlueprintWithFoosGetRequestBody = async (
   t: ExecutionContext,
   schema: Record<string, unknown>,

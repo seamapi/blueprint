@@ -784,15 +784,32 @@ const createEndpoint = async (
     ([method]) => method.toUpperCase() as Method,
   )
 
-  const validOperation = validOperations.find(([m]) => m === 'post')
+  const postOperation = validOperations.find(([method]) => method === 'post')
+
+  const semanticMethod = getSemanticMethod(supportedMethods)
+  const semanticOperation = validOperations.find(
+    ([method]) => method.toUpperCase() === semanticMethod,
+  )
+
+  const validOperation = postOperation ?? semanticOperation
   if (validOperation == null) {
-    throw new Error(`No valid post operation found for ${path}`)
+    throw new Error(`No valid operation found for ${path}`)
   }
 
-  const [_, operation] = validOperation
+  // The Seam API accepts POST on every endpoint. A spec generated with a
+  // single semantic operation per path documents only the non-POST method,
+  // so the POST alias is restored here to keep the blueprint identical to
+  // one built from a spec that mirrors every operation onto POST.
+  const methods =
+    postOperation == null
+      ? [...supportedMethods, 'POST' as Method]
+      : supportedMethods
+
+  const [operationMethod, operation] = validOperation
 
   return await createEndpointFromOperation(
-    supportedMethods,
+    methods,
+    operationMethod.toUpperCase() as Method,
     operation as OpenapiOperation,
     path,
     context,
@@ -801,6 +818,7 @@ const createEndpoint = async (
 
 const createEndpointFromOperation = async (
   methods: Method[],
+  operationMethod: Method,
   operation: OpenapiOperation,
   path: string,
   context: Context,
@@ -830,7 +848,7 @@ const createEndpointFromOperation = async (
   const isDraft = parsedOperation['x-draft'].length > 0
   const draftMessage = parsedOperation['x-draft']
 
-  const request = createRequest(methods, operation, path, {
+  const request = createRequest(methods, operationMethod, operation, path, {
     hasRequiredParameters: parsedOperation['x-has-required-parameters'],
   })
   const { hasPagination, ...response } = createResponse(
@@ -936,6 +954,7 @@ const pathsAllowedMoreThanTwoMethods: string[] = [
 
 const createRequest = (
   methods: Method[],
+  operationMethod: Method,
   operation: OpenapiOperation,
   path: string,
   {
@@ -955,7 +974,10 @@ const createRequest = (
   }
 
   const semanticMethod = getSemanticMethod(methods)
-  const parameters = createRequestBody(operation, path)
+  const parameters =
+    operationMethod === 'POST' || getRequestBodySchema(operation) != null
+      ? createRequestBody(operation, path)
+      : createQueryParameters(operation, path)
 
   return {
     methods,
@@ -974,6 +996,25 @@ const deriveHasRequiredParameters = (
 ): boolean =>
   parameters.some(({ isRequired }) => isRequired) ||
   schemaRequiresAnyProperty(getRequestBodySchema(operation))
+
+const createQueryParameters = (
+  operation: OpenapiOperation,
+  path: string,
+): Parameter[] => {
+  const queryParameters = (operation.parameters ?? []).filter(
+    (parameter) => parameter.in === 'query',
+  )
+  if (queryParameters.length === 0) return []
+
+  const properties = Object.fromEntries(
+    queryParameters.map((parameter) => [parameter.name, parameter.schema]),
+  )
+  const requiredParameterNames = queryParameters
+    .filter((parameter) => parameter.required === true)
+    .map((parameter) => parameter.name)
+
+  return createParameters(properties, path, requiredParameterNames)
+}
 
 const createRequestBody = (
   operation: OpenapiOperation,

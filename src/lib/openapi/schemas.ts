@@ -7,7 +7,8 @@ export const ParameterSchema = z.object({
   required: z.boolean().default(false),
   schema: z
     .object({
-      type: z.string(),
+      // Union schemas (oneOf/anyOf) have no top-level type.
+      type: z.string().optional(),
       format: z.string().optional(),
     })
     .optional(),
