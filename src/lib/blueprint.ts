@@ -980,7 +980,7 @@ const createRequest = (
       : createQueryParameters(operation, path)
 
   return {
-    methods,
+    methods: [...methods].sort((a, b) => a.localeCompare(b)),
     semanticMethod,
     preferredMethod: semanticMethod,
     parameters,
@@ -1064,6 +1064,11 @@ export const createParameters = (
 
       return createParameter(name, property, path, requiredParameters)
     })
+    // Order parameters by name so the blueprint does not depend on how the
+    // spec happened to order them. Body properties arrive as object keys and
+    // query parameters as an array, so the same endpoint would otherwise
+    // reorder purely because it changed which one it is described by.
+    .sort((a, b) => a.name.localeCompare(b.name))
 
 const createParameter = (
   name: string,
