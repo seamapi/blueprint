@@ -7,10 +7,19 @@ export const ParameterSchema = z.object({
   required: z.boolean().default(false),
   schema: z
     .object({
-      // Union schemas (oneOf/anyOf) have no top-level type.
+      // A union-typed parameter carries its branches instead of a top-level
+      // type, e.g. device_type on /devices/list. createParameters flattens
+      // these, so accept either shape but reject a schema declaring neither.
       type: z.string().optional(),
       format: z.string().optional(),
+      oneOf: z.array(z.unknown()).optional(),
+      anyOf: z.array(z.unknown()).optional(),
     })
+    .refine(
+      ({ type, oneOf, anyOf }) =>
+        type != null || oneOf != null || anyOf != null,
+      'A parameter schema must declare a type or a oneOf/anyOf union of them',
+    )
     .optional(),
   deprecated: z.boolean().default(false),
   'x-undocumented': z.string().default(''),
