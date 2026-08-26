@@ -76,7 +76,7 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
-    "@seamapi/types": "1.1040.0",
+    "@seamapi/types": "^1.1042.0",
     "@swc/core": "^1.11.29",
     "@types/node": "^24.10.9",
     "ava": "^8.0.1",
