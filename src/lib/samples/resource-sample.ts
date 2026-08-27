@@ -1,4 +1,4 @@
-import { z, type ZodSchema } from 'zod'
+import * as z from 'zod/v3'
 
 import type { Resource as BlueprintResource } from 'lib/blueprint.js'
 import { JsonSchema } from 'lib/json.js'
@@ -85,9 +85,9 @@ export const createResourceSample = async (
   }
 }
 
-const toPartialZodSchema = (input: unknown): ZodSchema | null => {
+const toPartialZodSchema = (input: unknown): z.ZodSchema | null => {
   if (typeof input !== 'object') return null
   if (input == null) return null
-  if ('deepPartial' in input) return input as unknown as ZodSchema
+  if ('deepPartial' in input) return input as unknown as z.ZodSchema
   return null
 }

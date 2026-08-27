@@ -1,4 +1,4 @@
-import { z } from 'zod'
+import * as z from 'zod/v3'
 
 // https://zod.dev/?id=json-type
 const LiteralSchema = z.union([z.string(), z.number(), z.boolean(), z.null()])
