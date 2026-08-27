@@ -1,4 +1,4 @@
-import { z } from 'zod'
+import * as z from 'zod/v3'
 
 export const foo = z.object({
   foo_id: z.string().uuid(),

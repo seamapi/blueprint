@@ -1,4 +1,4 @@
-import { z } from 'zod'
+import * as z from 'zod/v3'
 
 import type { Endpoint } from 'lib/blueprint.js'
 import { JsonSchema } from 'lib/json.js'

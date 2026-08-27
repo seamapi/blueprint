@@ -1,4 +1,4 @@
-import { z } from 'zod'
+import * as z from 'zod/v3'
 
 import { omitUndocumentedFromBlueprint } from './omit-undocumented.js'
 import { findCommonOpenapiSchemaProperties } from './openapi/find-common-openapi-schema-properties.js'
