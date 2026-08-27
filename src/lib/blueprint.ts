@@ -330,9 +330,12 @@ interface ResourceListResponse extends BaseResponse {
   resourceType: string
 }
 
+export type ActionAttemptStatus = 'pending' | 'success' | 'error'
+
 interface BaseProperty {
   name: string
   description: string
+  actionAttemptStatuses?: ActionAttemptStatus[]
   isOptional: boolean
   isNullable: boolean
   isDeprecated: boolean
@@ -2198,10 +2201,34 @@ const createActionAttempts = async (
           context,
         )
 
+        const actionAttemptStatuses: ActionAttemptStatus[] = [
+          'pending',
+          'success',
+          'error',
+        ]
+        const properties = resource.properties.map((property) => {
+          const statuses = actionAttemptSchemas.flatMap((schema) => {
+            const status = schema.properties?.['status']?.enum?.[0]
+            const definition = schema.properties?.[property.name]
+            return actionAttemptStatuses.includes(
+              status as ActionAttemptStatus,
+            ) &&
+              definition != null &&
+              definition.nullable !== true
+              ? [status as ActionAttemptStatus]
+              : []
+          })
+
+          return statuses.length === actionAttemptStatuses.length
+            ? property
+            : { ...property, actionAttemptStatuses: statuses }
+        })
+
         return {
           ...resource,
           resourceType: 'action_attempt',
           actionAttemptType: actionType,
+          properties,
           resourceSamples: resource.resourceSamples.filter(
             (resourceSample) =>
               resourceSample.properties['action_type'] === actionType,

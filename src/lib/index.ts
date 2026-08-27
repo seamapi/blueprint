@@ -1,5 +1,6 @@
 export {
   type ActionAttempt,
+  type ActionAttemptStatus,
   type Blueprint,
   type BlueprintOptions,
   createBlueprint,
