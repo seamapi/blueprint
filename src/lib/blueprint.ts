@@ -1040,6 +1040,18 @@ const createRequestBody = (
   )
 }
 
+const assertLowerSnakeCase = (
+  name: string,
+  kind: 'property' | 'parameter',
+  path: string,
+): void => {
+  if (!/^_*[a-z][a-z0-9]*(?:_[a-z0-9]+)*$/.test(name)) {
+    throw new Error(
+      `${kind} name '${name}' in ${path} must be lower_snake_case`,
+    )
+  }
+}
+
 export const createParameters = (
   properties: Record<string, OpenapiSchema>,
   path: string,
@@ -1079,6 +1091,8 @@ const createParameter = (
   path: string,
   requiredParameters: string[],
 ): Parameter => {
+  assertLowerSnakeCase(name, 'parameter', path)
+
   const parsedProp = PropertySchema.parse(property, {
     path: [...path.split('/'), name],
   })
@@ -1684,6 +1698,8 @@ const createProperty = (
   schemas: Openapi['components']['schemas'],
   { isOptional }: { isOptional: boolean },
 ): Property => {
+  assertLowerSnakeCase(name, 'property', parentPaths.join('.'))
+
   const parsedProp = parsePropertySchema(name, prop, parentPaths, schemas)
 
   if (name.startsWith('ext_')) {
