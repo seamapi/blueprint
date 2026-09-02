@@ -11,7 +11,7 @@ import type { OpenapiAuthMethod, OpenapiSchema } from 'lib/openapi/types.js'
 
 test('createProperties: assigns appropriate default values', (t) => {
   const minimalProperties = {
-    minimalProperty: {
+    minimal_property: {
       type: 'string',
     },
   }
@@ -107,7 +107,7 @@ test('createProperties: sets isNullable from the nullable flag', (t) => {
 
 test('createProperties: uses provided values', (t) => {
   const fullProperties = {
-    fullProperty: {
+    full_property: {
       type: 'string',
       description: 'Test description',
       deprecated: true,
@@ -149,6 +149,25 @@ test('createProperties: uses provided values', (t) => {
     'isUndocumented should be true when x-undocumented is provided',
   )
   t.true(property.isDraft, 'isDraft should be true when x-draft is provided')
+})
+
+test('createProperties: rejects names that are not lower_snake_case', (t) => {
+  const error = t.throws(() =>
+    createProperties({ fooBar: { type: 'string' } }, ['user'], [], {}),
+  )
+
+  t.is(error.message, "property name 'fooBar' in user must be lower_snake_case")
+})
+
+test('createParameters: rejects names that are not lower_snake_case', (t) => {
+  const error = t.throws(() =>
+    createParameters({ fooBar: { type: 'string' } }, '/users/create'),
+  )
+
+  t.is(
+    error.message,
+    "parameter name 'fooBar' in /users/create must be lower_snake_case",
+  )
 })
 
 test('createParameters: assigns appropriate default values', (t) => {
