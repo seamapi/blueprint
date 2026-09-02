@@ -156,10 +156,7 @@ test('createProperties: rejects names that are not lower_snake_case', (t) => {
     createProperties({ fooBar: { type: 'string' } }, ['user'], [], {}),
   )
 
-  t.is(
-    error.message,
-    "property name 'fooBar' in user must be lower_snake_case",
-  )
+  t.is(error.message, "property name 'fooBar' in user must be lower_snake_case")
 })
 
 test('createParameters: rejects names that are not lower_snake_case', (t) => {
