@@ -18,12 +18,12 @@ jobs:
       fail-fast: false
       matrix:
         os:
-          - ubuntu-latest
+          - namespace-profile-npm-test
         node:
           - '22'
           - '24'
         include:
-          - os: ubuntu-latest
+          - os: namespace-profile-npm-test
             os_name: Linux
     steps:
       - name: Checkout
@@ -36,7 +36,7 @@ jobs:
         run: npm test
   lint:
     name: Lint (Node.js v${{ matrix.node }})
-    runs-on: ubuntu-latest
+    runs-on: namespace-profile-codegen
     timeout-minutes: 30
     strategy:
       fail-fast: false
@@ -65,12 +65,12 @@ jobs:
       fail-fast: false
       matrix:
         os:
-          - ubuntu-latest
+          - namespace-profile-npm-test
         node:
           - '22'
           - '24'
         include:
-          - os: ubuntu-latest
+          - os: namespace-profile-npm-test
             os_name: Linux
     steps:
       - name: Setup Node.js
@@ -107,7 +107,7 @@ jobs:
         run: node index.js
   typecheck:
     name: Typecheck (Node.js v${{ matrix.node }})
-    runs-on: ubuntu-latest
+    runs-on: namespace-profile-codegen
     timeout-minutes: 30
     strategy:
       fail-fast: false
@@ -126,7 +126,7 @@ jobs:
         run: npm run typecheck
   docs:
     name: Docs
-    runs-on: ubuntu-latest
+    runs-on: namespace-profile-codegen
     timeout-minutes: 30
     steps:
       - name: Checkout
