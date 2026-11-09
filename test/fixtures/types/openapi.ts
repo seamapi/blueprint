@@ -39,7 +39,7 @@ export default {
               },
               foo_legacy: {
                 description: 'Use a legacy foo',
-                end_of_life: '2026-01-01',
+                end_of_life: 'This is end of life.',
               },
             },
           },
@@ -65,7 +65,7 @@ export default {
           end_of_life_prop: {
             description: 'This prop is end of life',
             type: 'string',
-            'x-end-of-life': '2026-01-01',
+            'x-end-of-life': 'This is end of life.',
           },
           nullable_prop: {
             description: 'This prop is nullable',

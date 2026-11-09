@@ -102,7 +102,7 @@ export interface Resource {
   isDraft: boolean
   draftMessage: string
   isEndOfLife: boolean
-  endOfLifeDate: string
+  endOfLifeMessage: string
   propertyGroups: PropertyGroup[]
   resourceSamples: ResourceSample[]
 }
@@ -156,7 +156,7 @@ export interface Endpoint {
   isDraft: boolean
   draftMessage: string
   isEndOfLife: boolean
-  endOfLifeDate: string
+  endOfLifeMessage: string
   request: Request
   response: Response
   hasPagination: boolean
@@ -177,7 +177,7 @@ interface BaseParameter {
   isDraft: boolean
   draftMessage: string
   isEndOfLife: boolean
-  endOfLifeDate: string
+  endOfLifeMessage: string
   hasDefault: boolean
 }
 
@@ -356,7 +356,7 @@ interface BaseProperty {
   isDraft: boolean
   draftMessage: string
   isEndOfLife: boolean
-  endOfLifeDate: string
+  endOfLifeMessage: string
   propertyGroupKey: string | null
 }
 
@@ -881,8 +881,8 @@ const createEndpointFromOperation = async (
 
   const isDraft = parsedOperation['x-draft'].length > 0
   const draftMessage = parsedOperation['x-draft']
-  const endOfLifeDate = parsedOperation['x-end-of-life']
-  const isEndOfLife = endOfLifeDate.length > 0
+  const endOfLifeMessage = parsedOperation['x-end-of-life']
+  const isEndOfLife = endOfLifeMessage.length > 0
 
   const request = createRequest(methods, operationMethod, operation, path, {
     hasRequiredParameters: parsedOperation['x-has-required-parameters'],
@@ -924,7 +924,7 @@ const createEndpointFromOperation = async (
     isDraft,
     draftMessage,
     isEndOfLife,
-    endOfLifeDate,
+    endOfLifeMessage,
     response,
     request,
     hasPagination,
@@ -1146,7 +1146,7 @@ const createParameter = (
     isDraft: parsedProp['x-draft'].length > 0,
     draftMessage: parsedProp['x-draft'],
     isEndOfLife: parsedProp['x-end-of-life'].length > 0,
-    endOfLifeDate: parsedProp['x-end-of-life'],
+    endOfLifeMessage: parsedProp['x-end-of-life'],
     hasDefault: 'default' in parsedProp,
   }
 
@@ -1186,7 +1186,7 @@ const createParameter = (
               isDraft: Boolean(enumValue?.draft?.length ?? 0),
               draftMessage: enumValue?.draft ?? '',
               isEndOfLife: Boolean(enumValue?.end_of_life?.length ?? 0),
-              endOfLifeDate: enumValue?.end_of_life ?? '',
+              endOfLifeMessage: enumValue?.end_of_life ?? '',
             }
           }),
         }
@@ -1441,7 +1441,7 @@ const createResource = async (
     isDraft: (schema['x-draft'] ?? '').length > 0,
     draftMessage: schema['x-draft'] ?? '',
     isEndOfLife: (schema['x-end-of-life'] ?? '').length > 0,
-    endOfLifeDate: schema['x-end-of-life'] ?? '',
+    endOfLifeMessage: schema['x-end-of-life'] ?? '',
     propertyGroups,
   }
 
@@ -1764,7 +1764,7 @@ const createProperty = (
     isDraft: parsedProp['x-draft'].length > 0,
     draftMessage: parsedProp['x-draft'],
     isEndOfLife: parsedProp['x-end-of-life'].length > 0,
-    endOfLifeDate: parsedProp['x-end-of-life'],
+    endOfLifeMessage: parsedProp['x-end-of-life'],
     propertyGroupKey: propertyGroupKey === '' ? null : propertyGroupKey,
   }
 
@@ -1820,7 +1820,7 @@ const createProperty = (
               isDraft: Boolean(enumValue?.draft?.length ?? 0),
               draftMessage: enumValue?.draft ?? '',
               isEndOfLife: Boolean(enumValue?.end_of_life?.length ?? 0),
-              endOfLifeDate: enumValue?.end_of_life ?? '',
+              endOfLifeMessage: enumValue?.end_of_life ?? '',
             }
           }),
         }
