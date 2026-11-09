@@ -28,7 +28,7 @@ export default {
           foo_type: {
             description: 'Foo type',
             type: 'string',
-            enum: ['foo_basic', 'foo_advanced'],
+            enum: ['foo_basic', 'foo_advanced', 'foo_legacy'],
             'x-enums': {
               foo_basic: {
                 description: 'Use a basic foo',
@@ -36,6 +36,10 @@ export default {
               foo_advanced: {
                 description: 'Use an advanced foo',
                 deprecated: 'Advanced foo is deprecated',
+              },
+              foo_legacy: {
+                description: 'Use a legacy foo',
+                end_of_life: 'This is end of life.',
               },
             },
           },
@@ -57,6 +61,11 @@ export default {
             description: 'This prop is draft',
             type: 'string',
             'x-draft': 'This prop is intentionally left draft.',
+          },
+          end_of_life_prop: {
+            description: 'This prop is end of life',
+            type: 'string',
+            'x-end-of-life': 'This is end of life.',
           },
           nullable_prop: {
             description: 'This prop is nullable',

@@ -1,6 +1,9 @@
 import * as z from 'zod/v3'
 
-import { omitUndocumentedFromBlueprint } from './omit-undocumented.js'
+import {
+  omitEndOfLifeFromBlueprint,
+  omitUndocumentedFromBlueprint,
+} from './omit.js'
 import { findCommonOpenapiSchemaProperties } from './openapi/find-common-openapi-schema-properties.js'
 import { flattenOpenapiSchema } from './openapi/flatten-openapi-schema.js'
 import {
@@ -84,6 +87,7 @@ export interface Route {
   isUndocumented: boolean
   isDeprecated: boolean
   isDraft: boolean
+  isEndOfLife: boolean
 }
 
 export interface Resource {
@@ -97,6 +101,8 @@ export interface Resource {
   undocumentedMessage: string
   isDraft: boolean
   draftMessage: string
+  isEndOfLife: boolean
+  endOfLifeMessage: string
   propertyGroups: PropertyGroup[]
   resourceSamples: ResourceSample[]
 }
@@ -134,6 +140,7 @@ export interface Namespace {
   isDeprecated: boolean
   isUndocumented: boolean
   isDraft: boolean
+  isEndOfLife: boolean
 }
 
 export interface Endpoint {
@@ -148,6 +155,8 @@ export interface Endpoint {
   undocumentedMessage: string
   isDraft: boolean
   draftMessage: string
+  isEndOfLife: boolean
+  endOfLifeMessage: string
   request: Request
   response: Response
   hasPagination: boolean
@@ -167,6 +176,8 @@ interface BaseParameter {
   undocumentedMessage: string
   isDraft: boolean
   draftMessage: string
+  isEndOfLife: boolean
+  endOfLifeMessage: string
   hasDefault: boolean
 }
 
@@ -344,6 +355,8 @@ interface BaseProperty {
   undocumentedMessage: string
   isDraft: boolean
   draftMessage: string
+  isEndOfLife: boolean
+  endOfLifeMessage: string
   propertyGroupKey: string | null
 }
 
@@ -503,6 +516,7 @@ export type TypesModule = z.output<typeof TypesModuleSchema>
 export interface BlueprintOptions {
   formatCode?: (content: string, syntax: SyntaxName) => Promise<string>
   omitUndocumented?: boolean
+  omitEndOfLife?: boolean
 }
 
 export const createBlueprint = async (
@@ -510,6 +524,7 @@ export const createBlueprint = async (
   {
     formatCode = async (content) => content,
     omitUndocumented = false,
+    omitEndOfLife = false,
   }: BlueprintOptions = {},
 ): Promise<Blueprint> => {
   const { schemas, codeSampleDefinitions, resourceSampleDefinitions } =
@@ -530,6 +545,7 @@ export const createBlueprint = async (
     resourceSampleDefinitions,
     formatCode,
     omitUndocumented,
+    omitEndOfLife,
     schemas,
     validActionAttemptTypes,
     validResourceTypes,
@@ -602,7 +618,13 @@ export const createBlueprint = async (
     actionAttempts,
   }
 
-  return omitUndocumented ? omitUndocumentedFromBlueprint(blueprint) : blueprint
+  const documentedBlueprint = omitUndocumented
+    ? omitUndocumentedFromBlueprint(blueprint)
+    : blueprint
+
+  return omitEndOfLife
+    ? omitEndOfLifeFromBlueprint(documentedBlueprint)
+    : documentedBlueprint
 }
 
 const extractValidActionAttemptTypes = (
@@ -662,6 +684,7 @@ const createRoutes = async (
     .map(addIsDeprecatedToRoute)
     .map(addIsUndocumentedToRoute)
     .map(addIsDraftToRoute)
+    .map(addIsEndOfLifeToRoute)
 }
 
 const getNamespacePath = (path: string, paths: OpenapiPaths): string | null => {
@@ -722,6 +745,7 @@ const createRoute = async (
     isUndocumented: false,
     isDeprecated: false,
     isDraft: false,
+    isEndOfLife: false,
   }
 }
 
@@ -738,6 +762,11 @@ const addIsUndocumentedToRoute = (route: Route): Route => ({
 const addIsDraftToRoute = (route: Route): Route => ({
   ...route,
   isDraft: route.endpoints.every((endpoint) => endpoint.isDraft),
+})
+
+const addIsEndOfLifeToRoute = (route: Route): Route => ({
+  ...route,
+  isEndOfLife: route.endpoints.every((endpoint) => endpoint.isEndOfLife),
 })
 
 const createNamespaces = (routes: Route[]): Namespace[] => {
@@ -759,6 +788,7 @@ const createNamespaces = (routes: Route[]): Namespace[] => {
     const isDeprecated = namespaceRoutes.every((r) => r.isDeprecated)
     const isUndocumented = namespaceRoutes.every((r) => r.isUndocumented)
     const isDraft = namespaceRoutes.every((r) => r.isDraft)
+    const isEndOfLife = namespaceRoutes.every((r) => r.isEndOfLife)
 
     return {
       name,
@@ -767,6 +797,7 @@ const createNamespaces = (routes: Route[]): Namespace[] => {
       isDeprecated,
       isUndocumented,
       isDraft,
+      isEndOfLife,
     }
   })
 }
@@ -850,6 +881,8 @@ const createEndpointFromOperation = async (
 
   const isDraft = parsedOperation['x-draft'].length > 0
   const draftMessage = parsedOperation['x-draft']
+  const endOfLifeMessage = parsedOperation['x-end-of-life']
+  const isEndOfLife = endOfLifeMessage.length > 0
 
   const request = createRequest(methods, operationMethod, operation, path, {
     hasRequiredParameters: parsedOperation['x-has-required-parameters'],
@@ -890,6 +923,8 @@ const createEndpointFromOperation = async (
     undocumentedMessage,
     isDraft,
     draftMessage,
+    isEndOfLife,
+    endOfLifeMessage,
     response,
     request,
     hasPagination,
@@ -1110,6 +1145,8 @@ const createParameter = (
     undocumentedMessage: parsedProp['x-undocumented'],
     isDraft: parsedProp['x-draft'].length > 0,
     draftMessage: parsedProp['x-draft'],
+    isEndOfLife: parsedProp['x-end-of-life'].length > 0,
+    endOfLifeMessage: parsedProp['x-end-of-life'],
     hasDefault: 'default' in parsedProp,
   }
 
@@ -1148,6 +1185,8 @@ const createParameter = (
               undocumentedMessage: enumValue?.undocumented ?? '',
               isDraft: Boolean(enumValue?.draft?.length ?? 0),
               draftMessage: enumValue?.draft ?? '',
+              isEndOfLife: Boolean(enumValue?.end_of_life?.length ?? 0),
+              endOfLifeMessage: enumValue?.end_of_life ?? '',
             }
           }),
         }
@@ -1401,6 +1440,8 @@ const createResource = async (
     undocumentedMessage: schema['x-undocumented'] ?? '',
     isDraft: (schema['x-draft'] ?? '').length > 0,
     draftMessage: schema['x-draft'] ?? '',
+    isEndOfLife: (schema['x-end-of-life'] ?? '').length > 0,
+    endOfLifeMessage: schema['x-end-of-life'] ?? '',
     propertyGroups,
   }
 
@@ -1722,6 +1763,8 @@ const createProperty = (
     undocumentedMessage: parsedProp['x-undocumented'],
     isDraft: parsedProp['x-draft'].length > 0,
     draftMessage: parsedProp['x-draft'],
+    isEndOfLife: parsedProp['x-end-of-life'].length > 0,
+    endOfLifeMessage: parsedProp['x-end-of-life'],
     propertyGroupKey: propertyGroupKey === '' ? null : propertyGroupKey,
   }
 
@@ -1776,6 +1819,8 @@ const createProperty = (
               undocumentedMessage: enumValue?.undocumented ?? '',
               isDraft: Boolean(enumValue?.draft?.length ?? 0),
               draftMessage: enumValue?.draft ?? '',
+              isEndOfLife: Boolean(enumValue?.end_of_life?.length ?? 0),
+              endOfLifeMessage: enumValue?.end_of_life ?? '',
             }
           }),
         }

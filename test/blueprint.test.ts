@@ -60,6 +60,34 @@ test('createBlueprint: with omitUndocumented', async (t) => {
   t.snapshot(blueprint, 'blueprint')
 })
 
+test('createBlueprint: with omitEndOfLife', async (t) => {
+  const typesModule = TypesModuleSchema.parse(types)
+  const blueprint = await createBlueprint(typesModule, {
+    omitEndOfLife: true,
+  })
+
+  const fooResource = blueprint.resources.find(
+    (resource) => resource.resourceType === 'foo',
+  )
+  t.false(
+    fooResource?.properties.some((property) => property.isEndOfLife),
+    'End of life resource properties should be omitted',
+  )
+  t.true(
+    fooResource?.properties.some((property) => property.isUndocumented),
+    'Undocumented resource properties should be kept',
+  )
+
+  const fooType = fooResource?.properties.find(
+    (property) => property.name === 'foo_type',
+  )
+  t.false(
+    fooType?.format === 'enum' &&
+      fooType.values.some((value) => value.isEndOfLife),
+    'End of life enum values should be omitted',
+  )
+})
+
 test('createBlueprint: with formatCode', async (t) => {
   const typesModule = TypesModuleSchema.parse(types)
   const blueprint = await createBlueprint(typesModule, {
