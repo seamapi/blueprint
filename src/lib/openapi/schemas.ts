@@ -25,6 +25,7 @@ export const ParameterSchema = z.object({
   'x-undocumented': z.string().default(''),
   'x-deprecated': z.string().default(''),
   'x-draft': z.string().default(''),
+  'x-end-of-life': z.string().default(''),
 })
 
 const ResponseSchema = z.record(
@@ -93,6 +94,7 @@ export const OpenapiOperationSchema = z.object({
   'x-undocumented': z.string().default(''),
   'x-deprecated': z.string().default(''),
   'x-draft': z.string().default(''),
+  'x-end-of-life': z.string().default(''),
   'x-action-attempt-type': z.string().optional(),
   'x-has-required-parameters': z.boolean().optional(),
 })
@@ -102,6 +104,7 @@ export const EnumValueSchema = z.object({
   undocumented: z.string().default(''),
   deprecated: z.string().default(''),
   draft: z.string().default(''),
+  end_of_life: z.string().default(''),
 })
 
 const PropertyGroupSchema = z
@@ -123,6 +126,7 @@ const commonPropertyFields = {
   'x-undocumented': z.string().default(''),
   'x-deprecated': z.string().default(''),
   'x-draft': z.string().default(''),
+  'x-end-of-life': z.string().default(''),
   'x-property-group-key': z.string().default(''),
   'x-property-groups': PropertyGroupSchema,
   'x-variant-groups': VariantGroupSchema,
@@ -159,6 +163,7 @@ export const ResourceSchema = z.object({
   'x-undocumented': z.string().default(''),
   'x-deprecated': z.string().default(''),
   'x-draft': z.string().default(''),
+  'x-end-of-life': z.string().default(''),
   'x-property-groups': PropertyGroupSchema,
   'x-variant-groups': VariantGroupSchema,
 })

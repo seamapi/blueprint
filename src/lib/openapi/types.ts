@@ -87,6 +87,7 @@ export interface OpenapiSchema {
   default?: any
   'x-deprecated'?: string
   'x-draft'?: string
+  'x-end-of-life'?: string
   'x-undocumented'?: string
   'x-route-path'?: string
   'x-resource-type'?: string
@@ -99,6 +100,7 @@ export interface OpenapiSchema {
       undocumented?: string
       deprecated?: string
       draft?: string
+      end_of_life?: string
     }
   >
   oneOf?: OpenapiSchema[]

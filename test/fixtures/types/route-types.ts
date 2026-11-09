@@ -13,6 +13,7 @@ export interface Routes {
         deprecated_prop?: string
         undocumented_prop?: string
         draft_prop?: string
+        end_of_life_prop?: string
         nullable_prop?: string
         number_prop?: number
         integer_prop?: number
@@ -37,6 +38,7 @@ export interface Routes {
         deprecated_prop?: string
         undocumented_prop?: string
         draft_prop?: string
+        end_of_life_prop?: string
         nullable_prop?: string
         number_prop?: number
         integer_prop?: number

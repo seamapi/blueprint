@@ -114,6 +114,7 @@ test('createProperties: uses provided values', (t) => {
       'x-deprecated': 'This property is deprecated',
       'x-undocumented': 'true',
       'x-draft': 'true',
+      'x-end-of-life': '2026-01-01',
     },
   }
 
@@ -149,6 +150,15 @@ test('createProperties: uses provided values', (t) => {
     'isUndocumented should be true when x-undocumented is provided',
   )
   t.true(property.isDraft, 'isDraft should be true when x-draft is provided')
+  t.true(
+    property.isEndOfLife,
+    'isEndOfLife should be true when x-end-of-life is provided',
+  )
+  t.is(
+    property.endOfLifeDate,
+    '2026-01-01',
+    'endOfLifeDate should match x-end-of-life value',
+  )
 })
 
 test('createProperties: rejects names that are not lower_snake_case', (t) => {
