@@ -435,3 +435,22 @@ test('flattenOpenapiSchema: flattens a tuple-encoded array of timestamps', (t) =
   const flattened = flattenOpenapiSchema(schema)
   t.deepEqual(flattened.items, { type: 'string', format: 'date-time' })
 })
+
+test('flattenOpenapiSchema: keeps annotations on a flattened oneOf and allOf', (t) => {
+  const annotations = {
+    'x-undocumented': 'Internal.',
+    'x-deprecated': 'Use b.',
+    'x-draft': 'Early access.',
+    'x-end-of-life': 'Removed.',
+  }
+  const variants: OpenapiSchema[] = [
+    { type: 'object', properties: { a: { type: 'string' } } },
+    { type: 'object', properties: { b: { type: 'string' } } },
+  ]
+  for (const key of ['oneOf', 'allOf'] as const) {
+    const flattened = flattenOpenapiSchema({ ...annotations, [key]: variants })
+    for (const [name, message] of Object.entries(annotations)) {
+      t.is(flattened[name as keyof typeof annotations], message)
+    }
+  }
+})

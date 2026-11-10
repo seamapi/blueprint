@@ -11,6 +11,20 @@ const isScalarSchema = (
 ): schema is OpenapiSchema & { type: ScalarType } =>
   schema.type != null && scalarTypes.includes(schema.type as ScalarType)
 
+const annotationKeys = [
+  'x-undocumented',
+  'x-deprecated',
+  'x-draft',
+  'x-end-of-life',
+] as const
+
+const pickAnnotations = (schema: OpenapiSchema): OpenapiSchema =>
+  Object.fromEntries(
+    annotationKeys.flatMap((key) =>
+      schema[key] == null ? [] : [[key, schema[key]]],
+    ),
+  )
+
 export const flattenOpenapiSchema = (schema: OpenapiSchema): OpenapiSchema => {
   if ('allOf' in schema && Array.isArray(schema.allOf)) {
     return flattenAllOfSchema(schema as { allOf: OpenapiSchema[] })
@@ -46,6 +60,7 @@ export const flattenAllOfSchema = (schema: AllOfSchema): OpenapiSchema => {
     properties: {},
     required: [],
     ...(schema?.description != null && { description: schema.description }),
+    ...pickAnnotations(schema),
     ...(schema['x-property-groups'] != null && {
       'x-property-groups': schema['x-property-groups'],
     }),
@@ -117,6 +132,7 @@ export const flattenOneOfSchema = (schema: OneOfSchema): OpenapiSchema => {
 
   const baseFlattenedSchema: OpenapiSchema = {
     ...(schema?.description != null && { description: schema.description }),
+    ...pickAnnotations(schema),
     ...(isNullable && { nullable: true }),
   }
 
