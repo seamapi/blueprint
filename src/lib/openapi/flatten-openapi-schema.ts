@@ -45,6 +45,9 @@ export const flattenOpenapiSchema = (schema: OpenapiSchema): OpenapiSchema => {
   }
 
   if (schema.type === 'array' && schema.items != null) {
+    if (schema.items.discriminator != null && schema.items.oneOf != null) {
+      return schema
+    }
     return { ...schema, items: flattenOpenapiSchema(schema.items) }
   }
 

@@ -114,10 +114,12 @@ const omitFromParameter = (
     if (parameter.itemFormat === 'discriminated_object') {
       return {
         ...parameter,
-        variants: parameter.variants.map((variant) => ({
-          ...variant,
-          parameters: omitFromParameters(variant.parameters, isOmitted),
-        })),
+        variants: parameter.variants
+          .filter((variant) => !isOmitted(variant))
+          .map((variant) => ({
+            ...variant,
+            parameters: omitFromParameters(variant.parameters, isOmitted),
+          })),
       }
     }
   }

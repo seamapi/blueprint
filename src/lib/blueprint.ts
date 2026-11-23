@@ -270,6 +270,8 @@ interface DiscriminatedListParameter extends BaseListParameter {
   variants: Array<{
     parameters: Parameter[]
     description: BaseParameter['description']
+    isUndocumented?: true
+    isEndOfLife?: true
   }>
 }
 
@@ -1095,19 +1097,8 @@ export const createParameters = (
   requiredParameters: string[] = [],
 ): Parameter[] =>
   Object.entries(properties)
-    .map(([name, property]) => {
-      // Don't flatten discriminated arrays as they are handled separately in createParameter
-      if (
-        property.type === 'array' &&
-        'items' in property &&
-        'discriminator' in property.items
-      ) {
-        return [name, property] as [string, OpenapiSchema]
-      }
-
-      return [name, flattenOpenapiSchema(property)] as [string, OpenapiSchema]
-    })
-    .map(([name, property]) => {
+    .map(([name, schema]) => {
+      const property = flattenOpenapiSchema(schema)
       if (property.type == null) {
         throw new Error(
           `The ${name} property for ${path} cannot be documented since it does not define a type.`,
@@ -1295,6 +1286,12 @@ const createArrayParameter = (
       {
         discriminator: property.items.discriminator.propertyName,
         variants: property.items.oneOf.map((schema: OpenapiSchema) => ({
+          ...((schema['x-undocumented'] ?? '').length > 0 && {
+            isUndocumented: true,
+          }),
+          ...((schema['x-end-of-life'] ?? '').length > 0 && {
+            isEndOfLife: true,
+          }),
           parameters: createParameters(
             schema.properties ?? {},
             path,
@@ -1710,18 +1707,7 @@ export const createProperties = (
 ): Property[] =>
   Object.entries(properties)
     .map(([name, property]) => {
-      // Don't flatten discriminated arrays as they are handled separately in createProperty
-      if (
-        property.type === 'array' &&
-        'items' in property &&
-        'discriminator' in property.items
-      ) {
-        return [name, property] as [string, OpenapiSchema]
-      }
-
-      return [name, flattenOpenapiSchema(property)] as [string, OpenapiSchema]
-    })
-    .map(([name, prop]) => {
+      const prop = flattenOpenapiSchema(property)
       if (prop.type == null) {
         throw new Error(
           `The ${name} property for ${parentPaths.join('.')} cannot be documented since it does not define a type.`,

@@ -64,13 +64,15 @@ for (const [kind, option, annotation] of [
   ['error', 'omitUndocumented', 'x-undocumented'],
   ['warning', 'omitUndocumented', 'x-undocumented'],
   ['error', 'omitEndOfLife', 'x-end-of-life'],
+  ['warning', 'omitEndOfLife', 'x-end-of-life'],
 ] as const) {
   test(`createBlueprint: ${option} filters ${kind} variants and fields`, async (t) => {
     const typesModule = TypesModuleSchema.parse(types)
     const openapi = structuredClone(typesModule.openapi)
     const fooSchema = openapi.components.schemas['foo']
-    if (fooSchema?.properties == null) {
-      t.fail('Expected foo schema to have properties')
+    const operation = openapi.paths['/foos/get']?.post
+    if (fooSchema?.properties == null || operation == null) {
+      t.fail('Expected a foo resource and POST endpoint')
       return
     }
 
@@ -85,7 +87,7 @@ for (const [kind, option, annotation] of [
       required: [code, 'message'],
       'x-resource-type': 'foo',
     }
-    fooSchema.properties[`${kind}s`] = {
+    const issueList: NonNullable<typeof fooSchema.properties>[string] = {
       type: 'array',
       items: {
         discriminator: { propertyName: code },
@@ -103,36 +105,76 @@ for (const [kind, option, annotation] of [
       },
     }
 
+    const listName = `${kind}s`
+    const nestedProperties = {
+      result: { type: 'object' as const, properties: { [listName]: issueList } },
+    }
+    Object.assign(fooSchema.properties, {
+      [listName]: issueList,
+      ...nestedProperties,
+    })
+    operation.requestBody = {
+      content: {
+        'application/json': {
+          schema: { type: 'object', properties: nestedProperties },
+        },
+      },
+    }
+
     for (const omit of [false, true]) {
       const blueprint = await createBlueprint(
         { ...typesModule, openapi },
         { [option]: omit },
       )
-      const issues = blueprint.resources
-        .find(({ resourceType }) => resourceType === 'foo')
-        ?.properties.find(({ name }) => name === `${kind}s`)
-      if (
-        issues?.format !== 'list' ||
-        issues.itemFormat !== 'discriminated_object'
-      ) {
-        t.fail(`Expected ${kind}s to be a discriminated list property`)
-        return
-      }
+      const properties = blueprint.resources.find(
+        ({ resourceType }) => resourceType === 'foo',
+      )?.properties
+      const result = properties?.find(({ name }) => name === 'result')
+      const requestResult = blueprint.routes
+        .flatMap(({ endpoints }) => endpoints)
+        .find(({ path }) => path === '/foos/get')
+        ?.request.parameters.find(({ name }) => name === 'result')
 
-      const codes = issues.variants.map(({ properties }) => {
-        const discriminator = properties.find(({ name }) => name === code)
-        return discriminator?.format === 'enum'
-          ? discriminator.values[0]?.name
-          : undefined
-      })
-      t.deepEqual(
-        codes,
-        omit ? ['foo_offline'] : ['foo_offline', 'foo_unreachable'],
-      )
-      t.deepEqual(
-        issues.variants[0]?.properties.map(({ name }) => name),
-        omit ? [code, 'message'] : [code, 'message', 'internal_detail'],
-      )
+      const lists = [
+        properties?.find(({ name }) => name === listName),
+        result?.format === 'object'
+          ? result.properties.find(({ name }) => name === listName)
+          : undefined,
+        requestResult?.format === 'object'
+          ? requestResult.parameters.find(({ name }) => name === listName)
+          : undefined,
+      ]
+      for (const issues of lists) {
+        if (
+          issues?.format !== 'list' ||
+          issues.itemFormat !== 'discriminated_object'
+        ) {
+          t.fail(`Expected ${kind}s to be a discriminated list`)
+          continue
+        }
+
+        const fields = issues.variants.map((variant) =>
+          'properties' in variant ? variant.properties : variant.parameters,
+        )
+        t.deepEqual(
+          fields.map((variantFields) => {
+            const discriminator = variantFields.find(
+              ({ name }) => name === code,
+            )
+            return discriminator?.format === 'enum'
+              ? discriminator.values[0]?.name
+              : undefined
+          }),
+          omit ? ['foo_offline'] : ['foo_offline', 'foo_unreachable'],
+        )
+        const expectedFields = omit
+          ? [code, 'message']
+          : [code, 'internal_detail', 'message']
+        t.deepEqual(
+          fields[0]?.map(({ name }) => name).sort(),
+          expectedFields.sort(),
+        )
+      }
     }
   })
 }
