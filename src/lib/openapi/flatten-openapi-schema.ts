@@ -31,6 +31,11 @@ export const flattenOpenapiSchema = (schema: OpenapiSchema): OpenapiSchema => {
   }
 
   if ('oneOf' in schema && Array.isArray(schema.oneOf)) {
+    if (schema.type === 'object' && schema.oneOf.length === 0) {
+      // Omission can remove every branch from a nested object union.
+      const { oneOf: _oneOf, ...object } = schema
+      return { ...object, properties: {} }
+    }
     return flattenOneOfSchema(schema as { oneOf: OpenapiSchema[] })
   }
 
@@ -45,17 +50,6 @@ export const flattenOpenapiSchema = (schema: OpenapiSchema): OpenapiSchema => {
   }
 
   if (schema.type === 'array' && schema.items != null) {
-    const discriminator = schema.items.discriminator?.propertyName
-    if (
-      (discriminator === 'error_code' || discriminator === 'warning_code') &&
-      schema.items.oneOf?.some(
-        (branch) =>
-          (branch['x-undocumented'] ?? '').length > 0 ||
-          (branch['x-end-of-life'] ?? '').length > 0,
-      ) === true
-    ) {
-      return schema
-    }
     return { ...schema, items: flattenOpenapiSchema(schema.items) }
   }
 

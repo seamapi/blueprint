@@ -11,6 +11,11 @@ import {
   schemaRequiresAnyProperty,
 } from './openapi/get-request-body-schema.js'
 import {
+  createOpenapiOmissions,
+  isEventProjectionPath,
+  type OpenapiOmissions,
+} from './openapi/omit.js'
+import {
   EventResourceSchema,
   OpenapiOperationSchema,
   PropertySchema,
@@ -270,8 +275,6 @@ interface DiscriminatedListParameter extends BaseListParameter {
   variants: Array<{
     parameters: Parameter[]
     description: BaseParameter['description']
-    isUndocumented?: true
-    isEndOfLife?: true
   }>
 }
 
@@ -452,8 +455,6 @@ export interface DiscriminatedListProperty extends BaseListProperty {
   variants: Array<{
     resourceType: string | null
     variantGroupKey: string | null
-    isUndocumented?: boolean
-    isEndOfLife?: boolean
     properties: Property[]
     description: BaseProperty['description']
   }>
@@ -501,6 +502,8 @@ interface Context extends Required<BlueprintOptions> {
   validActionAttemptTypes: string[]
   validResourceTypes: string[]
   schemas: Record<string, unknown>
+  omissions?: OpenapiOmissions
+  omitPagination?: boolean
 }
 
 export const TypesModuleSchema = z.object({
@@ -544,6 +547,14 @@ export const createBlueprint = async (
     openapi.components.schemas,
   )
 
+  const pagination = openapi.components.schemas[paginationResponseKey]
+  const omissions = createOpenapiOmissions(openapi.components.schemas, {
+    omitUndocumented,
+    omitEndOfLife,
+  })
+  const omitPagination =
+    pagination != null && omissions?.isOmitted(pagination) === true
+
   const context: Context = {
     codeSampleDefinitions,
     resourceSampleDefinitions,
@@ -553,6 +564,7 @@ export const createBlueprint = async (
     schemas,
     validActionAttemptTypes,
     validResourceTypes,
+    ...(omissions != null && { omissions, omitPagination }),
   }
 
   assertDocumentedEndpointResponsesReferenceResourceSchemas(
@@ -565,7 +577,6 @@ export const createBlueprint = async (
   const routes = await createRoutes(openapi.paths, context)
   const namespaces = createNamespaces(routes)
 
-  const pagination = openapi.components.schemas[paginationResponseKey]
   const openapiSchemas = Object.fromEntries(
     Object.entries(openapi.components.schemas).filter(
       ([k]) => k !== paginationResponseKey,
@@ -617,7 +628,9 @@ export const createBlueprint = async (
     routes,
     namespaces,
     resources,
-    pagination: createPagination(pagination, openapiSchemas),
+    pagination: omitPagination
+      ? null
+      : createPagination(pagination, openapiSchemas, omissions),
     events,
     actionAttempts,
   }
@@ -888,7 +901,19 @@ const createEndpointFromOperation = async (
   const endOfLifeMessage = parsedOperation['x-end-of-life']
   const isEndOfLife = endOfLifeMessage.length > 0
 
-  const request = createRequest(methods, operationMethod, operation, path, {
+  const bodySchema = getRequestBodySchema(operation)
+  const useBody = operationMethod === 'POST' || bodySchema != null
+  const requestSchema = useBody ? bodySchema : getQuerySchema(operation)
+  const eventProjection = isEventProjectionPath(path)
+  const visibleRequestSchema =
+    requestSchema == null
+      ? undefined
+      : (context.omissions?.omitSchema(requestSchema, {
+          request: true,
+          eventProjection,
+        }) ?? requestSchema)
+  const request = createRequest(methods, path, visibleRequestSchema, {
+    useBody,
     hasRequiredParameters: parsedOperation['x-has-required-parameters'],
   })
   const { hasPagination, ...response } = createResponse(
@@ -941,9 +966,43 @@ const createEndpointFromOperation = async (
     codeSamples: await Promise.all(
       context.codeSampleDefinitions
         .filter(({ request }) => request.path === endpointPath)
+        .flatMap((definition) => {
+          const omissions = context.omissions
+          if (omissions == null) return [definition]
+          const parameters =
+            omissions.omitSample(
+              definition.request.parameters,
+              requestSchema,
+              eventProjection,
+            ) ?? {}
+          const responseSchema =
+            operation.responses['200']?.content?.['application/json']?.schema
+          const body =
+            definition.response.body == null
+              ? null
+              : (omissions.omitSample(
+                  definition.response.body,
+                  responseSchema,
+                  eventProjection,
+                ) ?? {})
+          if (
+            response.responseType !== 'void' &&
+            definition.response.body?.[response.responseKey] != null &&
+            body?.[response.responseKey] == null
+          ) {
+            return []
+          }
+          return [
+            {
+              ...definition,
+              request: { ...definition.request, parameters },
+              response: { body },
+            },
+          ]
+        })
         .map(
-          async (codeSampleDefinition) =>
-            await createCodeSample(codeSampleDefinition, {
+          async (definition) =>
+            await createCodeSample(definition, {
               endpoint,
               formatCode: context.formatCode,
             }),
@@ -996,12 +1055,12 @@ const pathsAllowedMoreThanTwoMethods: string[] = [
 
 const createRequest = (
   methods: Method[],
-  operationMethod: Method,
-  operation: OpenapiOperation,
   path: string,
+  schema: OpenapiSchema | undefined,
   {
+    useBody,
     hasRequiredParameters,
-  }: { hasRequiredParameters?: boolean | undefined } = {},
+  }: { useBody: boolean; hasRequiredParameters?: boolean | undefined },
 ): Request => {
   if (methods.length === 0) {
     throw new Error(`At least one HTTP method should be specified for ${path}`)
@@ -1016,10 +1075,12 @@ const createRequest = (
   }
 
   const semanticMethod = getSemanticMethod(methods)
+  const requestSchema =
+    useBody && schema != null ? flattenOpenapiSchema(schema) : schema
   const parameters =
-    operationMethod === 'POST' || getRequestBodySchema(operation) != null
-      ? createRequestBody(operation, path)
-      : createQueryParameters(operation, path)
+    requestSchema?.type !== 'object' || requestSchema.properties == null
+      ? []
+      : createParameters(requestSchema.properties, path, requestSchema.required)
 
   return {
     methods: [...methods].sort((a, b) => a.localeCompare(b)),
@@ -1028,55 +1089,24 @@ const createRequest = (
     parameters,
     hasRequiredParameters:
       hasRequiredParameters ??
-      deriveHasRequiredParameters(operation, parameters),
+      (parameters.some(({ isRequired }) => isRequired) ||
+        schemaRequiresAnyProperty(schema)),
   }
 }
 
-const deriveHasRequiredParameters = (
-  operation: OpenapiOperation,
-  parameters: Parameter[],
-): boolean =>
-  parameters.some(({ isRequired }) => isRequired) ||
-  schemaRequiresAnyProperty(getRequestBodySchema(operation))
-
-const createQueryParameters = (
-  operation: OpenapiOperation,
-  path: string,
-): Parameter[] => {
-  const queryParameters = (operation.parameters ?? []).filter(
+const getQuerySchema = (operation: OpenapiOperation): OpenapiSchema => {
+  const query = (operation.parameters ?? []).filter(
     (parameter) => parameter.in === 'query',
   )
-  if (queryParameters.length === 0) return []
-
-  const properties = Object.fromEntries(
-    queryParameters.map((parameter) => [parameter.name, parameter.schema]),
-  )
-  const requiredParameterNames = queryParameters
-    .filter((parameter) => parameter.required === true)
-    .map((parameter) => parameter.name)
-
-  return createParameters(properties, path, requiredParameterNames)
-}
-
-const createRequestBody = (
-  operation: OpenapiOperation,
-  path: string,
-): Parameter[] => {
-  // This should be done by the createParameters but for some reason it's not
-  // TODO: remove this in favour of using createParameters
-  const jsonSchema = getRequestBodySchema(operation)
-  if (jsonSchema == null) return []
-
-  const flattenedSchema = flattenOpenapiSchema(jsonSchema)
-  if (flattenedSchema.type !== 'object' || flattenedSchema.properties == null) {
-    return []
+  return {
+    type: 'object',
+    properties: Object.fromEntries(
+      query.map(({ name, schema }) => [name, schema]),
+    ),
+    required: query
+      .filter(({ required }) => required === true)
+      .map(({ name }) => name),
   }
-
-  return createParameters(
-    flattenedSchema.properties,
-    path,
-    flattenedSchema.required,
-  )
 }
 
 const assertLowerSnakeCase = (
@@ -1091,21 +1121,25 @@ const assertLowerSnakeCase = (
   }
 }
 
-const flattenBlueprintField = (schema: OpenapiSchema): OpenapiSchema =>
-  schema.type === 'array' &&
-  schema.items != null &&
-  'discriminator' in schema.items
-    ? schema
-    : flattenOpenapiSchema(schema)
-
 export const createParameters = (
   properties: Record<string, OpenapiSchema>,
   path: string,
   requiredParameters: string[] = [],
 ): Parameter[] =>
   Object.entries(properties)
-    .map(([name, schema]) => {
-      const property = flattenBlueprintField(schema)
+    .map(([name, property]) => {
+      // Don't flatten discriminated arrays as they are handled separately in createParameter
+      if (
+        property.type === 'array' &&
+        'items' in property &&
+        'discriminator' in property.items
+      ) {
+        return [name, property] as [string, OpenapiSchema]
+      }
+
+      return [name, flattenOpenapiSchema(property)] as [string, OpenapiSchema]
+    })
+    .map(([name, property]) => {
       if (property.type == null) {
         throw new Error(
           `The ${name} property for ${path} cannot be documented since it does not define a type.`,
@@ -1293,12 +1327,6 @@ const createArrayParameter = (
       {
         discriminator: property.items.discriminator.propertyName,
         variants: property.items.oneOf.map((schema: OpenapiSchema) => ({
-          ...((schema['x-undocumented'] ?? '').length > 0 && {
-            isUndocumented: true,
-          }),
-          ...((schema['x-end-of-life'] ?? '').length > 0 && {
-            isEndOfLife: true,
-          }),
           parameters: createParameters(
             schema.properties ?? {},
             path,
@@ -1351,8 +1379,10 @@ const createArrayParameter = (
 const createPagination = (
   schema: Openapi['components']['schemas'][number] | undefined,
   schemas: Openapi['components']['schemas'],
+  omissions: OpenapiOmissions | undefined,
 ): Pagination | null => {
   if (schema == null) return null
+  schema = omissions?.omitSchema(schema) ?? schema
   return {
     responseKey: paginationResponseKey,
     description: normalizeDescription(schema.description ?? ''),
@@ -1428,11 +1458,14 @@ const createResource = async (
 
   const propertyGroups = getPropertyGroups(schema)
   const resourceType = schemaName
+  const eventProjection = resourceType === 'event' || resourceType === 'webhook'
+  const visibleSchema =
+    context.omissions?.omitSchema(schema, { eventProjection }) ?? schema
 
   const resource: Omit<Resource, 'resourceSamples'> = {
     resourceType,
     properties: createProperties(
-      schema.properties ?? {},
+      visibleSchema.properties ?? {},
       [schemaName],
       propertyGroups,
       schemas,
@@ -1458,14 +1491,31 @@ const createResource = async (
         .filter(
           (resourceSample) => resourceSample.resource_type === resourceType,
         )
-        .map(
-          async (resourceSampleDefinition) =>
-            await createResourceSample(resourceSampleDefinition, {
-              resource,
-              schemas: context.schemas,
-              formatCode: context.formatCode,
-            }),
-        ),
+        .flatMap((definition) => {
+          const omissions = context.omissions
+          const sampleSchema =
+            resourceType === 'event' ? (schemas['event'] ?? schema) : schema
+          const properties =
+            omissions == null
+              ? definition.properties
+              : omissions.omitSample(
+                  definition.properties,
+                  sampleSchema,
+                  eventProjection,
+                )
+          if (properties == null) return []
+          return [
+            createResourceSample(
+              definition,
+              {
+                resource,
+                schemas: context.schemas,
+                formatCode: context.formatCode,
+              },
+              properties,
+            ),
+          ]
+        }),
     ),
   }
 }
@@ -1653,11 +1703,11 @@ const createResponse = (
         resourceType,
         description,
         hasPagination:
-          (paginationResponseKey in properties &&
-            properties[paginationResponseKey]?.$ref?.endsWith(
-              `/${paginationResponseKey}`,
-            )) ??
-          false,
+          !context.omitPagination &&
+          paginationResponseKey in properties &&
+          properties[paginationResponseKey]?.$ref?.endsWith(
+            `/${paginationResponseKey}`,
+          ) === true,
         actionAttemptType,
         batchResourceTypes: batchResourceTypes ?? null,
       }
@@ -1714,7 +1764,18 @@ export const createProperties = (
 ): Property[] =>
   Object.entries(properties)
     .map(([name, property]) => {
-      const prop = flattenBlueprintField(property)
+      // Don't flatten discriminated arrays as they are handled separately in createProperty
+      if (
+        property.type === 'array' &&
+        'items' in property &&
+        'discriminator' in property.items
+      ) {
+        return [name, property] as [string, OpenapiSchema]
+      }
+
+      return [name, flattenOpenapiSchema(property)] as [string, OpenapiSchema]
+    })
+    .map(([name, prop]) => {
       if (prop.type == null) {
         throw new Error(
           `The ${name} property for ${parentPaths.join('.')} cannot be documented since it does not define a type.`,
@@ -1985,12 +2046,6 @@ const createArrayProperty = (
           return {
             resourceType,
             variantGroupKey,
-            ...((schema['x-undocumented'] ?? '').length > 0 && {
-              isUndocumented: true,
-            }),
-            ...((schema['x-end-of-life'] ?? '').length > 0 && {
-              isEndOfLife: true,
-            }),
             properties: createProperties(
               schema.properties ?? {},
               [...parentPaths, baseProperty.name],

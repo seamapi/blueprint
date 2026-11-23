@@ -7,19 +7,18 @@ import type {
 } from './blueprint.js'
 
 interface Omittable {
-  isUndocumented?: boolean
-  isEndOfLife?: boolean
+  isUndocumented: boolean
+  isEndOfLife: boolean
 }
 
 type IsOmitted = (item: Omittable) => boolean
 
 export const omitUndocumentedFromBlueprint = (
   blueprint: Blueprint,
-): Blueprint =>
-  omitFromBlueprint(blueprint, (item) => item.isUndocumented === true)
+): Blueprint => omitFromBlueprint(blueprint, (item) => item.isUndocumented)
 
 export const omitEndOfLifeFromBlueprint = (blueprint: Blueprint): Blueprint =>
-  omitFromBlueprint(blueprint, (item) => item.isEndOfLife === true)
+  omitFromBlueprint(blueprint, (item) => item.isEndOfLife)
 
 const omitFromBlueprint = (
   blueprint: Blueprint,
@@ -114,12 +113,10 @@ const omitFromParameter = (
     if (parameter.itemFormat === 'discriminated_object') {
       return {
         ...parameter,
-        variants: parameter.variants
-          .filter((variant) => !isOmitted(variant))
-          .map((variant) => ({
-            ...variant,
-            parameters: omitFromParameters(variant.parameters, isOmitted),
-          })),
+        variants: parameter.variants.map((variant) => ({
+          ...variant,
+          parameters: omitFromParameters(variant.parameters, isOmitted),
+        })),
       }
     }
   }
@@ -168,12 +165,10 @@ const omitFromProperty = (
     if (property.itemFormat === 'discriminated_object') {
       return {
         ...property,
-        variants: property.variants
-          .filter((variant) => !isOmitted(variant))
-          .map((variant) => ({
-            ...variant,
-            properties: omitFromProperties(variant.properties, isOmitted),
-          })),
+        variants: property.variants.map((variant) => ({
+          ...variant,
+          properties: omitFromProperties(variant.properties, isOmitted),
+        })),
       }
     }
   }
