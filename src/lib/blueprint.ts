@@ -1091,6 +1091,13 @@ const assertLowerSnakeCase = (
   }
 }
 
+const flattenBlueprintField = (schema: OpenapiSchema): OpenapiSchema =>
+  schema.type === 'array' &&
+  schema.items != null &&
+  'discriminator' in schema.items
+    ? schema
+    : flattenOpenapiSchema(schema)
+
 export const createParameters = (
   properties: Record<string, OpenapiSchema>,
   path: string,
@@ -1098,7 +1105,7 @@ export const createParameters = (
 ): Parameter[] =>
   Object.entries(properties)
     .map(([name, schema]) => {
-      const property = flattenOpenapiSchema(schema)
+      const property = flattenBlueprintField(schema)
       if (property.type == null) {
         throw new Error(
           `The ${name} property for ${path} cannot be documented since it does not define a type.`,
@@ -1707,7 +1714,7 @@ export const createProperties = (
 ): Property[] =>
   Object.entries(properties)
     .map(([name, property]) => {
-      const prop = flattenOpenapiSchema(property)
+      const prop = flattenBlueprintField(property)
       if (prop.type == null) {
         throw new Error(
           `The ${name} property for ${parentPaths.join('.')} cannot be documented since it does not define a type.`,

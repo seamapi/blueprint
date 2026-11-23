@@ -30,5 +30,25 @@ test('createBlueprint', async (t) => {
 
   t.deepEqual(statusesFor('error'), ['error'])
   t.deepEqual(statusesFor('result'), ['success'])
+
+  const result = blueprint.actionAttempts
+    .find(({ actionAttemptType }) => actionAttemptType === 'ASSIGN_CREDENTIAL')
+    ?.properties.find(({ name }) => name === 'result')
+  const nestedMutations =
+    result?.format === 'object'
+      ? result.properties.find(({ name }) => name === 'pending_mutations')
+      : undefined
+  const directMutations = blueprint.resources
+    .find(({ resourceType }) => resourceType === 'access_method')
+    ?.properties.find(({ name }) => name === 'pending_mutations')
+
+  t.is(
+    nestedMutations?.format === 'list' && nestedMutations.itemFormat,
+    'object',
+  )
+  t.is(
+    directMutations?.format === 'list' && directMutations.itemFormat,
+    'discriminated_object',
+  )
   t.snapshot(blueprint, 'blueprint')
 })
