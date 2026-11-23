@@ -81,7 +81,7 @@ export const createOpenapiOmissions = (
     }
     if (value === null && branch.nullable === true) return true
     if (branch.allOf?.some((member) => !matchesBranch(value, member)))
-      return false
+      {return false}
     if (
       branch.oneOf != null &&
       branch.oneOf.filter((member) => matchesBranch(value, member)).length !== 1
@@ -136,7 +136,7 @@ export const createOpenapiOmissions = (
           ((typeof value === 'string' || typeof value === 'boolean') &&
             isOmittedEnum(member, value, eventField))
         )
-          return undefined
+          {return undefined}
 
         active.push(member)
         for (const branch of member.allOf ?? []) {
@@ -168,7 +168,7 @@ export const createOpenapiOmissions = (
               eventProjection && isEventField(discriminator),
             ) === undefined
           )
-            return undefined
+            {return undefined}
         }
         active.push(...selected)
       }
