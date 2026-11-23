@@ -106,8 +106,18 @@ for (const [kind, option, annotation] of [
     }
 
     const listName = `${kind}s`
+    const resultProperties = {
+      [listName]: issueList,
+      documented: {
+        type: 'array' as const,
+        items: {
+          discriminator: { propertyName: code },
+          oneOf: [documentedVariant],
+        },
+      },
+    }
     const nestedProperties = {
-      result: { type: 'object' as const, properties: { [listName]: issueList } },
+      result: { type: 'object' as const, properties: resultProperties },
     }
     Object.assign(fooSchema.properties, {
       [listName]: issueList,
@@ -134,6 +144,18 @@ for (const [kind, option, annotation] of [
         .flatMap(({ endpoints }) => endpoints)
         .find(({ path }) => path === '/foos/get')
         ?.request.parameters.find(({ name }) => name === 'result')
+
+      const documentedLists = [
+        result?.format === 'object'
+          ? result.properties.find(({ name }) => name === 'documented')
+          : undefined,
+        requestResult?.format === 'object'
+          ? requestResult.parameters.find(({ name }) => name === 'documented')
+          : undefined,
+      ]
+      for (const list of documentedLists) {
+        t.is(list?.format === 'list' && list.itemFormat, 'object')
+      }
 
       const lists = [
         properties?.find(({ name }) => name === listName),
