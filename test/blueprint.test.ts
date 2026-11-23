@@ -60,6 +60,83 @@ test('createBlueprint: with omitUndocumented', async (t) => {
   t.snapshot(blueprint, 'blueprint')
 })
 
+for (const [kind, option, annotation] of [
+  ['error', 'omitUndocumented', 'x-undocumented'],
+  ['warning', 'omitUndocumented', 'x-undocumented'],
+  ['error', 'omitEndOfLife', 'x-end-of-life'],
+] as const) {
+  test(`createBlueprint: ${option} filters ${kind} variants and fields`, async (t) => {
+    const typesModule = TypesModuleSchema.parse(types)
+    const openapi = structuredClone(typesModule.openapi)
+    const fooSchema = openapi.components.schemas['foo']
+    if (fooSchema?.properties == null) {
+      t.fail('Expected foo schema to have properties')
+      return
+    }
+
+    const code = `${kind}_code`
+    const documentedVariant = {
+      type: 'object',
+      properties: {
+        [code]: { type: 'string', enum: ['foo_offline'] },
+        message: { type: 'string' },
+        internal_detail: { type: 'string', [annotation]: 'Omit this field.' },
+      },
+      required: [code, 'message'],
+      'x-resource-type': 'foo',
+    }
+    fooSchema.properties[`${kind}s`] = {
+      type: 'array',
+      items: {
+        discriminator: { propertyName: code },
+        oneOf: [
+          documentedVariant,
+          {
+            ...documentedVariant,
+            properties: {
+              ...documentedVariant.properties,
+              [code]: { type: 'string', enum: ['foo_unreachable'] },
+            },
+            [annotation]: 'Omit this variant.',
+          },
+        ],
+      },
+    }
+
+    for (const omit of [false, true]) {
+      const blueprint = await createBlueprint(
+        { ...typesModule, openapi },
+        { [option]: omit },
+      )
+      const issues = blueprint.resources
+        .find(({ resourceType }) => resourceType === 'foo')
+        ?.properties.find(({ name }) => name === `${kind}s`)
+      if (
+        issues?.format !== 'list' ||
+        issues.itemFormat !== 'discriminated_object'
+      ) {
+        t.fail(`Expected ${kind}s to be a discriminated list property`)
+        return
+      }
+
+      const codes = issues.variants.map(({ properties }) => {
+        const discriminator = properties.find(({ name }) => name === code)
+        return discriminator?.format === 'enum'
+          ? discriminator.values[0]?.name
+          : undefined
+      })
+      t.deepEqual(
+        codes,
+        omit ? ['foo_offline'] : ['foo_offline', 'foo_unreachable'],
+      )
+      t.deepEqual(
+        issues.variants[0]?.properties.map(({ name }) => name),
+        omit ? [code, 'message'] : [code, 'message', 'internal_detail'],
+      )
+    }
+  })
+}
+
 test('createBlueprint: with omitEndOfLife', async (t) => {
   const typesModule = TypesModuleSchema.parse(types)
   const blueprint = await createBlueprint(typesModule, {

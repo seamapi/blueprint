@@ -450,6 +450,8 @@ export interface DiscriminatedListProperty extends BaseListProperty {
   variants: Array<{
     resourceType: string | null
     variantGroupKey: string | null
+    isUndocumented?: boolean
+    isEndOfLife?: boolean
     properties: Property[]
     description: BaseProperty['description']
   }>
@@ -1990,6 +1992,12 @@ const createArrayProperty = (
           return {
             resourceType,
             variantGroupKey,
+            ...((schema['x-undocumented'] ?? '').length > 0 && {
+              isUndocumented: true,
+            }),
+            ...((schema['x-end-of-life'] ?? '').length > 0 && {
+              isEndOfLife: true,
+            }),
             properties: createProperties(
               schema.properties ?? {},
               [...parentPaths, baseProperty.name],
