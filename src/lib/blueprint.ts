@@ -906,12 +906,12 @@ const createEndpointFromOperation = async (
   const requestSchema = useBody ? bodySchema : getQuerySchema(operation)
   const eventProjection = isEventProjectionPath(path)
   const visibleRequestSchema =
-    requestSchema == null
-      ? undefined
-      : (context.omissions?.omitSchema(requestSchema, {
+    requestSchema == null || context.omissions == null
+      ? requestSchema
+      : context.omissions.omitSchema(requestSchema, {
           request: true,
           eventProjection,
-        }) ?? requestSchema)
+        })
   const request = createRequest(methods, path, visibleRequestSchema, {
     useBody,
     hasRequiredParameters: parsedOperation['x-has-required-parameters'],
@@ -969,12 +969,12 @@ const createEndpointFromOperation = async (
         .flatMap((definition) => {
           const omissions = context.omissions
           if (omissions == null) return [definition]
-          const parameters =
-            omissions.omitSample(
-              definition.request.parameters,
-              requestSchema,
-              eventProjection,
-            ) ?? {}
+          const parameters = omissions.omitSample(
+            definition.request.parameters,
+            requestSchema,
+            eventProjection,
+          )
+          if (parameters == null) return []
           const responseSchema =
             operation.responses['200']?.content?.['application/json']?.schema
           const body =
@@ -1382,7 +1382,8 @@ const createPagination = (
   omissions: OpenapiOmissions | undefined,
 ): Pagination | null => {
   if (schema == null) return null
-  schema = omissions?.omitSchema(schema) ?? schema
+  if (omissions != null) schema = omissions.omitSchema(schema)
+  if (schema == null) return null
   return {
     responseKey: paginationResponseKey,
     description: normalizeDescription(schema.description ?? ''),
@@ -1460,16 +1461,18 @@ const createResource = async (
   const resourceType = schemaName
   const eventProjection = resourceType === 'event' || resourceType === 'webhook'
   const visibleSchema =
-    context.omissions?.omitSchema(schema, { eventProjection }) ?? schema
+    context.omissions == null
+      ? schema
+      : context.omissions.omitSchema(schema, { eventProjection })
 
   const resource: Omit<Resource, 'resourceSamples'> = {
     resourceType,
     properties: createProperties(
-      visibleSchema.properties ?? {},
+      visibleSchema?.properties ?? {},
       [schemaName],
       propertyGroups,
       schemas,
-      schema.required ?? [],
+      visibleSchema?.required ?? [],
     ),
     description: normalizeDescription(schema.description ?? ''),
     isDeprecated: schema.deprecated ?? false,
@@ -1697,6 +1700,7 @@ const createResponse = (
           })
         : null
 
+      const pagination = properties[paginationResponseKey]
       return {
         responseType: props?.type === 'array' ? 'resource_list' : 'resource',
         responseKey: refKey,
@@ -1704,10 +1708,8 @@ const createResponse = (
         description,
         hasPagination:
           !context.omitPagination &&
-          paginationResponseKey in properties &&
-          properties[paginationResponseKey]?.$ref?.endsWith(
-            `/${paginationResponseKey}`,
-          ) === true,
+          pagination?.$ref?.endsWith(`/${paginationResponseKey}`) === true &&
+          context.omissions?.isOmitted(pagination) !== true,
         actionAttemptType,
         batchResourceTypes: batchResourceTypes ?? null,
       }
