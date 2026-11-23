@@ -69,12 +69,8 @@ export const createOpenapiOmissions = (
       if (value == null || typeof value !== 'object' || Array.isArray(value)) {
         return false
       }
-      const normalized =
-        branch.allOf == null ? branch : flattenOpenapiSchema(branch)
-      return (
-        normalized.properties?.[discriminator]?.enum?.some(
-          (literal) => literal === value[discriminator],
-        ) === true
+      return discriminatorValues(branch, discriminator).some(
+        (literal) => literal === value[discriminator],
       )
     }
     if (
@@ -115,67 +111,95 @@ export const createOpenapiOmissions = (
 
   const omitValue = (
     value: Json,
-    schema: OpenapiSchema,
+    schemas: OpenapiSchema[],
     eventProjection: boolean,
     eventField = false,
   ): Json | undefined => {
-    const referenced = resolve(schema)
-    if (isOmitted(schema) || (referenced != null && isOmitted(referenced))) {
-      return undefined
-    }
-    schema = referenced ?? schema
-    if (
-      (typeof value === 'string' || typeof value === 'boolean') &&
-      isOmittedEnum(schema, value, eventField)
-    ) {
-      return undefined
+    if (schemas.length === 0) return value
+    const fields = (members: OpenapiSchema[], name: string): OpenapiSchema[] =>
+      members.flatMap((member) => {
+        const field =
+          member.properties?.[name] ??
+          (typeof member.additionalProperties === 'object'
+            ? member.additionalProperties
+            : undefined)
+        return field == null ? [] : [field]
+      })
+
+    const collect = (schema: OpenapiSchema): OpenapiSchema[] | undefined => {
+      const referenced = resolve(schema)
+      const members = referenced == null ? [schema] : [schema, referenced]
+      const active: OpenapiSchema[] = []
+      for (const member of members) {
+        if (
+          isOmitted(member) ||
+          ((typeof value === 'string' || typeof value === 'boolean') &&
+            isOmittedEnum(member, value, eventField))
+        )
+          return undefined
+
+        active.push(member)
+        for (const branch of member.allOf ?? []) {
+          const selected = collect(branch)
+          if (selected == null) return undefined
+          active.push(...selected)
+        }
+        const discriminator = member.discriminator?.propertyName
+        const matching = member.oneOf?.filter((branch) =>
+          matchesBranch(value, branch, discriminator),
+        )
+        const branch = matching?.length === 1 ? matching[0] : undefined
+        if (branch == null) continue
+        const selected = collect(branch)
+        if (selected == null) return undefined
+        if (
+          discriminator != null &&
+          value != null &&
+          typeof value === 'object' &&
+          !Array.isArray(value)
+        ) {
+          const literal = value[discriminator]
+          if (
+            literal !== undefined &&
+            omitValue(
+              literal,
+              fields(selected, discriminator),
+              eventProjection,
+              eventProjection && isEventField(discriminator),
+            ) === undefined
+          )
+            return undefined
+        }
+        active.push(...selected)
+      }
+      return active
     }
 
-    if (schema.allOf != null) {
-      for (const branch of schema.allOf) {
-        const next = omitValue(value, branch, eventProjection, eventField)
-        if (next === undefined) return undefined
-        value = next
-      }
-    }
-    if (schema.oneOf != null) {
-      const matching = schema.oneOf.filter((branch) =>
-        matchesBranch(value, branch, schema.discriminator?.propertyName),
-      )
-      const [branch] = matching
-      if (matching.length === 1 && branch != null) {
-        const visible = omitValue(value, branch, eventProjection, eventField)
-        if (visible === undefined) return undefined
-        value = visible
-      }
+    const active: OpenapiSchema[] = []
+    for (const schema of schemas) {
+      const selected = collect(schema)
+      if (selected == null) return undefined
+      active.push(...selected)
     }
     if (Array.isArray(value)) {
-      const items = schema.items
-      if (items == null) return value
+      const items = active.flatMap((member) =>
+        member.items == null ? [] : [member.items],
+      )
+      if (items.length === 0) return value
       return value.flatMap((item) => {
         const visible = omitValue(item, items, eventProjection, eventField)
         return visible === undefined ? [] : [visible]
       })
     }
-    if (value == null || typeof value !== 'object' || Array.isArray(value)) {
-      return value
-    }
-    const additional =
-      typeof schema.additionalProperties === 'object'
-        ? schema.additionalProperties
-        : undefined
+    if (value == null || typeof value !== 'object') return value
     return Object.fromEntries(
       Object.entries(value).flatMap(([name, property]) => {
-        const field = schema.properties?.[name] ?? additional
-        const visible =
-          field == null
-            ? property
-            : omitValue(
-                property,
-                field,
-                eventProjection,
-                eventProjection && isEventField(name),
-              )
+        const visible = omitValue(
+          property,
+          fields(active, name),
+          eventProjection,
+          eventProjection && isEventField(name),
+        )
         return visible === undefined ? [] : [[name, visible]]
       }),
     )
@@ -183,23 +207,27 @@ export const createOpenapiOmissions = (
 
   const omitSchema = (
     schema: OpenapiSchema,
-    { eventProjection = false, request = false } = {},
+    { eventProjection = false } = {},
     eventField = false,
     listItem = false,
     inheritedEnumOmission?: (value: OpenapiEnumValue) => boolean,
   ): OpenapiSchema | undefined => {
-    const scope = { eventProjection, request }
+    const referenced = resolve(schema)
+    if (isOmitted(schema) || (referenced != null && isOmitted(referenced))) {
+      return undefined
+    }
+    const scope = { eventProjection }
     const hidesEnum = (value: OpenapiEnumValue): boolean =>
       isOmittedEnum(schema, value, eventField) ||
       inheritedEnumOmission?.(value) === true
-    let result = { ...schema }
+    const result = { ...schema }
     if (schema.enum != null) {
       result.enum = schema.enum.filter((value) => !hidesEnum(value))
     }
     if (Object.hasOwn(schema, 'default')) {
       const visible = omitValue(
         schema.default,
-        schema,
+        [schema],
         eventProjection,
         eventField,
       )
@@ -243,12 +271,8 @@ export const createOpenapiOmissions = (
       result.allOf = branches
     }
     if (schema.oneOf != null) {
-      const omitBranches =
-        request ||
-        schema.discriminator != null ||
-        schema.oneOf.every((branch) => branch.enum != null)
+      const discriminator = schema.discriminator?.propertyName
       const branches = schema.oneOf.flatMap((branch) => {
-        if (omitBranches && isOmitted(branch)) return []
         const visible = omitSchema(
           branch,
           scope,
@@ -256,7 +280,19 @@ export const createOpenapiOmissions = (
           listItem,
           hidesEnum,
         )
-        return visible == null ? [] : [visible]
+        if (visible == null) return []
+        if (discriminator != null) {
+          const original = discriminatorValues(
+            resolve(branch) ?? branch,
+            discriminator,
+          )
+          const remaining = discriminatorValues(
+            resolve(visible) ?? visible,
+            discriminator,
+          )
+          if (original.length > 0 && remaining.length === 0) return []
+        }
+        return [visible]
       })
       const removed = branches.length !== schema.oneOf.length
       if (removed && branches.length === 0) {
@@ -280,14 +316,17 @@ export const createOpenapiOmissions = (
           return visible
         }
         const { allOf: _allOf, oneOf: _oneOf, ...metadata } = visible
-        return { ...metadata, ...flattenOpenapiSchema(visible) }
+        return {
+          ...metadata,
+          ...flattenOpenapiSchema(visible),
+          ...variantMetadata(visible),
+        }
       })
     }
     return result
   }
 
   return {
-    isOmitted,
     omitSchema,
     omitSample: (
       value: Record<string, Json>,
@@ -295,7 +334,7 @@ export const createOpenapiOmissions = (
       eventProjection = false,
     ): Record<string, Json> | undefined => {
       if (schema == null) return value
-      const visible = omitValue(value, schema, eventProjection)
+      const visible = omitValue(value, [schema], eventProjection)
       return visible != null &&
         typeof visible === 'object' &&
         !Array.isArray(visible)
@@ -304,6 +343,32 @@ export const createOpenapiOmissions = (
     },
   }
 }
+
+const discriminatorValues = (
+  schema: OpenapiSchema,
+  name: string,
+): OpenapiEnumValue[] => {
+  const property =
+    schema.properties?.[name] ??
+    (schema.allOf != null || schema.oneOf != null
+      ? flattenOpenapiSchema(schema).properties?.[name]
+      : undefined)
+  return property == null ? [] : (flattenOpenapiSchema(property).enum ?? [])
+}
+
+const variantMetadata = (schema: OpenapiSchema): OpenapiSchema => ({
+  ...Object.assign(
+    {},
+    ...(schema.allOf ?? schema.oneOf ?? []).map(variantMetadata),
+  ),
+  ...(schema.description != null && { description: schema.description }),
+  ...(schema['x-resource-type'] != null && {
+    'x-resource-type': schema['x-resource-type'],
+  }),
+  ...(schema['x-variant-group-key'] != null && {
+    'x-variant-group-key': schema['x-variant-group-key'],
+  }),
+})
 
 export type OpenapiOmissions = NonNullable<
   ReturnType<typeof createOpenapiOmissions>

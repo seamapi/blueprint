@@ -84,6 +84,7 @@ for (const [kind, option, annotation] of [
       },
       required: [code, 'message'],
       'x-resource-type': 'foo',
+      description: 'Public issue.',
     }
     const hiddenVariant = {
       ...documentedVariant,
@@ -120,6 +121,15 @@ for (const [kind, option, annotation] of [
     }
 
     for (const omit of [false, true]) {
+      if (omit) {
+        fooSchema.properties[`${kind}s`] = {
+          ...issuesSchema,
+          items: {
+            ...issuesSchema.items,
+            oneOf: [{ allOf: [documentedVariant] }, hiddenVariant],
+          },
+        }
+      }
       const blueprint = await createBlueprint(
         { ...typesModule, openapi },
         { [option]: omit },
@@ -136,6 +146,8 @@ for (const [kind, option, annotation] of [
         return
       }
 
+      t.is(issues.variants[0]?.resourceType, 'foo')
+      t.is(issues.variants[0]?.description, 'Public issue.')
       const codes = issues.variants.map(({ properties }) => {
         const discriminator = properties.find(({ name }) => name === code)
         return discriminator?.format === 'enum'
@@ -208,7 +220,20 @@ for (const method of ['get', 'post'] as const) {
         discriminator: { propertyName: 'kind' },
         oneOf: [
           variant('public'),
-          { ...variant('internal'), 'x-undocumented': 'Internal.' },
+          {
+            ...variant('internal'),
+            properties: {
+              ...variant('internal').properties,
+              kind: {
+                type: 'string',
+                enum: ['internal'],
+                'x-enums': {
+                  public: { description: 'Public variant.' },
+                  internal: { undocumented: 'Internal.' },
+                },
+              },
+            },
+          },
         ],
       },
     }
@@ -300,6 +325,17 @@ test('createBlueprint: omits hidden enum literals before projection', async (t) 
       items: structuredClone(status),
       default: ['internal'],
     },
+    hidden_items: {
+      type: 'array',
+      items: {
+        type: 'string',
+        enum: ['internal'],
+        'x-undocumented': 'Internal.',
+      },
+    },
+    hidden_intersection: {
+      allOf: [{ type: 'object', 'x-undocumented': 'Internal.' }],
+    },
     enabled: {
       type: 'boolean',
       enum: [true, false],
@@ -331,6 +367,7 @@ test('createBlueprint: omits hidden enum literals before projection', async (t) 
       ?.properties,
     blueprint.pagination?.properties,
   ]) {
+    t.false(fields?.some(({ name }) => name.startsWith('hidden_')))
     const scalar = fields?.find(({ name }) => name === 'status')
     const list = fields?.find(({ name }) => name === 'statuses')
     const boolean = fields?.find(({ name }) => name === 'enabled')
@@ -353,6 +390,59 @@ test('createBlueprint: omits hidden enum literals before projection', async (t) 
       false,
     )
   }
+})
+
+test('createBlueprint: omits composed samples using their original discriminator', async (t) => {
+  const typesModule = TypesModuleSchema.parse(types)
+  const openapi = structuredClone(typesModule.openapi)
+  const operation = openapi.paths['/foos/get'].post
+  const variant = (kind: string) => ({
+    type: 'object',
+    required: ['kind'],
+    properties: { kind: { type: 'string', enum: [kind] } },
+  })
+  const properties = {
+    filter: {
+      allOf: [
+        {
+          type: 'object',
+          properties: {
+            kind: { type: 'string', 'x-undocumented': 'Internal.' },
+          },
+        },
+        {
+          oneOf: [
+            variant('public'),
+            { ...variant('internal'), 'x-undocumented': 'Internal.' },
+          ],
+        },
+      ],
+    },
+  }
+  operation.requestBody = {
+    content: { 'application/json': { schema: { type: 'object', properties } } },
+  }
+  const sample = typesModule.codeSampleDefinitions.find(
+    ({ request }) => request.path === '/foos/get',
+  )
+  if (sample == null) throw new Error('Missing foo code sample')
+  const publicSample = structuredClone(sample)
+  publicSample.request.parameters = {
+    filter: { kind: 'public', payload: 'keep' },
+  }
+  sample.request.parameters = { filter: { kind: 'internal', payload: 'hide' } }
+  typesModule.codeSampleDefinitions.push(publicSample)
+  const blueprint = await createBlueprint(
+    { ...typesModule, openapi },
+    { omitUndocumented: true },
+  )
+  const endpoint = blueprint.routes
+    .flatMap(({ endpoints }) => endpoints)
+    .find(({ path }) => path === '/foos/get')
+  t.deepEqual(
+    endpoint?.codeSamples.map(({ request }) => request.parameters),
+    [{}, { filter: { payload: 'keep' } }],
+  )
 })
 
 test('createBlueprint: omits exhausted scalar unions and selects samples by field type', async (t) => {
@@ -697,6 +787,31 @@ test('createBlueprint: resolves documented batch response keys without requiring
       ? endpoint.response.batchResourceTypes
       : null,
     [{ batchKey: 'foos', resourceType: 'foo' }],
+  )
+
+  responseProperties.batch.properties.foos['x-undocumented'] = 'Internal.'
+  const filtered = await createBlueprint(
+    { ...typesModule, codeSampleDefinitions: [], openapi },
+    { omitUndocumented: true },
+  )
+  const batch = filtered.routes
+    .flatMap(({ endpoints }) => endpoints)
+    .find(({ path }) => path === '/foos/get')?.response
+  t.deepEqual(
+    batch?.responseType === 'resource' && batch.batchResourceTypes,
+    [],
+  )
+
+  responseProperties.batch['x-undocumented'] = 'Internal.'
+  const hidden = await createBlueprint(
+    { ...typesModule, codeSampleDefinitions: [], openapi },
+    { omitUndocumented: true },
+  )
+  t.is(
+    hidden.routes
+      .flatMap(({ endpoints }) => endpoints)
+      .find(({ path }) => path === '/foos/get')?.response.responseType,
+    'void',
   )
 })
 

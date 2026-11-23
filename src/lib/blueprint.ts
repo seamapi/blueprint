@@ -503,7 +503,6 @@ interface Context extends Required<BlueprintOptions> {
   validResourceTypes: string[]
   schemas: Record<string, unknown>
   omissions?: OpenapiOmissions
-  omitPagination?: boolean
 }
 
 export const TypesModuleSchema = z.object({
@@ -552,9 +551,6 @@ export const createBlueprint = async (
     omitUndocumented,
     omitEndOfLife,
   })
-  const omitPagination =
-    pagination != null && omissions?.isOmitted(pagination) === true
-
   const context: Context = {
     codeSampleDefinitions,
     resourceSampleDefinitions,
@@ -564,7 +560,7 @@ export const createBlueprint = async (
     schemas,
     validActionAttemptTypes,
     validResourceTypes,
-    ...(omissions != null && { omissions, omitPagination }),
+    ...(omissions != null && { omissions }),
   }
 
   assertDocumentedEndpointResponsesReferenceResourceSchemas(
@@ -628,9 +624,7 @@ export const createBlueprint = async (
     routes,
     namespaces,
     resources,
-    pagination: omitPagination
-      ? null
-      : createPagination(pagination, openapiSchemas, omissions),
+    pagination: createPagination(pagination, openapiSchemas, omissions),
     events,
     actionAttempts,
   }
@@ -909,7 +903,6 @@ const createEndpointFromOperation = async (
     requestSchema == null || context.omissions == null
       ? requestSchema
       : context.omissions.omitSchema(requestSchema, {
-          request: true,
           eventProjection,
         })
   const request = createRequest(methods, path, visibleRequestSchema, {
@@ -985,10 +978,11 @@ const createEndpointFromOperation = async (
                   responseSchema,
                   eventProjection,
                 ) ?? {})
+          const responseKey = parsedOperation['x-response-key']
           if (
-            response.responseType !== 'void' &&
-            definition.response.body?.[response.responseKey] != null &&
-            body?.[response.responseKey] == null
+            responseKey != null &&
+            definition.response.body?.[responseKey] != null &&
+            (response.responseType === 'void' || body?.[responseKey] == null)
           ) {
             return []
           }
@@ -1657,62 +1651,63 @@ const createResponse = (
       )
     }
 
-    const refKey = responseKey
-    if (refKey != null && properties[refKey] != null) {
-      const props = schema.properties[refKey]
-      const refString = props?.$ref ?? props?.items?.$ref
-      const resourceType = refString?.split('/').at(-1) ?? 'unknown'
+    const visible =
+      context.omissions == null ? schema : context.omissions.omitSchema(schema)
+    const props = visible?.properties?.[responseKey]
+    if (props == null) {
+      return { responseType: 'void', description, hasPagination: false }
+    }
 
-      const actionAttemptType = validateActionAttemptType(
-        parsedOperation['x-action-attempt-type'] ?? null,
-        responseKey,
-        path,
-        resourceType,
-        context.validActionAttemptTypes,
-      )
+    const refString = props.$ref ?? props.items?.$ref
+    const resourceType = refString?.split('/').at(-1) ?? 'unknown'
 
-      const batchKeys = parsedOperation['x-batch-keys']
-      const batchResourceTypes = batchKeys
-        ? batchKeys.flatMap((key) => {
-            const resourceRef = props?.properties?.[key]?.items?.$ref
-            if (resourceRef == null) {
-              return []
-            }
+    const actionAttemptType = validateActionAttemptType(
+      parsedOperation['x-action-attempt-type'] ?? null,
+      responseKey,
+      path,
+      resourceType,
+      context.validActionAttemptTypes,
+    )
 
-            // get last part of $ref. e.g. { '$ref': '#/components/schemas/space' }
-            const batchResourceType = resourceRef.split('/').at(-1)
-            if (batchResourceType == null) {
-              return []
-            }
+    const batchKeys = parsedOperation['x-batch-keys']
+    const batchResourceTypes = batchKeys
+      ? batchKeys.flatMap((key) => {
+          const resourceRef = props.properties?.[key]?.items?.$ref
+          if (resourceRef == null) {
+            return []
+          }
 
-            if (!context.validResourceTypes.includes(batchResourceType)) {
-              throw new Error(
-                `Unknown batch resource type '${batchResourceType}' referenced by ${path}`,
-              )
-            }
+          // get last part of $ref. e.g. { '$ref': '#/components/schemas/space' }
+          const batchResourceType = resourceRef.split('/').at(-1)
+          if (batchResourceType == null) {
+            return []
+          }
 
-            return [
-              {
-                batchKey: key,
-                resourceType: batchResourceType,
-              },
-            ]
-          })
-        : null
+          if (!context.validResourceTypes.includes(batchResourceType)) {
+            throw new Error(
+              `Unknown batch resource type '${batchResourceType}' referenced by ${path}`,
+            )
+          }
 
-      const pagination = properties[paginationResponseKey]
-      return {
-        responseType: props?.type === 'array' ? 'resource_list' : 'resource',
-        responseKey: refKey,
-        resourceType,
-        description,
-        hasPagination:
-          !context.omitPagination &&
-          pagination?.$ref?.endsWith(`/${paginationResponseKey}`) === true &&
-          context.omissions?.isOmitted(pagination) !== true,
-        actionAttemptType,
-        batchResourceTypes: batchResourceTypes ?? null,
-      }
+          return [
+            {
+              batchKey: key,
+              resourceType: batchResourceType,
+            },
+          ]
+        })
+      : null
+
+    const pagination = visible?.properties?.[paginationResponseKey]
+    return {
+      responseType: props.type === 'array' ? 'resource_list' : 'resource',
+      responseKey,
+      resourceType,
+      description,
+      hasPagination:
+        pagination?.$ref?.endsWith(`/${paginationResponseKey}`) === true,
+      actionAttemptType,
+      batchResourceTypes: batchResourceTypes ?? null,
     }
   }
 
