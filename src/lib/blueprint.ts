@@ -6,7 +6,11 @@ import {
   omitFromBlueprint,
 } from './omit.js'
 import { findCommonOpenapiSchemaProperties } from './openapi/find-common-openapi-schema-properties.js'
-import { flattenOpenapiSchema } from './openapi/flatten-openapi-schema.js'
+import {
+  flattenOneOfSchema,
+  flattenOpenapiSchema,
+  taggedArrayItems,
+} from './openapi/flatten-openapi-schema.js'
 import {
   getRequestBodySchema,
   schemaRequiresAnyProperty,
@@ -60,6 +64,7 @@ import {
   type ResponseField,
   responseVisibility,
   schemaVisibility,
+  taggedArrayProjections,
 } from './visibility.js'
 
 const paginationResponseKey = 'pagination'
@@ -1363,6 +1368,19 @@ const createParameter = (
   }
 }
 
+const createRequestVariant = (schema: OpenapiSchema, path: string) =>
+  annotateVariant(
+    {
+      parameters: createParameters(
+        schema.properties ?? {},
+        path,
+        schema.required ?? [],
+      ),
+      description: normalizeDescription(schema.description ?? ''),
+    },
+    schema,
+  )
+
 const createArrayParameter = (
   baseParam: BaseParameter,
   property: OpenapiSchema,
@@ -1416,19 +1434,7 @@ const createArrayParameter = (
       'discriminated_object',
       {
         discriminator: property.items.discriminator.propertyName,
-        variants: branches.map((schema) =>
-          annotateVariant(
-            {
-              parameters: createParameters(
-                schema.properties ?? {},
-                path,
-                schema.required ?? [],
-              ),
-              description: normalizeDescription(schema.description ?? ''),
-            },
-            schema,
-          ),
-        ),
+        variants: branches.map((schema) => createRequestVariant(schema, path)),
       },
     )
   }
@@ -1458,13 +1464,35 @@ const createArrayParameter = (
         itemEnumValues: itemParameter.values,
       })
 
-    case 'object':
-      return annotateDiscriminator(
+    case 'object': {
+      const list = annotateDiscriminator(
         createListParameter<ObjectListParameter>('object', {
           itemParameters: itemParameter.parameters,
         }),
         property.items,
       )
+      const contributors = taggedArrayItems.get(property.items)
+      if (contributors != null) {
+        const variants = contributors.oneOf.map((schema) =>
+          createRequestVariant(schema, path),
+        )
+        taggedArrayProjections.set(list, {
+          variants,
+          project: (indices) => {
+            const oneOf = contributors.oneOf.filter((_, index) =>
+              indices.includes(index),
+            )
+            if (oneOf.length === 0) return []
+            const { properties } = flattenOneOfSchema({
+              ...contributors,
+              oneOf,
+            })
+            return createParameters(properties ?? {}, path)
+          },
+        })
+      }
+      return list
+    }
 
     case 'record':
       return createListParameter<RecordListParameter>('record')

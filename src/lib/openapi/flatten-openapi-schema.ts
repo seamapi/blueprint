@@ -89,6 +89,48 @@ export const projectVisibility = (
   return result
 }
 
+type TaggedArrayItems = OpenapiSchema &
+  Required<Pick<OpenapiSchema, 'discriminator' | 'oneOf'>>
+
+// Only flattened tagged arrays with shared object fields need their contributors
+// to resolve which object definition survives Blueprint omission.
+export const taggedArrayItems = new WeakMap<OpenapiSchema, TaggedArrayItems>()
+
+const getTaggedArrayItems = (
+  items: OpenapiSchema,
+): TaggedArrayItems | undefined => {
+  const { oneOf, discriminator } = items
+  if (oneOf == null || discriminator == null || oneOf.length < 2) {
+    return undefined
+  }
+  const tags = new Set<string>()
+  const fields = new Map<string, OpenapiSchema['type']>()
+  let sharedObject = false
+  for (const branch of oneOf) {
+    const tag = branch.properties?.[discriminator.propertyName]
+    const literal = tag?.enum?.[0]
+    if (
+      branch.type !== 'object' ||
+      branch.properties == null ||
+      tag?.type !== 'string' ||
+      tag.enum?.length !== 1 ||
+      typeof literal !== 'string' ||
+      tags.has(literal)
+    ) {
+      return undefined
+    }
+    tags.add(literal)
+    for (const [name, field] of Object.entries(branch.properties)) {
+      if (fields.has(name)) {
+        if (fields.get(name) !== field.type) return undefined
+        if (field.type === 'object') sharedObject = true
+      }
+      fields.set(name, field.type)
+    }
+  }
+  return sharedObject ? { ...items, oneOf, discriminator } : undefined
+}
+
 export const flattenOpenapiSchema = (schema: OpenapiSchema): OpenapiSchema => {
   if ('allOf' in schema && Array.isArray(schema.allOf)) {
     return flattenAllOfSchema(schema as { allOf: OpenapiSchema[] })
@@ -109,7 +151,11 @@ export const flattenOpenapiSchema = (schema: OpenapiSchema): OpenapiSchema => {
   }
 
   if (schema.type === 'array' && schema.items != null) {
-    return { ...schema, items: flattenOpenapiSchema(schema.items) }
+    const items = flattenOpenapiSchema(schema.items)
+    const contributors =
+      taggedArrayItems.get(schema.items) ?? getTaggedArrayItems(schema.items)
+    if (contributors != null) taggedArrayItems.set(items, contributors)
+    return { ...schema, items }
   }
 
   return schema

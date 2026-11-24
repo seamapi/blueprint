@@ -7,11 +7,13 @@ import type {
 } from './blueprint.js'
 import {
   booleanVisibility,
+  flattenedDiscriminators,
   isNodeOmitted,
   type IsOmitted,
   paginationVisibility,
   requestVisibility,
   responseVisibility,
+  taggedArrayProjections,
 } from './visibility.js'
 
 export type Field = Property | Parameter
@@ -29,10 +31,12 @@ export const getEnumValues = (
   return undefined
 }
 
-export const annotateEventProjections = (blueprint: Blueprint): void => {
-  const events = new Map(
-    blueprint.events.map((event) => [event.eventType, event]),
-  )
+type AnnotateFields = (fields: Field[]) => void
+
+const eventProjectionAnnotator = (
+  catalog: Blueprint['events'],
+): AnnotateFields => {
+  const events = new Map(catalog.map((event) => [event.eventType, event]))
   const annotate = (fields: Field[]): void => {
     for (const field of fields) {
       if (field.name === 'event_type' || field.name === 'event_types') {
@@ -48,11 +52,15 @@ export const annotateEventProjections = (blueprint: Blueprint): void => {
       if (field.format === 'object') {
         annotate('parameters' in field ? field.parameters : field.properties)
       } else if (field.format === 'list' && field.itemFormat === 'object') {
-        annotate(
-          'itemParameters' in field
-            ? field.itemParameters
-            : field.itemProperties,
-        )
+        if ('itemParameters' in field) {
+          annotate(field.itemParameters)
+          for (const variant of taggedArrayProjections.get(field)?.variants ??
+            []) {
+            annotate(variant.parameters)
+          }
+        } else {
+          annotate(field.itemProperties)
+        }
       } else if (
         field.format === 'list' &&
         field.itemFormat === 'discriminated_object'
@@ -65,6 +73,11 @@ export const annotateEventProjections = (blueprint: Blueprint): void => {
       }
     }
   }
+  return annotate
+}
+
+export const annotateEventProjections = (blueprint: Blueprint): void => {
+  const annotate = eventProjectionAnnotator(blueprint.events)
   for (const route of blueprint.routes) {
     for (const endpoint of route.endpoints) {
       annotate(endpoint.request.parameters)
@@ -125,11 +138,15 @@ export const isVariantOmitted = (
   )
 }
 
-const omitFields = <T extends Field>(fields: T[], isOmitted: IsOmitted): T[] =>
+const omitFields = <T extends Field>(
+  fields: T[],
+  isOmitted: IsOmitted,
+  annotate: AnnotateFields,
+): T[] =>
   fields
     .filter((field) => !isFieldOmitted(field, isOmitted))
     .map((field) => {
-      const visible = omitField(field, isOmitted)
+      const visible = omitField(field, isOmitted, annotate)
       if (
         'hasDefault' in visible &&
         'default' in visible &&
@@ -149,7 +166,11 @@ const omitFields = <T extends Field>(fields: T[], isOmitted: IsOmitted): T[] =>
       return visible as T
     })
 
-const omitField = (field: Field, isOmitted: IsOmitted): Field => {
+const omitField = (
+  field: Field,
+  isOmitted: IsOmitted,
+  annotate: AnnotateFields,
+): Field => {
   if (field.format === 'enum') {
     return {
       ...field,
@@ -166,8 +187,14 @@ const omitField = (field: Field, isOmitted: IsOmitted): Field => {
   }
   if (field.format === 'object') {
     return 'parameters' in field
-      ? { ...field, parameters: omitFields(field.parameters, isOmitted) }
-      : { ...field, properties: omitFields(field.properties, isOmitted) }
+      ? {
+          ...field,
+          parameters: omitFields(field.parameters, isOmitted, annotate),
+        }
+      : {
+          ...field,
+          properties: omitFields(field.properties, isOmitted, annotate),
+        }
   }
   if (field.format !== 'list') return field
   if (field.itemFormat === 'enum') {
@@ -177,15 +204,25 @@ const omitField = (field: Field, isOmitted: IsOmitted): Field => {
     }
   }
   if (field.itemFormat === 'object') {
-    return 'itemParameters' in field
-      ? {
-          ...field,
-          itemParameters: omitFields(field.itemParameters, isOmitted),
-        }
-      : {
-          ...field,
-          itemProperties: omitFields(field.itemProperties, isOmitted),
-        }
+    if ('itemProperties' in field) {
+      return {
+        ...field,
+        itemProperties: omitFields(field.itemProperties, isOmitted, annotate),
+      }
+    }
+    const projection = taggedArrayProjections.get(field)
+    const discriminator = flattenedDiscriminators.get(field)
+    let fields = field.itemParameters
+    if (projection != null && discriminator != null) {
+      const visible = projection.variants.flatMap((variant, index) =>
+        isVariantOmitted(variant, discriminator, isOmitted) ? [] : [index],
+      )
+      if (visible.length !== projection.variants.length) {
+        fields = projection.project(visible)
+        annotate(fields)
+      }
+    }
+    return { ...field, itemParameters: omitFields(fields, isOmitted, annotate) }
   }
   if (field.itemFormat === 'discriminated_object') {
     if ('isRequired' in field) {
@@ -198,7 +235,7 @@ const omitField = (field: Field, isOmitted: IsOmitted): Field => {
           )
           .map((variant) => ({
             ...variant,
-            parameters: omitFields(variant.parameters, isOmitted),
+            parameters: omitFields(variant.parameters, isOmitted, annotate),
           })),
       }
     }
@@ -211,7 +248,7 @@ const omitField = (field: Field, isOmitted: IsOmitted): Field => {
         )
         .map((variant) => ({
           ...variant,
-          properties: omitFields(variant.properties, isOmitted),
+          properties: omitFields(variant.properties, isOmitted, annotate),
         })),
     }
   }
@@ -222,6 +259,7 @@ export const omitFromBlueprint = (
   blueprint: Blueprint,
   isOmitted: IsOmitted,
 ): Blueprint => {
+  const annotate = eventProjectionAnnotator(blueprint.events)
   const hiddenResources = new Set(
     blueprint.resources
       .filter(isOmitted)
@@ -236,7 +274,7 @@ export const omitFromBlueprint = (
     const parameters =
       flags != null && isOmitted(flags)
         ? []
-        : omitFields(endpoint.request.parameters, isOmitted)
+        : omitFields(endpoint.request.parameters, isOmitted, annotate)
     const { response } = endpoint
     const visibility = responseVisibility.get(endpoint)
     const field =
@@ -295,7 +333,7 @@ export const omitFromBlueprint = (
     resource: T,
   ): T => ({
     ...resource,
-    properties: omitFields(resource.properties, isOmitted),
+    properties: omitFields(resource.properties, isOmitted, annotate),
   })
   return {
     ...blueprint,
@@ -325,7 +363,7 @@ export const omitFromBlueprint = (
       pagination != null && !hiddenPagination
         ? {
             ...pagination,
-            properties: omitFields(pagination.properties, isOmitted),
+            properties: omitFields(pagination.properties, isOmitted, annotate),
           }
         : null,
   }

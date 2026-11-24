@@ -293,6 +293,95 @@ for (const method of ['get', 'post'] as const) {
   })
 }
 
+test('createBlueprint: tagged POST arrays flatten shared fields from visible variants', async (t) => {
+  const typesModule = TypesModuleSchema.parse(types)
+  const openapi = structuredClone(typesModule.openapi)
+  const path = '/foos/get'
+  const operation = openapi.paths[path].post
+  const variant = (kind: string, properties: Record<string, unknown>) => ({
+    type: 'object',
+    required: ['kind'],
+    properties: {
+      kind: { type: 'string', enum: [kind] },
+      details: { type: 'object', properties },
+    },
+  })
+  operation.requestBody = {
+    content: {
+      'application/json': {
+        schema: {
+          type: 'object',
+          properties: {
+            filters: {
+              type: 'array',
+              items: {
+                discriminator: { propertyName: 'kind' },
+                oneOf: [
+                  variant('public', {
+                    public_detail: { type: 'string' },
+                    secret_detail: {
+                      type: 'string',
+                      'x-undocumented': 'Internal.',
+                    },
+                  }),
+                  {
+                    ...variant('internal', {
+                      internal_detail: { type: 'string' },
+                    }),
+                    'x-undocumented': 'Internal.',
+                  },
+                ],
+              },
+            },
+          },
+        },
+      },
+    },
+  }
+  const definition = typesModule.codeSampleDefinitions.find(
+    ({ request }) => request.path === path,
+  )
+  if (definition == null) throw new Error('Missing foo sample')
+  definition.request.parameters = {
+    filters: [
+      {
+        kind: 'public',
+        details: { public_detail: 'keep', secret_detail: 'hide' },
+      },
+      { kind: 'internal', details: { internal_detail: 'hide' } },
+    ],
+  }
+  for (const omitUndocumented of [false, true]) {
+    const blueprint = await createBlueprint(
+      { ...typesModule, openapi },
+      { omitUndocumented },
+    )
+    const endpoint = blueprint.routes
+      .flatMap(({ endpoints }) => endpoints)
+      .find((endpoint) => endpoint.path === path)
+    const filters = endpoint?.request.parameters.find(
+      ({ name }) => name === 'filters',
+    )
+    if (filters?.format !== 'list' || filters.itemFormat !== 'object') {
+      throw new Error('Expected a flattened list of objects')
+    }
+    const details = filters.itemParameters.find(
+      ({ name }) => name === 'details',
+    )
+    t.deepEqual(
+      details?.format === 'object' &&
+        details.parameters.map(({ name }) => name),
+      omitUndocumented ? ['public_detail'] : ['internal_detail'],
+    )
+    t.deepEqual(
+      endpoint?.codeSamples[0]?.request.parameters,
+      omitUndocumented
+        ? { filters: [{ kind: 'public', details: { public_detail: 'keep' } }] }
+        : definition.request.parameters,
+    )
+  }
+})
+
 test('createBlueprint: carries visibility through enum, list and intersection projections', async (t) => {
   const typesModule = TypesModuleSchema.parse(types)
   const openapi = structuredClone(typesModule.openapi)

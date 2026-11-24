@@ -39,6 +39,16 @@ export const flattenedDiscriminators = new WeakMap<
   Property | Parameter,
   string
 >()
+export const taggedArrayProjections = new WeakMap<
+  Parameter,
+  {
+    variants: Extract<
+      Parameter,
+      { itemFormat: 'discriminated_object' }
+    >['variants']
+    project: (indices: number[]) => Parameter[]
+  }
+>()
 export const paginationVisibility = new WeakMap<Pagination, Visibility>()
 export const requestVisibility = new WeakMap<
   Request,

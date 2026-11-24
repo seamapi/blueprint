@@ -13,6 +13,7 @@ import {
   requestVisibility,
   type ResponseField,
   responseVisibility,
+  taggedArrayProjections,
 } from 'lib/visibility.js'
 
 import { type CodeSampleDefinition, createCodeSample } from './code-sample.js'
@@ -69,6 +70,40 @@ const omitExampleFields = (
           value.flatMap((item) => {
             if (isLiteralOmitted(field, item, isOmitted)) return []
             if (!isObject(item)) return [item]
+            const discriminator =
+              field.itemFormat === 'discriminated_object'
+                ? field.discriminator
+                : flattenedDiscriminators.get(field)
+            const variants =
+              field.itemFormat === 'discriminated_object'
+                ? field.variants
+                : 'itemParameters' in field
+                  ? taggedArrayProjections.get(field)?.variants
+                  : undefined
+            if (discriminator != null && variants != null) {
+              for (const variant of variants) {
+                const fields =
+                  'parameters' in variant
+                    ? variant.parameters
+                    : variant.properties
+                const tag = fields.find(({ name }) => name === discriminator)
+                if (
+                  tag == null ||
+                  getEnumValues(tag)?.some(
+                    ({ name }) => name === item[discriminator],
+                  ) !== true
+                ) {
+                  continue
+                }
+                if (
+                  isVariantOmitted(variant, discriminator, isOmitted) ||
+                  isLiteralOmitted(tag, item[tag.name], isOmitted)
+                ) {
+                  return []
+                }
+                return [omitExampleFields(item, fields, isOmitted)]
+              }
+            }
             if (field.itemFormat === 'object') {
               const fields =
                 'itemParameters' in field
@@ -78,32 +113,6 @@ const omitExampleFields = (
                 return []
               }
               return [omitExampleFields(item, fields, isOmitted)]
-            }
-            if (field.itemFormat === 'discriminated_object') {
-              for (const variant of field.variants) {
-                const fields =
-                  'parameters' in variant
-                    ? variant.parameters
-                    : variant.properties
-                const tag = fields.find(
-                  ({ name }) => name === field.discriminator,
-                )
-                if (
-                  tag == null ||
-                  getEnumValues(tag)?.some(
-                    ({ name }) => name === item[field.discriminator],
-                  ) !== true
-                ) {
-                  continue
-                }
-                if (
-                  isVariantOmitted(variant, field.discriminator, isOmitted) ||
-                  isLiteralOmitted(tag, item[tag.name], isOmitted)
-                ) {
-                  return []
-                }
-                return [omitExampleFields(item, fields, isOmitted)]
-              }
             }
             return [item]
           }),
