@@ -144,6 +144,10 @@ for (const [kind, option, annotation] of [
         omit ? ['foo_offline'] : ['foo_offline', 'foo_unreachable'],
       )
       t.deepEqual(
+        issues.variants.map(({ discriminatorValue }) => discriminatorValue),
+        codes,
+      )
+      t.deepEqual(
         issues.variants[0]?.properties.map(({ name }) => name),
         omit ? [code, 'message'] : [code, 'message', 'internal_detail'],
       )
@@ -278,6 +282,14 @@ for (const method of ['get', 'post'] as const) {
         ),
         omitUndocumented ? ['public'] : ['public', 'internal'],
       )
+      if (parameter.itemFormat === 'discriminated_object') {
+        t.deepEqual(
+          parameter.variants.map(
+            ({ discriminatorValue }) => discriminatorValue,
+          ),
+          omitUndocumented ? ['public'] : ['public', 'internal'],
+        )
+      }
       const example = endpoint?.codeSamples[0]
       t.deepEqual(
         example?.request.parameters['filter_list'],

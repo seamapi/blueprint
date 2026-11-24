@@ -26,6 +26,7 @@ const createCodeListProperty = (
     variants: codes.map((code) => ({
       resourceType: null,
       variantGroupKey: null,
+      discriminatorValue: code,
       description: '',
       properties: [
         {
