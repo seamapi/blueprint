@@ -24,6 +24,7 @@ import {
 import type {
   Openapi,
   OpenapiAuthMethod,
+  OpenapiEnumValue,
   OpenapiOperation,
   OpenapiPathItem,
   OpenapiPaths,
@@ -283,6 +284,7 @@ interface DiscriminatedListParameter extends BaseListParameter {
   itemFormat: 'discriminated_object'
   discriminator: string
   variants: Array<{
+    discriminatorValue: OpenapiEnumValue | null
     parameters: Parameter[]
     description: BaseParameter['description']
   }>
@@ -465,6 +467,7 @@ export interface DiscriminatedListProperty extends BaseListProperty {
   variants: Array<{
     resourceType: string | null
     variantGroupKey: string | null
+    discriminatorValue: OpenapiEnumValue | null
     properties: Property[]
     description: BaseProperty['description']
   }>
@@ -1199,9 +1202,14 @@ const normalizeDiscriminatedVariant = (
 const annotateVariant = <T extends object>(
   node: T,
   schema: OpenapiSchema,
-): T => {
-  nodeVisibility.set(node, schemaVisibility(schema))
-  return node
+  discriminator: string,
+) => {
+  const variant = {
+    ...node,
+    discriminatorValue: schema.properties?.[discriminator]?.enum?.[0] ?? null,
+  }
+  nodeVisibility.set(variant, schemaVisibility(schema))
+  return variant
 }
 
 const assertLowerSnakeCase = (
@@ -1368,7 +1376,11 @@ const createParameter = (
   }
 }
 
-const createRequestVariant = (schema: OpenapiSchema, path: string) =>
+const createRequestVariant = (
+  schema: OpenapiSchema,
+  path: string,
+  discriminator: string,
+) =>
   annotateVariant(
     {
       parameters: createParameters(
@@ -1379,6 +1391,7 @@ const createRequestVariant = (schema: OpenapiSchema, path: string) =>
       description: normalizeDescription(schema.description ?? ''),
     },
     schema,
+    discriminator,
   )
 
 const createArrayParameter = (
@@ -1433,8 +1446,10 @@ const createArrayParameter = (
     return createListParameter<DiscriminatedListParameter>(
       'discriminated_object',
       {
-        discriminator: property.items.discriminator.propertyName,
-        variants: branches.map((schema) => createRequestVariant(schema, path)),
+        discriminator: discriminatorPropertyName,
+        variants: branches.map((schema) =>
+          createRequestVariant(schema, path, discriminatorPropertyName),
+        ),
       },
     )
   }
@@ -1474,7 +1489,11 @@ const createArrayParameter = (
       const contributors = taggedArrayItems.get(property.items)
       if (contributors != null) {
         const variants = contributors.oneOf.map((schema) =>
-          createRequestVariant(schema, path),
+          createRequestVariant(
+            schema,
+            path,
+            contributors.discriminator.propertyName,
+          ),
         )
         taggedArrayProjections.set(list, {
           variants,
@@ -2099,7 +2118,7 @@ const createArrayProperty = (
     return createListProperty<DiscriminatedListProperty>(
       'discriminated_object',
       {
-        discriminator: prop.items.discriminator.propertyName,
+        discriminator: discriminatorPropertyName,
         variantGroups,
         variants: branches.map((schema) => {
           const errorCode = schema.properties?.['error_code']?.enum?.[0]
@@ -2137,6 +2156,7 @@ const createArrayProperty = (
               description: normalizeDescription(schema.description ?? ''),
             },
             schema,
+            discriminatorPropertyName,
           )
         }),
       },
