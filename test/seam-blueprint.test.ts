@@ -32,3 +32,112 @@ test('createBlueprint', async (t) => {
   t.deepEqual(statusesFor('result'), ['success'])
   t.snapshot(blueprint, 'blueprint')
 })
+
+test('createBlueprint: omits event names from catalog enum projections only', async (t) => {
+  const typesModule = TypesModuleSchema.parse(types)
+  const openapi = structuredClone(typesModule.openapi)
+  const hidden = 'access_code.failed_to_issue'
+  const documented = 'access_code.created'
+  openapi.components.schemas.access_code.properties.unrelated_status = {
+    type: 'string',
+    enum: [hidden, documented],
+  }
+  const list = openapi.paths['/events/list'].get
+  const sample = {
+    title: 'Example events',
+    description: 'Visible events remain in the authored list.',
+    request: {
+      path: '/events/list',
+      parameters: { event_types: [hidden, documented] },
+    },
+    response: {
+      body: { events: [{ event_type: hidden }, { event_type: documented }] },
+    },
+  }
+  typesModule.codeSampleDefinitions = [sample]
+  const timelineOperation = openapi.paths['/access_codes/get_timeline'].get
+  // This endpoint is unreleased. Make its projection observable in the filtered output.
+  delete timelineOperation['x-undocumented']
+  timelineOperation.responses = list.responses
+  timelineOperation['x-response-key'] = list['x-response-key']
+  list.parameters.push({
+    in: 'query',
+    name: 'unrelated_status',
+    schema: { type: 'string', enum: [hidden, documented] },
+  })
+  const endpoint = (
+    blueprint: Awaited<ReturnType<typeof createBlueprint>>,
+    path: string,
+  ) =>
+    blueprint.routes
+      .flatMap(({ endpoints }) => endpoints)
+      .find((entry) => entry.path === path)
+
+  for (const omitUndocumented of [false, true]) {
+    const blueprint = await createBlueprint(
+      { ...typesModule, openapi },
+      { omitUndocumented },
+    )
+    t.is(
+      blueprint.events.some(({ eventType }) => eventType === hidden),
+      !omitUndocumented,
+    )
+    t.true(blueprint.events.some(({ eventType }) => eventType === documented))
+    const eventType = blueprint.resources
+      .find(({ resourceType }) => resourceType === 'event')
+      ?.properties.find(({ name }) => name === 'event_type')
+    const eventList = endpoint(blueprint, '/events/list')
+    const single = eventList?.request.parameters.find(
+      ({ name }) => name === 'event_type',
+    )
+    const timeline = endpoint(
+      blueprint,
+      '/access_codes/get_timeline',
+    )?.request.parameters.find(({ name }) => name === 'event_types')
+    const multiple = eventList?.request.parameters.find(
+      ({ name }) => name === 'event_types',
+    )
+    const outside = blueprint.resources
+      .find(({ resourceType }) => resourceType === 'access_code')
+      ?.properties.find(({ name }) => name === 'unrelated_status')
+    const unrelated = eventList?.request.parameters.find(
+      ({ name }) => name === 'unrelated_status',
+    )
+    for (const projection of [eventType, single, timeline, multiple]) {
+      const values =
+        projection?.format === 'enum'
+          ? projection.values
+          : projection?.format === 'list' && projection.itemFormat === 'enum'
+            ? projection.itemEnumValues
+            : []
+      t.is(
+        values.some(({ name }) => name === hidden),
+        !omitUndocumented,
+      )
+      t.true(values.some(({ name }) => name === documented))
+      if (!omitUndocumented) {
+        t.true(values.find(({ name }) => name === hidden)?.isUndocumented)
+      }
+    }
+    const example = eventList?.codeSamples[0]
+    t.deepEqual(
+      example?.request.parameters['event_types'],
+      omitUndocumented ? [documented] : [hidden, documented],
+    )
+    t.deepEqual(
+      example?.response.body?.['events'],
+      omitUndocumented
+        ? [{ event_type: documented }]
+        : sample.response.body.events,
+    )
+    t.is(example?.code.seam_cli?.response.includes(hidden), !omitUndocumented)
+    for (const field of [outside, unrelated]) {
+      t.deepEqual(
+        field?.format === 'enum'
+          ? field.values.map(({ name }) => name)
+          : undefined,
+        [hidden, documented],
+      )
+    }
+  }
+})

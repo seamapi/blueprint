@@ -48,6 +48,7 @@ export type ResourceSample = z.output<typeof _ResourceSampleSchema>
 export const createResourceSample = async (
   resourceSampleDefinition: ResourceSampleDefinition,
   context: ResourceSampleContext,
+  properties = resourceSampleDefinition.properties,
 ): Promise<ResourceSample> => {
   const resourceType = resourceSampleDefinition.resource_type
   const schema = toPartialZodSchema(context.schemas[resourceType])
@@ -68,19 +69,17 @@ export const createResourceSample = async (
     }
   }
 
+  const visibleDefinition = { ...resourceSampleDefinition, properties }
   const resource: Resource = {
     seam_cli: {
       title: 'Seam CLI',
-      resource_data: createSeamCliResourceData(
-        resourceSampleDefinition,
-        context,
-      ),
+      resource_data: createSeamCliResourceData(visibleDefinition, context),
       resource_data_syntax: 'json',
     },
   }
 
   return {
-    ...resourceSampleDefinition,
+    ...visibleDefinition,
     resource: await formatResourceRecords(resource, context),
   }
 }

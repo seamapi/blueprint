@@ -25,6 +25,112 @@ const pickAnnotations = (schema: OpenapiSchema): OpenapiSchema =>
     ),
   )
 
+const visibilityKeys = ['x-undocumented', 'x-end-of-life'] as const
+const enumVisibilityKeys = {
+  'x-undocumented': 'undocumented',
+  'x-end-of-life': 'end_of_life',
+} as const
+
+// Project visibility when contributors are merged, without removing any schemas.
+export const projectVisibility = (
+  projected: OpenapiSchema,
+  contributors: OpenapiSchema[],
+  intersection: boolean,
+): OpenapiSchema => {
+  const result = { ...projected }
+  for (const key of visibilityKeys) {
+    if (
+      intersection
+        ? contributors.some((s) => s[key])
+        : contributors.every((s) => s[key])
+    ) {
+      const message = contributors.find((s) => s[key])?.[key]
+      if (message != null) result[key] = message
+    } else if (!intersection) {
+      delete result[key]
+    }
+  }
+  if (projected.enum == null) return result
+
+  const enumMetadata = Object.fromEntries(
+    projected.enum.map((literal) => {
+      const name = String(literal)
+      const matching = contributors.filter((s) => s.enum?.includes(literal))
+      const entry = {
+        ...matching.findLast((s) => s['x-enums']?.[name] != null)?.[
+          'x-enums'
+        ]?.[name],
+      }
+      for (const schemaKey of visibilityKeys) {
+        const key = enumVisibilityKeys[schemaKey]
+        const messages = matching.map(
+          (s) => s[schemaKey] || s['x-enums']?.[name]?.[key],
+        )
+        if (
+          messages.length > 0 &&
+          (intersection ? messages.some(Boolean) : messages.every(Boolean))
+        ) {
+          const message = messages.find(Boolean)
+          if (message != null) entry[key] = message
+        } else {
+          delete entry[key]
+        }
+      }
+      return [name, entry]
+    }),
+  )
+  if (
+    Object.values(enumMetadata).some((entry) => Object.keys(entry).length > 0)
+  ) {
+    result['x-enums'] = enumMetadata
+  } else {
+    delete result['x-enums']
+  }
+  return result
+}
+
+type TaggedArrayItems = OpenapiSchema &
+  Required<Pick<OpenapiSchema, 'discriminator' | 'oneOf'>>
+
+// Only flattened tagged arrays with shared object fields need their contributors
+// to resolve which object definition survives Blueprint omission.
+export const taggedArrayItems = new WeakMap<OpenapiSchema, TaggedArrayItems>()
+
+const getTaggedArrayItems = (
+  items: OpenapiSchema,
+): TaggedArrayItems | undefined => {
+  const { oneOf, discriminator } = items
+  if (oneOf == null || discriminator == null || oneOf.length < 2) {
+    return undefined
+  }
+  const tags = new Set<string>()
+  const fields = new Map<string, OpenapiSchema['type']>()
+  let sharedObject = false
+  for (const branch of oneOf) {
+    const tag = branch.properties?.[discriminator.propertyName]
+    const literal = tag?.enum?.[0]
+    if (
+      branch.type !== 'object' ||
+      branch.properties == null ||
+      tag?.type !== 'string' ||
+      tag.enum?.length !== 1 ||
+      typeof literal !== 'string' ||
+      tags.has(literal)
+    ) {
+      return undefined
+    }
+    tags.add(literal)
+    for (const [name, field] of Object.entries(branch.properties)) {
+      if (fields.has(name)) {
+        if (fields.get(name) !== field.type) return undefined
+        if (field.type === 'object') sharedObject = true
+      }
+      fields.set(name, field.type)
+    }
+  }
+  return sharedObject ? { ...items, oneOf, discriminator } : undefined
+}
+
 export const flattenOpenapiSchema = (schema: OpenapiSchema): OpenapiSchema => {
   if ('allOf' in schema && Array.isArray(schema.allOf)) {
     return flattenAllOfSchema(schema as { allOf: OpenapiSchema[] })
@@ -45,7 +151,11 @@ export const flattenOpenapiSchema = (schema: OpenapiSchema): OpenapiSchema => {
   }
 
   if (schema.type === 'array' && schema.items != null) {
-    return { ...schema, items: flattenOpenapiSchema(schema.items) }
+    const items = flattenOpenapiSchema(schema.items)
+    const contributors =
+      taggedArrayItems.get(schema.items) ?? getTaggedArrayItems(schema.items)
+    if (contributors != null) taggedArrayItems.set(items, contributors)
+    return { ...schema, items }
   }
 
   return schema
@@ -117,6 +227,16 @@ export const flattenAllOfSchema = (schema: AllOfSchema): OpenapiSchema => {
     }
   }
 
+  Object.assign(
+    flattenedSchema,
+    projectVisibility(flattenedSchema, flattenedSubschemas, true),
+  )
+  for (const [name, prop] of Object.entries(flattenedSchema.properties)) {
+    const fields = flattenedSubschemas.flatMap(
+      (schema) => schema.properties?.[name] ?? [],
+    )
+    flattenedSchema.properties[name] = projectVisibility(prop, fields, true)
+  }
   return flattenedSchema
 }
 
@@ -148,14 +268,21 @@ export const flattenOneOfSchema = (schema: OneOfSchema): OpenapiSchema => {
     )
 
     return {
+      ...projectVisibility(
+        { type: enumType, enum: mergedEnums },
+        flattenedSubschemas,
+        false,
+      ),
       ...baseFlattenedSchema,
-      type: enumType,
-      enum: mergedEnums,
     }
   } else if (flattenedSubschemas.every(isScalarSchema)) {
     return {
       ...baseFlattenedSchema,
-      ...flattenScalarSubschemas(flattenedSubschemas),
+      ...projectVisibility(
+        flattenScalarSubschemas(flattenedSubschemas),
+        flattenedSubschemas,
+        false,
+      ),
     }
   } else if (flattenedSubschemas.some(isScalarSchema)) {
     const kinds = Array.from(
@@ -208,6 +335,28 @@ export const flattenOneOfSchema = (schema: OneOfSchema): OpenapiSchema => {
       }
     }
 
+    for (const [name, prop] of Object.entries(mergedProperties)) {
+      const contributors = flattenedSubschemas.flatMap((schema) => {
+        const field = schema.properties?.[name]
+        return field == null
+          ? []
+          : [
+              {
+                ...field,
+                ...Object.fromEntries(
+                  visibilityKeys.flatMap((key) =>
+                    schema[key] ? [[key, schema[key]]] : [],
+                  ),
+                ),
+              },
+            ]
+      })
+      // The legacy projection cannot describe different types for the same field.
+      if (contributors.every((field) => field.type === prop.type)) {
+        mergedProperties[name] = projectVisibility(prop, contributors, false)
+      }
+    }
+
     let commonRequiredFields: string[] = []
     if (requiredFieldsLists.length > 0) {
       commonRequiredFields = requiredFieldsLists.reduce(
@@ -223,6 +372,9 @@ export const flattenOneOfSchema = (schema: OneOfSchema): OpenapiSchema => {
       type: 'object',
       properties: mergedProperties,
       required: commonRequiredFields,
+      ...(schema.discriminator != null && {
+        discriminator: schema.discriminator,
+      }),
     }
   }
 }
