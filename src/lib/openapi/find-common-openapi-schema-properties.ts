@@ -1,5 +1,7 @@
 import type { OpenapiEnumValue, OpenapiSchema } from 'lib/openapi/types.js'
 
+import { projectVisibility } from './flatten-openapi-schema.js'
+
 export function findCommonOpenapiSchemaProperties(
   schemas: OpenapiSchema[],
 ): Record<string, OpenapiSchema> {
@@ -11,11 +13,10 @@ export function findCommonOpenapiSchemaProperties(
   return Object.entries(firstSchema.properties).reduce<
     Record<string, OpenapiSchema>
   >((commonProps, [propKey, propValue]) => {
-    const isPropInAllSchemas = schemas.every((schema) =>
-      Object.keys(schema.properties ?? {}).includes(propKey),
+    const contributors = schemas.flatMap(
+      (schema) => schema.properties?.[propKey] ?? [],
     )
-
-    if (!isPropInAllSchemas) {
+    if (contributors.length !== schemas.length) {
       return commonProps
     }
 
@@ -30,10 +31,17 @@ export function findCommonOpenapiSchemaProperties(
 
       return {
         ...commonProps,
-        [propKey]: { ...propValue, enum: mergedEnumValues },
+        [propKey]: projectVisibility(
+          { ...propValue, enum: mergedEnumValues },
+          contributors,
+          false,
+        ),
       }
     }
 
-    return { ...commonProps, [propKey]: propValue }
+    return {
+      ...commonProps,
+      [propKey]: projectVisibility(propValue, contributors, false),
+    }
   }, {})
 }

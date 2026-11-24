@@ -99,20 +99,14 @@ for (const [kind, option, annotation] of [
       type: 'array',
       items: {
         discriminator: { propertyName: code },
-        oneOf: [documentedVariant, hiddenVariant],
+        oneOf: [{ allOf: [documentedVariant] }, hiddenVariant],
       },
     }
     fooSchema.properties[`${kind}s`] = issuesSchema
     fooSchema.properties.nested_issues = {
       type: 'object',
       properties: {
-        issues: {
-          ...issuesSchema,
-          items: {
-            ...issuesSchema.items,
-            oneOf: [{ allOf: [documentedVariant] }, hiddenVariant],
-          },
-        },
+        issues: issuesSchema,
         only_hidden: {
           ...issuesSchema,
           items: { ...issuesSchema.items, oneOf: [hiddenVariant] },
@@ -121,15 +115,6 @@ for (const [kind, option, annotation] of [
     }
 
     for (const omit of [false, true]) {
-      if (omit) {
-        fooSchema.properties[`${kind}s`] = {
-          ...issuesSchema,
-          items: {
-            ...issuesSchema.items,
-            oneOf: [{ allOf: [documentedVariant] }, hiddenVariant],
-          },
-        }
-      }
       const blueprint = await createBlueprint(
         { ...typesModule, openapi },
         { [option]: omit },
@@ -200,7 +185,7 @@ for (const [kind, option, annotation] of [
 }
 
 for (const method of ['get', 'post'] as const) {
-  test(`createBlueprint: filters marked request variants before ${method.toUpperCase()} conversion`, async (t) => {
+  test(`createBlueprint: filters marked ${method.toUpperCase()} request variants and samples`, async (t) => {
     const typesModule = TypesModuleSchema.parse(types)
     const openapi = structuredClone(typesModule.openapi)
     const pathItem = openapi.paths['/foos/get']
@@ -308,7 +293,7 @@ for (const method of ['get', 'post'] as const) {
   })
 }
 
-test('createBlueprint: omits hidden enum literals before projection', async (t) => {
+test('createBlueprint: carries visibility through enum, list and intersection projections', async (t) => {
   const typesModule = TypesModuleSchema.parse(types)
   const openapi = structuredClone(typesModule.openapi)
   const hidden = { undocumented: 'Internal.' }
@@ -392,7 +377,7 @@ test('createBlueprint: omits hidden enum literals before projection', async (t) 
   }
 })
 
-test('createBlueprint: omits composed samples using their original discriminator', async (t) => {
+test('createBlueprint: omits intersected sample fields without guessing untagged branches', async (t) => {
   const typesModule = TypesModuleSchema.parse(types)
   const openapi = structuredClone(typesModule.openapi)
   const operation = openapi.paths['/foos/get'].post
@@ -441,11 +426,11 @@ test('createBlueprint: omits composed samples using their original discriminator
     .find(({ path }) => path === '/foos/get')
   t.deepEqual(
     endpoint?.codeSamples.map(({ request }) => request.parameters),
-    [{}, { filter: { payload: 'keep' } }],
+    [{ filter: { payload: 'hide' } }, { filter: { payload: 'keep' } }],
   )
 })
 
-test('createBlueprint: omits exhausted scalar unions and selects samples by field type', async (t) => {
+test('createBlueprint: omits exhausted scalar enums without matching mixed-type branches', async (t) => {
   const typesModule = TypesModuleSchema.parse(types)
   const openapi = structuredClone(typesModule.openapi)
   const operation = openapi.paths['/foos/get'].post
@@ -504,8 +489,50 @@ test('createBlueprint: omits exhausted scalar unions and selects samples by fiel
   )
   t.deepEqual(
     endpoint?.codeSamples.map(({ request }) => request.parameters),
-    [{ filter: 'public' }],
+    [{ filter: { internal: true } }, { filter: 'public' }],
   )
+})
+
+test('createBlueprint: omits marked query wrappers and derives visible requiredness', async (t) => {
+  const typesModule = TypesModuleSchema.parse(types)
+  const openapi = structuredClone(typesModule.openapi)
+  const path = '/foos/get'
+  const pathItem = openapi.paths[path]
+  delete pathItem['post']
+  pathItem.get.parameters = [
+    {
+      in: 'query',
+      name: 'hidden',
+      required: true,
+      schema: { type: 'string' },
+      'x-undocumented': 'Internal.',
+    },
+    { in: 'query', name: 'public', schema: { type: 'string' } },
+  ]
+  const definition = typesModule.codeSampleDefinitions.find(
+    ({ request }) => request.path === path,
+  )
+  if (definition == null) throw new Error('Missing foo sample')
+  definition.request.parameters = { hidden: 'secret', public: 'keep' }
+  for (const omitUndocumented of [false, true]) {
+    const blueprint = await createBlueprint(
+      { ...typesModule, openapi },
+      { omitUndocumented },
+    )
+    const endpoint = blueprint.routes
+      .flatMap(({ endpoints }) => endpoints)
+      .find((endpoint) => endpoint.path === path)
+    t.deepEqual(
+      endpoint?.request.parameters.map(({ name }) => name),
+      omitUndocumented ? ['public'] : ['hidden', 'public'],
+    )
+    t.is(endpoint?.request.hasRequiredParameters, !omitUndocumented)
+    t.is(
+      endpoint?.codeSamples[0]?.request.parameters['hidden'],
+      omitUndocumented ? undefined : 'secret',
+    )
+    t.is(endpoint?.codeSamples[0]?.request.parameters['public'], 'keep')
+  }
 })
 
 for (const marker of ['component', 'response'] as const) {

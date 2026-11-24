@@ -43,6 +43,18 @@ test('createBlueprint: omits event names from catalog enum projections only', as
     enum: [hidden, documented],
   }
   const list = openapi.paths['/events/list'].get
+  const sample = {
+    title: 'Example events',
+    description: 'Visible events remain in the authored list.',
+    request: {
+      path: '/events/list',
+      parameters: { event_types: [hidden, documented] },
+    },
+    response: {
+      body: { events: [{ event_type: hidden }, { event_type: documented }] },
+    },
+  }
+  typesModule.codeSampleDefinitions = [sample]
   const timelineOperation = openapi.paths['/access_codes/get_timeline'].get
   // This endpoint is unreleased. Make its projection observable in the filtered output.
   delete timelineOperation['x-undocumented']
@@ -103,7 +115,22 @@ test('createBlueprint: omits event names from catalog enum projections only', as
         !omitUndocumented,
       )
       t.true(values.some(({ name }) => name === documented))
+      if (!omitUndocumented) {
+        t.true(values.find(({ name }) => name === hidden)?.isUndocumented)
+      }
     }
+    const example = eventList?.codeSamples[0]
+    t.deepEqual(
+      example?.request.parameters['event_types'],
+      omitUndocumented ? [documented] : [hidden, documented],
+    )
+    t.deepEqual(
+      example?.response.body?.['events'],
+      omitUndocumented
+        ? [{ event_type: documented }]
+        : sample.response.body.events,
+    )
+    t.is(example?.code.seam_cli?.response.includes(hidden), !omitUndocumented)
     for (const field of [outside, unrelated]) {
       t.deepEqual(
         field?.format === 'enum'

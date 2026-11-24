@@ -52,6 +52,8 @@ export interface OpenapiParameter {
   in: 'query' | 'header' | 'path' | 'cookie'
   description?: string
   required?: boolean
+  'x-undocumented'?: string
+  'x-end-of-life'?: string
   schema: OpenapiSchema
 }
 
